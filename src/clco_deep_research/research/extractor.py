@@ -40,9 +40,11 @@ def skip_url(url: str) -> bool:
         "youtube.com/watch", "youtu.be/",
         "instagram.com/p/", "twitter.com/", "x.com/",
         "facebook.com/", "tiktok.com/",
+        "linkedin.com/in/", "pinterest.com", "reddit.com/r/",
         "/login", "/signup", "/register", "/auth",
         "apple.com/app", "play.google.com",
-        "pinterest.com", "reddit.com/r/",
+        "utm_source=", "utm_medium=", "utm_campaign=",
+        "#comments", "#comment-",
     ]
     lower = url.lower()
     return any(p in lower for p in skip_patterns)

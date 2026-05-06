@@ -48,7 +48,7 @@ clco-deep-research
 }
 ```
 
-Or use the **[clco-helper](https://github.com/ryankdev/clco-helper)** TUI — one-button install from the MCP management screen.
+Or use the **[clco-helper](https://github.com/claudianus/clco-helper)** TUI — one-button install from the MCP management screen.
 
 ## Tools (6)
 
@@ -180,5 +180,5 @@ MIT — use it, fork it, ship it. Built for the coding agent era.
 ---
 
 <p align="center">
-  <sub>Made for <a href="https://github.com/ryankdev/clco-helper">clco-helper</a> — the Claude Code power tool</sub>
+  <sub>Made for <a href="https://github.com/claudianus/clco-helper">clco-helper</a> — the Claude Code power tool</sub>
 </p>

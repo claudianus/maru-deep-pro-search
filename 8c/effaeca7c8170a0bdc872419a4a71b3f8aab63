@@ -1,0 +1,31 @@
+pyproject.toml
+  2a2d4838e1ef3877 59-64
+tests/test_code_aware.py
+  2a2d4838e1ef3877 1-153
+tests/conftest.py
+  2a2d4838e1ef3877 1-27
+src/clco_deep_research/research/extractor.py
+  2a2d4838e1ef3877 43,46-47
+tests/test_extractor.py
+  2a2d4838e1ef3877 1-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "8ceffaeca7c8170a0bdc872419a4a71b3f8aab63",
+  "prompts": {
+    "2a2d4838e1ef3877": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a2b5dcc7-14b1-47f2-9890-7d4e790d98a4",
+        "model": "glm-5-turbo"
+      },
+      "human_author": "ryan.h.park",
+      "messages": [],
+      "total_additions": 439,
+      "total_deletions": 180,
+      "accepted_lines": 260,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,57 @@
+[project]
+name = "clco-deep-research-mcp"
+version = "0.2.0"
+description = "Free, coding-agent-optimized deep research MCP — 4-engine SERP scraping + trafilatura extraction + code-aware analysis. Zero API keys required."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "clco", email = "ryan.h.park@me.com" },
+]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "web-search",
+    "deep-research",
+    "scraping",
+    "coding-agent",
+    "llm-tools",
+    "scrapling",
+    "trafilatura",
+    "claude-code",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "htmldate>=1.9.4",
+    "mcp>=1.0.0",
+    "pygments>=2.20.0",
+    "scrapling[fetchers]>=0.2.0",
+    "trafilatura>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ryankdev/clco-deep-research-mcp"
+Repository = "https://github.com/ryankdev/clco-deep-research-mcp"
+Issues = "https://github.com/ryankdev/clco-deep-research-mcp/issues"
+
+[project.scripts]
+clco-deep-research = "clco_deep_research.server:main"
+
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

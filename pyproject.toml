@@ -48,6 +48,7 @@ Issues = "https://github.com/claudianus/clco-deep-research-mcp/issues"
 
 [project.scripts]
 clco-deep-research = "clco_deep_research.server:main"
+clco-deep-research-mcp = "clco_deep_research.server:main"
 
 [build-system]
 requires = ["setuptools>=69.0"]

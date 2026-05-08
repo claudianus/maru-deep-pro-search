@@ -71,7 +71,7 @@ async def main():
             write_stream,
             InitializationOptions(
                 server_name="clco-deep-research",
-                server_version="0.3.4",
+                server_version="0.3.5",
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),
                     experimental_capabilities={},

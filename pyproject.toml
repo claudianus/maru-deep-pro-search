@@ -47,8 +47,8 @@ Repository = "https://github.com/claudianus/clco-deep-research-mcp"
 Issues = "https://github.com/claudianus/clco-deep-research-mcp/issues"
 
 [project.scripts]
-clco-deep-research = "clco_deep_research.server:main"
-clco-deep-research-mcp = "clco_deep_research.server:main"
+clco-deep-research = "clco_deep_research.server:run"
+clco-deep-research-mcp = "clco_deep_research.server:run"
 
 [build-system]
 requires = ["setuptools>=69.0"]

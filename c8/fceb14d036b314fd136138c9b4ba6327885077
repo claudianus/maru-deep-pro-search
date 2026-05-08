@@ -1,0 +1,26 @@
+README.md
+  s_0a52b2ee00b31f::t_e532a34e2c037c 25
+  s_0a52b2ee00b31f::t_70b0fd640495a9 226
+  s_0a52b2ee00b31f::t_76b5f6c973af89 135,140,142,144,146,148,150,152,154
+  s_0a52b2ee00b31f::t_75403bac6c6ad0 3
+  s_0a52b2ee00b31f::t_cad7471e746f0a 32-33,35,38-46,49-61
+pyproject.toml
+  s_0a52b2ee00b31f::t_a3f12246f21476 45-46
+  s_0a52b2ee00b31f::t_337c14ac3d3a1f 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "c8fceb14d036b314fd136138c9b4ba6327885077",
+  "prompts": {},
+  "sessions": {
+    "s_0a52b2ee00b31f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1faeff4f1ffeu20YapOfPfg0jK",
+        "model": "unknown"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

@@ -14,7 +14,8 @@ import logging
 from typing import Any
 
 from mcp.server import Server
-from mcp.server.models import ServerCapabilities
+from mcp.server.models import InitializationOptions
+from mcp.server.lowlevel.server import NotificationOptions
 from mcp.server.stdio import stdio_server
 
 from .tools import TOOLS
@@ -62,7 +63,14 @@ async def main():
         await server.run(
             read_stream,
             write_stream,
-            ServerCapabilities(),
+            InitializationOptions(
+                server_name="clco-deep-research",
+                server_version="0.3.0",
+                capabilities=server.get_capabilities(
+                    notification_options=NotificationOptions(),
+                    experimental_capabilities={},
+                ),
+            ),
         )
 
 

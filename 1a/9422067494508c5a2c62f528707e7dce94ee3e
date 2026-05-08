@@ -1,0 +1,25 @@
+docs/ko/index.html
+  s_0a52b2ee00b31f::t_409402b4d1992f 741,744,771,780,793,801,890,931-932
+  s_0a52b2ee00b31f::t_373a2198b6ef93 1078-1126
+  s_0a52b2ee00b31f::t_977838366d2f97 676,679-681
+  s_0a52b2ee00b31f::t_6623f903b0d327 6-7,672
+docs/index.html
+  s_0a52b2ee00b31f::t_ac74a2ae5c2780 1078-1126
+  s_0a52b2ee00b31f::t_3bdfa72aa77858 676,679-681
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "1a9422067494508c5a2c62f528707e7dce94ee3e",
+  "prompts": {},
+  "sessions": {
+    "s_0a52b2ee00b31f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1faeff4f1ffeu20YapOfPfg0jK",
+        "model": "unknown"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

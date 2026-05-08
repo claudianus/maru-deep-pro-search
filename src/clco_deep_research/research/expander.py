@@ -6,6 +6,7 @@ without requiring LLM calls."""
 from __future__ import annotations
 
 import logging
+import re
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -137,6 +138,3 @@ def extract_keywords(query: str) -> list[str]:
     keywords = [w for w in words if w not in stop_words and len(w) > 2]
 
     return keywords
-
-
-import re

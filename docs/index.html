@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>clco-deep-research-mcp — Free Deep Research MCP for Coding Agents</title>
+    <meta name="description" content="The free, coding-agent-optimized deep research MCP. 4-engine SERP scraping + trafilatura extraction + code-aware analysis. Zero API keys required.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a2e;
+            --bg-card: #16162a;
+            --text-primary: #f0f0f5;
+            --text-secondary: #a0a0b0;
+            --text-muted: #6b6b7b;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border: rgba(255,255,255,0.08);
+            --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-cta {
+            background: var(--accent-gradient);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 8rem 2rem 4rem;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 50%, rgba(139, 92, 246, 0.1), transparent);
+        }
+
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            color: var(--accent-primary);
+            margin-bottom: 2rem;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-title span {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.7;
+        }
+
+        .hero-install {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.25rem 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9375rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .hero-install code {
+            color: var(--text-primary);
+        }
+
+        .hero-install .comment {
+            color: var(--text-muted);
+        }
+
+        .copy-btn {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--accent-primary);
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-tag {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 0.375rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            color: var(--accent-primary);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .section-desc {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-gradient);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .feature-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-desc {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .feature-meta {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .feature-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.625rem;
+            border-radius: 0.25rem;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+            font-weight: 500;
+        }
+
+        /* Pipeline Section */
+        .pipeline {
+            background: var(--bg-secondary);
+            border-radius: 1.5rem;
+            padding: 3rem;
+            border: 1px solid var(--border);
+        }
+
+        .pipeline-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .pipeline-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .pipeline-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 2.25rem;
+            top: 4rem;
+            bottom: -1rem;
+            width: 2px;
+            background: var(--accent-gradient);
+            opacity: 0.3;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .step-content h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-content p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin: 1.5rem 0;
+        }
+
+        .code-header {
+            background: var(--bg-tertiary);
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-lang {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .code-body {
+            padding: 1.25rem;
+            overflow-x: auto;
+        }
+
+        .code-body pre {
+            margin: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.7;
+            color: var(--text-primary);
+        }
+
+        .code-body .keyword { color: #c678dd; }
+        .code-body .string { color: #98c379; }
+        .code-body .comment { color: #5c6370; font-style: italic; }
+        .code-body .function { color: #61afef; }
+
+        /* Benchmark Table */
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        .benchmark-table th,
+        .benchmark-table td {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .benchmark-table th {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+
+        .benchmark-table td {
+            font-size: 0.9375rem;
+        }
+
+        .benchmark-table tr:hover td {
+            background: rgba(99, 102, 241, 0.03);
+        }
+
+        .check {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .cross {
+            color: var(--error);
+        }
+
+        /* Installation Tabs */
+        .install-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .install-tab {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .install-tab.active {
+            background: var(--accent-gradient);
+            border-color: transparent;
+            color: white;
+        }
+
+        .install-tab:hover:not(.active) {
+            border-color: rgba(99, 102, 241, 0.3);
+            color: var(--text-primary);
+        }
+
+        .install-panel {
+            display: none;
+        }
+
+        .install-panel.active {
+            display: block;
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-primary);
+        }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pipeline-step:not(:last-child)::after {
+                left: 1.75rem;
+            }
+
+            .section {
+                padding: 4rem 1.5rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <div class="nav-logo">clco-deep-research</div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#pipeline">Pipeline</a></li>
+                <li><a href="#benchmarks">Benchmarks</a></li>
+                <li><a href="#install">Install</a></li>
+            </ul>
+            <a href="https://github.com/claudianus/clco-deep-research-mcp" class="nav-cta" target="_blank">GitHub</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+        <div class="hero-content">
+            <div class="hero-badge animate-in">v0.3.0 Now Available</div>
+            <h1 class="hero-title animate-in delay-1">
+                Deep Research MCP for<br><span>Coding Agents</span>
+            </h1>
+            <p class="hero-subtitle animate-in delay-2">
+                The free, coding-agent-optimized deep research MCP that replaces Claude Code's built-in web_search. 
+                4-engine SERP scraping + trafilatura extraction + code-aware analysis. Zero API keys required.
+            </p>
+            <div class="hero-install animate-in delay-3">
+                <code><span class="comment"># One-shot install</span><br>uvx clco-deep-research-mcp</code>
+                <button class="copy-btn" onclick="copyToClipboard('uvx clco-deep-research-mcp')">Copy</button>
+            </div>
+            <div class="hero-stats animate-in delay-3">
+                <div class="stat">
+                    <div class="stat-value">6</div>
+                    <div class="stat-label">Tools</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">21</div>
+                    <div class="stat-label">Languages</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">68</div>
+                    <div class="stat-label">Tests</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">API Keys</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="section" id="features">
+        <div class="section-header">
+            <div class="section-tag">Features</div>
+            <h2 class="section-title">Everything You Need for Deep Research</h2>
+            <p class="section-desc">Six powerful tools designed specifically for coding agents to gather, analyze, and synthesize information.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3 class="feature-title">web_search</h3>
+                <p class="feature-desc">Scrape search engine SERPs directly with Scrapling. No API keys needed. Returns content type hints and authority badges per result.</p>
+                <div class="feature-meta">
+                    <span class="feature-badge">4 Engines</span>
+                    <span class="feature-badge">Anti-bot</span>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📄</div>
+                <h3 class="feature-title">fetch_page</h3>
+                <p class="feature-desc">Extract clean, LLM-optimized content from any URL. Strips nav, footer, ads. Returns structured markdown with quality signals.</p>
+                <div class="feature-meta">
+                    <span class="feature-badge">trafilatura</span>
+                    <span class="feature-badge">Markdown</span>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">fetch_bulk</h3>
+                <p class="feature-desc">Fetch multiple URLs in parallel with configurable concurrency. Each result includes quality signals for LLM prioritization.</p>
+                <div class="feature-meta">
+                    <span class="feature-badge">Parallel</span>
+                    <span class="feature-badge">5 Concurrent</span>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <h3 class="feature-title">deep_research</h3>
+                <p class="feature-desc">Full pipeline: query expansion → parallel search → relevance scoring → multi-pass crawling → content synthesis.</p>
+                <div class="feature-meta">
+                    <span class="feature-badge">Query Expansion</span>
+                    <span class="feature-badge">BFS Crawler</span>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🥷</div>
+                <h3 class="feature-title">stealthy_fetch</h3>
+                <p class="feature-desc">Full anti-bot bypass for Cloudflare Turnstile, DataDome, and other protections. Automatically adapts browser fingerprint.</p>
+                <div class="feature-meta">
+                    <span class="feature-badge">Cloudflare</span>
+                    <span class="feature-badge">DataDome</span>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <h3 class="feature-title">parallel_search</h3>
+                <p class="feature-desc">Run multiple searches in parallel across engines. Each query scrapes independently for maximum coverage.</p>
+                <div class="feature-meta">
+                    <span class="feature-badge">Multi-query</span>
+                    <span class="feature-badge">Scatter-gather</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pipeline Section -->
+    <section class="section" id="pipeline">
+        <div class="section-header">
+            <div class="section-tag">Architecture</div>
+            <h2 class="section-title">Deep Research Pipeline</h2>
+            <p class="section-desc">Multi-stage pipeline that transforms a simple query into comprehensive, structured research results.</p>
+        </div>
+        <div class="pipeline">
+            <div class="pipeline-steps">
+                <div class="pipeline-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Query Expansion</h3>
+                        <p>Generate 3-5 orthogonal subqueries covering recent developments, tutorials, API docs, troubleshooting, and comparisons.</p>
+                    </div>
+                </div>
+                <div class="pipeline-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Parallel Search</h3>
+                        <p>Execute all subqueries across multiple search engines concurrently for maximum coverage.</p>
+                    </div>
+                </div>
+                <div class="pipeline-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Deduplication & Scoring</h3>
+                        <p>URL normalization + content hashing. Score by authority domain, content type, freshness, and position.</p>
+                    </div>
+                </div>
+                <div class="pipeline-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Multi-Pass Crawling</h3>
+                        <p>BFS with depth limit. Prioritize same-domain links. Optional external link following for deeper coverage.</p>
+                    </div>
+                </div>
+                <div class="pipeline-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>Content Extraction</h3>
+                        <p>trafilatura for clean content + code-aware analysis (21 languages) + API signature extraction + package detection.</p>
+                    </div>
+                </div>
+                <div class="pipeline-step">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h3>Synthesis & Formatting</h3>
+                        <p>Aggregate by topic with confidence scores. Format into token-efficient markdown with quality badges and relevance scores.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Code-Aware Section -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-tag">Code-Aware</div>
+            <h2 class="section-title">Built for Coding Agents</h2>
+            <p class="section-desc">Every fetched page is analyzed for coding-agent relevance with rich metadata.</p>
+        </div>
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">Example Output</span>
+            </div>
+            <div class="code-body">
+                <pre>### [1] Async Context Managers in Python <span class="string">[HIGH]</span> <span class="string">[API-REF]</span> <span class="string">[python]</span> <span class="string">[code-heavy 32%]</span> <span class="string">[293d ago]</span> <span class="string">[AUTHORITY]</span>
+URL: https://dev.to/...
+<span class="comment">_relevance: 5.3_</span>
+<span class="comment">_APIs: async def __aenter__(self):; async def __aexit__(...):_</span>
+<span class="comment">_Packages: aiohttp (python), fastapi (python)_</span>
+
+<span class="comment"># Content...</span></pre>
+            </div>
+        </div>
+        <div class="features-grid" style="margin-top: 2rem;">
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <h3 class="feature-title">21 Language Detection</h3>
+                <p class="feature-desc">Fast regex-based detection for Python, Rust, Go, TypeScript, Kotlin, Swift, and 15 more languages.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔧</div>
+                <h3 class="feature-title">API Signature Extraction</h3>
+                <p class="feature-desc">Automatically extract function defs, class defs, imports, and decorators from code blocks.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📦</div>
+                <h3 class="feature-title">Package Detection</h3>
+                <p class="feature-desc">Identify pip, npm, cargo, and go packages referenced in documentation and code.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Content Classification</h3>
+                <p class="feature-desc">Auto-classify as API reference, tutorial, or error solution based on structure and keywords.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benchmarks Section -->
+    <section class="section" id="benchmarks">
+        <div class="section-header">
+            <div class="section-tag">Benchmarks</div>
+            <h2 class="section-title">How We Compare</h2>
+            <p class="section-desc">See how clco-deep-research stacks up against other web search MCPs.</p>
+        </div>
+        <table class="benchmark-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>clco-deep-research</th>
+                    <th>duckduckgo-websearch</th>
+                    <th>Brave Search API</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Search Engines</td>
+                    <td><span class="check">✓</span> 4 (DDG, DDG Lite, Google, Bing)</td>
+                    <td>1 (DDG API)</td>
+                    <td>1 (Brave)</td>
+                </tr>
+                <tr>
+                    <td>Content Extraction</td>
+                    <td><span class="check">✓</span> trafilatura (SOTA)</td>
+                    <td>cheerio (basic)</td>
+                    <td>Basic</td>
+                </tr>
+                <tr>
+                    <td>Code Detection</td>
+                    <td><span class="check">✓</span> 21 languages</td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+                <tr>
+                    <td>API Signatures</td>
+                    <td><span class="check">✓</span> Auto-extracted</td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+                <tr>
+                    <td>Date Extraction</td>
+                    <td><span class="check">✓</span> htmldate (95% accuracy)</td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+                <tr>
+                    <td>Query Expansion</td>
+                    <td><span class="check">✓</span> 3-5 subqueries</td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+                <tr>
+                    <td>Anti-bot Bypass</td>
+                    <td><span class="check">✓</span> StealthyFetcher</td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+                <tr>
+                    <td>API Keys Required</td>
+                    <td><span class="check">✓</span> None</td>
+                    <td>None</td>
+                    <td>Required</td>
+                </tr>
+                <tr>
+                    <td>Deep Research Pipeline</td>
+                    <td><span class="check">✓</span> Full pipeline</td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Installation Section -->
+    <section class="section" id="install">
+        <div class="section-header">
+            <div class="section-tag">Installation</div>
+            <h2 class="section-title">Get Started in Seconds</h2>
+            <p class="section-desc">Install clco-deep-research in your favorite coding agent.</p>
+        </div>
+        <div class="install-tabs">
+            <button class="install-tab active" onclick="switchTab('claude-code')">Claude Code</button>
+            <button class="install-tab" onclick="switchTab('claude-desktop')">Claude Desktop</button>
+            <button class="install-tab" onclick="switchTab('cursor')">Cursor</button>
+            <button class="install-tab" onclick="switchTab('vscode')">VS Code</button>
+            <button class="install-tab" onclick="switchTab('windsurf')">Windsurf</button>
+        </div>
+        <div id="claude-code" class="install-panel active">
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">JSON</span>
+                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('claude-code-config').innerText)">Copy</button>
+                </div>
+                <div class="code-body">
+                    <pre id="claude-code-config">{
+  "mcpServers": {
+    "clco-deep-research": {
+      "command": "uvx",
+      "args": ["clco-deep-research-mcp"]
+    }
+  }
+}</pre>
+                </div>
+            </div>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">~/.claude.json</code></p>
+        </div>
+        <div id="claude-desktop" class="install-panel">
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">JSON</span>
+                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('claude-desktop-config').innerText)">Copy</button>
+                </div>
+                <div class="code-body">
+                    <pre id="claude-desktop-config">{
+  "mcpServers": {
+    "clco-deep-research": {
+      "command": "uvx",
+      "args": ["clco-deep-research-mcp"]
+    }
+  }
+}</pre>
+                </div>
+            </div>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS)</p>
+        </div>
+        <div id="cursor" class="install-panel">
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">JSON</span>
+                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('cursor-config').innerText)">Copy</button>
+                </div>
+                <div class="code-body">
+                    <pre id="cursor-config">{
+  "mcpServers": {
+    "clco-deep-research": {
+      "command": "uvx",
+      "args": ["clco-deep-research-mcp"]
+    }
+  }
+}</pre>
+                </div>
+            </div>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.cursor/mcp.json</code> or Cursor Settings → MCP</p>
+        </div>
+        <div id="vscode" class="install-panel">
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">JSON</span>
+                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('vscode-config').innerText)">Copy</button>
+                </div>
+                <div class="code-body">
+                    <pre id="vscode-config">{
+  "cline.mcpServers": {
+    "clco-deep-research": {
+      "command": "uvx",
+      "args": ["clco-deep-research-mcp"]
+    }
+  }
+}</pre>
+                </div>
+            </div>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to VS Code <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">settings.json</code> (Cline/Roo Code extension)</p>
+        </div>
+        <div id="windsurf" class="install-panel">
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">JSON</span>
+                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('windsurf-config').innerText)">Copy</button>
+                </div>
+                <div class="code-body">
+                    <pre id="windsurf-config">{
+  "mcpServers": {
+    "clco-deep-research": {
+      "command": "uvx",
+      "args": ["clco-deep-research-mcp"]
+    }
+  }
+}</pre>
+                </div>
+            </div>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to Windsurf <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">mcp_config.json</code></p>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-tag">Demo</div>
+            <h2 class="section-title">See It in Action</h2>
+            <p class="section-desc">Example interactions with clco-deep-research in Claude Code.</p>
+        </div>
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">Claude Code</span>
+            </div>
+            <div class="code-body">
+                <pre><span class="comment"># Simple web search</span>
+$ /web_search python asyncio best practices
+
+<span class="comment"># Deep research with query expansion</span>
+$ /deep_research rust error handling patterns
+→ Expands to 5 subqueries, crawls 8 sources, synthesizes results
+
+<span class="comment"># Fetch a specific page</span>
+$ /fetch_page https://docs.python.org/3/library/asyncio.html
+
+<span class="comment"># Parallel search for comparison</span>
+$ /parallel_search ["python vs go concurrency", "python vs rust performance"]</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="https://github.com/claudianus/clco-deep-research-mcp" target="_blank">GitHub</a>
+            <a href="https://pypi.org/project/clco-deep-research-mcp/" target="_blank">PyPI</a>
+            <a href="https://github.com/claudianus/clco-deep-research-mcp/issues" target="_blank">Issues</a>
+            <a href="https://github.com/claudianus/clco-deep-research-mcp/blob/main/LICENSE" target="_blank">License</a>
+        </div>
+        <p class="footer-copy">
+            MIT License — Built for the coding agent era. 
+            Made with 💜 by <a href="https://github.com/claudianus" style="color: var(--accent-primary); text-decoration: none;">claudianus</a>
+        </p>
+    </footer>
+
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const original = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = original, 2000);
+            });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.install-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.install-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

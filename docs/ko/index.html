@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="ko" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>clco-deep-research-mcp — Free Deep Research MCP for Coding Agents</title>
-    <meta name="description" content="The free, coding-agent-optimized deep research MCP. 4-engine SERP scraping + trafilatura extraction + code-aware analysis. Zero API keys required.">
+    <title>clco-deep-research-mcp — 코딩 에이전트를 위한 묣은 딥리서치 MCP</title>
+    <meta name="description" content="코딩 에이전트 최적화 묣은 딥리서치 MCP. 4엔진 SERP 스크래핑 + trafilatura 추출 + 코드 인식 분석. API 키 불필요.">
     <link rel="alternate" hreflang="en" href="https://claudianus.github.io/clco-deep-research-mcp/">
     <link rel="alternate" hreflang="ko" href="https://claudianus.github.io/clco-deep-research-mcp/ko/">
     <link rel="alternate" hreflang="x-default" href="https://claudianus.github.io/clco-deep-research-mcp/">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-primary: #0a0a0f;
@@ -37,7 +37,7 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
@@ -645,14 +645,14 @@
         <div class="nav-container">
             <div class="nav-logo">clco-deep-research</div>
             <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#pipeline">Pipeline</a></li>
-                <li><a href="#benchmarks">Benchmarks</a></li>
-                <li><a href="#install">Install</a></li>
+                <li><a href="#features">기능</a></li>
+                <li><a href="#pipeline">파이프라인</a></li>
+                <li><a href="#benchmarks">비교</a></li>
+                <li><a href="#install">설치</a></li>
                 <li>
                     <div class="lang-switch">
-                        <a href="/clco-deep-research-mcp/" class="active">EN</a>
-                        <a href="/clco-deep-research-mcp/ko/">KO</a>
+                        <a href="/clco-deep-research-mcp/">EN</a>
+                        <a href="/clco-deep-research-mcp/ko/" class="active">KO</a>
                     </div>
                 </li>
             </ul>
@@ -664,34 +664,34 @@
         <div class="hero-bg"></div>
         <div class="hero-grid"></div>
         <div class="hero-content">
-            <div class="hero-badge animate-in">v0.3.7 Now Available</div>
+            <div class="hero-badge animate-in">v0.3.7 출시</div>
             <h1 class="hero-title animate-in delay-1">
-                Deep Research MCP for<br><span>Coding Agents</span>
+                코딩 에이전트를 위한<br><span>딥리서치 MCP</span>
             </h1>
             <p class="hero-subtitle animate-in delay-2">
-                The free, coding-agent-optimized deep research MCP that replaces Claude Code's built-in web_search. 
-                4-engine SERP scraping + trafilatura extraction + code-aware analysis. Zero API keys required.
+                Claude Code의 내장 web_search를 완전히 대체하는 묣은 딥리서치 MCP.
+                4엔진 SERP 스크래핑 + trafilatura 추출 + 코드 인식 분석. API 키 불필요.
             </p>
             <div class="hero-install animate-in delay-3">
-                <code><span class="comment"># Install globally</span><br>pip install clco-deep-research-mcp</code>
-                <button class="copy-btn" onclick="copyToClipboard('pip install clco-deep-research-mcp')">Copy</button>
+                <code><span class="comment"># 전역 설치</span><br>pip install clco-deep-research-mcp</code>
+                <button class="copy-btn" onclick="copyToClipboard('pip install clco-deep-research-mcp')">복사</button>
             </div>
             <div class="hero-stats animate-in delay-3">
                 <div class="stat">
                     <div class="stat-value">6</div>
-                    <div class="stat-label">Tools</div>
+                    <div class="stat-label">도구</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value">21</div>
-                    <div class="stat-label">Languages</div>
+                    <div class="stat-label">언어</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value">68</div>
-                    <div class="stat-label">Tests</div>
+                    <div class="stat-label">테스트</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value">0</div>
-                    <div class="stat-label">API Keys</div>
+                    <div class="stat-label">API 키</div>
                 </div>
             </div>
         </div>
@@ -699,51 +699,51 @@
 
     <section class="section" id="features">
         <div class="section-header">
-            <div class="section-tag">Features</div>
-            <h2 class="section-title">Everything You Need for Deep Research</h2>
-            <p class="section-desc">Six powerful tools designed specifically for coding agents to gather, analyze, and synthesize information.</p>
+            <div class="section-tag">기능</div>
+            <h2 class="section-title">딥리서치에 필요한 모든 것</h2>
+            <p class="section-desc">정보를 수집, 분석, 종합하기 위해 코딩 에이전트에 특화된 6가지 강력한 도구.</p>
         </div>
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">🔍</div>
                 <h3 class="feature-title">web_search</h3>
-                <p class="feature-desc">Scrape search engine SERPs directly with Scrapling. No API keys needed. Returns content type hints and authority badges per result.</p>
+                <p class="feature-desc">Scrapling으로 검색엔진 SERP를 직접 스크래핑. API 키 불필요. 결과마다 콘텐츠 유형 힌트와 권위 배지 제공.</p>
                 <div class="feature-meta">
-                    <span class="feature-badge">4 Engines</span>
-                    <span class="feature-badge">Anti-bot</span>
+                    <span class="feature-badge">4개 엔진</span>
+                    <span class="feature-badge">안티봇</span>
                 </div>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">📄</div>
                 <h3 class="feature-title">fetch_page</h3>
-                <p class="feature-desc">Extract clean, LLM-optimized content from any URL. Strips nav, footer, ads. Returns structured markdown with quality signals.</p>
+                <p class="feature-desc">모든 URL에서 깨끗하고 LLM 최적화된 콘텐츠 추출. 네비게이션, 푸터, 광고 제거. 품질 신호가 포함된 구조화된 마크다운 반환.</p>
                 <div class="feature-meta">
                     <span class="feature-badge">trafilatura</span>
-                    <span class="feature-badge">Markdown</span>
+                    <span class="feature-badge">마크다운</span>
                 </div>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">⚡</div>
                 <h3 class="feature-title">fetch_bulk</h3>
-                <p class="feature-desc">Fetch multiple URLs in parallel with configurable concurrency. Each result includes quality signals for LLM prioritization.</p>
+                <p class="feature-desc">설정 가능한 동시성으로 여러 URL을 병렬로 가져오기. 각 결과는 LLM 우선순위 지정을 위한 품질 신호 포함.</p>
                 <div class="feature-meta">
-                    <span class="feature-badge">Parallel</span>
-                    <span class="feature-badge">5 Concurrent</span>
+                    <span class="feature-badge">병렬</span>
+                    <span class="feature-badge">5 동시</span>
                 </div>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🧠</div>
                 <h3 class="feature-title">deep_research</h3>
-                <p class="feature-desc">Full pipeline: query expansion → parallel search → relevance scoring → multi-pass crawling → content synthesis.</p>
+                <p class="feature-desc">전체 파이프라인: 쿼리 확장 → 병렬 검색 → 관련성 스코어링 → 다중 패스 크롤링 → 콘텐츠 종합.</p>
                 <div class="feature-meta">
-                    <span class="feature-badge">Query Expansion</span>
-                    <span class="feature-badge">BFS Crawler</span>
+                    <span class="feature-badge">쿼리 확장</span>
+                    <span class="feature-badge">BFS 크롤러</span>
                 </div>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🥷</div>
                 <h3 class="feature-title">stealthy_fetch</h3>
-                <p class="feature-desc">Full anti-bot bypass for Cloudflare Turnstile, DataDome, and other protections. Automatically adapts browser fingerprint.</p>
+                <p class="feature-desc">Cloudflare Turnstile, DataDome 등의 완전한 안티봇 우회. 브라우저 지문을 자동으로 적응.</p>
                 <div class="feature-meta">
                     <span class="feature-badge">Cloudflare</span>
                     <span class="feature-badge">DataDome</span>
@@ -752,9 +752,9 @@
             <div class="feature-card">
                 <div class="feature-icon">🚀</div>
                 <h3 class="feature-title">parallel_search</h3>
-                <p class="feature-desc">Run multiple searches in parallel across engines. Each query scrapes independently for maximum coverage.</p>
+                <p class="feature-desc">여러 검색을 엔진 전체에서 병렬로 실행. 각 쿼리는 최대 커버리지를 위해 독립적으로 스크래핑.</p>
                 <div class="feature-meta">
-                    <span class="feature-badge">Multi-query</span>
+                    <span class="feature-badge">다중 쿼리</span>
                     <span class="feature-badge">Scatter-gather</span>
                 </div>
             </div>
@@ -763,52 +763,52 @@
 
     <section class="section" id="pipeline">
         <div class="section-header">
-            <div class="section-tag">Architecture</div>
-            <h2 class="section-title">Deep Research Pipeline</h2>
-            <p class="section-desc">Multi-stage pipeline that transforms a simple query into comprehensive, structured research results.</p>
+            <div class="section-tag">아키텍처</div>
+            <h2 class="section-title">딥리서치 파이프라인</h2>
+            <p class="section-desc">간단한 쿼리를 포괄적이고 구조화된 연구 결과로 변환하는 다단계 파이프라인.</p>
         </div>
         <div class="pipeline">
             <div class="pipeline-steps">
                 <div class="pipeline-step">
                     <div class="step-number">1</div>
                     <div class="step-content">
-                        <h3>Query Expansion</h3>
-                        <p>Generate 3-5 orthogonal subqueries covering recent developments, tutorials, API docs, troubleshooting, and comparisons.</p>
+                        <h3>쿼리 확장</h3>
+                        <p>최신 개발, 튜토리얼, API 문서, 문제 해결, 비교를 커버하는 3-5개의 직교 하위 쿼리 생성.</p>
                     </div>
                 </div>
                 <div class="pipeline-step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <h3>Parallel Search</h3>
-                        <p>Execute all subqueries across multiple search engines concurrently for maximum coverage.</p>
+                        <h3>병렬 검색</h3>
+                        <p>모든 하위 쿼리를 여러 검색엔진에서 동시에 실행하여 최대 커버리지 달성.</p>
                     </div>
                 </div>
                 <div class="pipeline-step">
                     <div class="step-number">3</div>
                     <div class="step-content">
-                        <h3>Deduplication & Scoring</h3>
-                        <p>URL normalization + content hashing. Score by authority domain, content type, freshness, and position.</p>
+                        <h3>중복 제거 및 스코어링</h3>
+                        <p>URL 정규화 + 콘텐츠 해싱. 권위 도메인, 콘텐츠 유형, 최신성, 위치로 점수화.</p>
                     </div>
                 </div>
                 <div class="pipeline-step">
                     <div class="step-number">4</div>
                     <div class="step-content">
-                        <h3>Multi-Pass Crawling</h3>
-                        <p>BFS with depth limit. Prioritize same-domain links. Optional external link following for deeper coverage.</p>
+                        <h3>다중 패스 크롤링</h3>
+                        <p>깊이 제한 BFS. 동일 도메인 링크 우선순위. 더 깊은 커버리지를 위한 선택적 외부 링크 추적.</p>
                     </div>
                 </div>
                 <div class="pipeline-step">
                     <div class="step-number">5</div>
                     <div class="step-content">
-                        <h3>Content Extraction</h3>
-                        <p>trafilatura for clean content + code-aware analysis (21 languages) + API signature extraction + package detection.</p>
+                        <h3>콘텐츠 추출</h3>
+                        <p>깨끗한 콘텐츠를 위한 trafilatura + 코드 인식 분석(21개 언어) + API 시그니처 추출 + 패키지 감지.</p>
                     </div>
                 </div>
                 <div class="pipeline-step">
                     <div class="step-number">6</div>
                     <div class="step-content">
-                        <h3>Synthesis & Formatting</h3>
-                        <p>Aggregate by topic with confidence scores. Format into token-efficient markdown with quality badges and relevance scores.</p>
+                        <h3>종합 및 포맷팅</h3>
+                        <p>신뢰도 점수로 주제별 집계. 품질 배지와 관련성 점수가 포함된 토큰 효율적 마크다운으로 포맷.</p>
                     </div>
                 </div>
             </div>
@@ -817,13 +817,13 @@
 
     <section class="section">
         <div class="section-header">
-            <div class="section-tag">Code-Aware</div>
-            <h2 class="section-title">Built for Coding Agents</h2>
-            <p class="section-desc">Every fetched page is analyzed for coding-agent relevance with rich metadata.</p>
+            <div class="section-tag">코드 인식</div>
+            <h2 class="section-title">코딩 에이전트를 위해 설계됨</h2>
+            <p class="section-desc">가져온 모든 페이지는 풍부한 메타데이터로 코딩 에이전트 관련성을 위해 분석됩니다.</p>
         </div>
         <div class="code-block">
             <div class="code-header">
-                <span class="code-lang">Example Output</span>
+                <span class="code-lang">출력 예시</span>
             </div>
             <div class="code-body">
                 <pre>### [1] Async Context Managers in Python <span class="string">[HIGH]</span> <span class="string">[API-REF]</span> <span class="string">[python]</span> <span class="string">[code-heavy 32%]</span> <span class="string">[293d ago]</span> <span class="string">[AUTHORITY]</span>
@@ -832,43 +832,43 @@ URL: https://dev.to/...
 <span class="comment">_APIs: async def __aenter__(self):; async def __aexit__(...):_</span>
 <span class="comment">_Packages: aiohttp (python), fastapi (python)_</span>
 
-<span class="comment"># Content...</span></pre>
+<span class="comment"># 콘텐츠...</span></pre>
             </div>
         </div>
         <div class="features-grid" style="margin-top: 2rem;">
             <div class="feature-card">
                 <div class="feature-icon">🌐</div>
-                <h3 class="feature-title">21 Language Detection</h3>
-                <p class="feature-desc">Fast regex-based detection for Python, Rust, Go, TypeScript, Kotlin, Swift, and 15 more languages.</p>
+                <h3 class="feature-title">21개 언어 감지</h3>
+                <p class="feature-desc">Python, Rust, Go, TypeScript, Kotlin, Swift 및 15개 이상 언어를 위한 빠른 정규식 기반 감지.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🔧</div>
-                <h3 class="feature-title">API Signature Extraction</h3>
-                <p class="feature-desc">Automatically extract function defs, class defs, imports, and decorators from code blocks.</p>
+                <h3 class="feature-title">API 시그니처 추출</h3>
+                <p class="feature-desc">코드 블록에서 함수 정의, 클래스 정의, 임포트, 데코레이터를 자동으로 추출.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">📦</div>
-                <h3 class="feature-title">Package Detection</h3>
-                <p class="feature-desc">Identify pip, npm, cargo, and go packages referenced in documentation and code.</p>
+                <h3 class="feature-title">패키지 감지</h3>
+                <p class="feature-desc">문서와 코드에서 참조된 pip, npm, cargo, go 패키지를 식별.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">📊</div>
-                <h3 class="feature-title">Content Classification</h3>
-                <p class="feature-desc">Auto-classify as API reference, tutorial, or error solution based on structure and keywords.</p>
+                <h3 class="feature-title">콘텐츠 분류</h3>
+                <p class="feature-desc">구조와 키워드를 기반으로 API 참조, 튜토리얼, 오류 해결로 자동 분류.</p>
             </div>
         </div>
     </section>
 
     <section class="section" id="benchmarks">
         <div class="section-header">
-            <div class="section-tag">Benchmarks</div>
-            <h2 class="section-title">How We Compare</h2>
-            <p class="section-desc">See how clco-deep-research stacks up against other web search MCPs.</p>
+            <div class="section-tag">비교</div>
+            <h2 class="section-title">다른 솔루션과 비교</h2>
+            <p class="section-desc">clco-deep-research가 다른 웹 검색 MCP와 어떻게 다른지 확인하세요.</p>
         </div>
         <table class="benchmark-table">
             <thead>
                 <tr>
-                    <th>Feature</th>
+                    <th>기능</th>
                     <th>clco-deep-research</th>
                     <th>duckduckgo-websearch</th>
                     <th>Brave Search API</th>
@@ -876,56 +876,56 @@ URL: https://dev.to/...
             </thead>
             <tbody>
                 <tr>
-                    <td>Search Engines</td>
-                    <td><span class="check">✓</span> 4 (DDG, DDG Lite, Google, Bing)</td>
-                    <td>1 (DDG API)</td>
-                    <td>1 (Brave)</td>
+                    <td>검색 엔진</td>
+                    <td><span class="check">✓</span> 4개 (DDG, DDG Lite, Google, Bing)</td>
+                    <td>1개 (DDG API)</td>
+                    <td>1개 (Brave)</td>
                 </tr>
                 <tr>
-                    <td>Content Extraction</td>
+                    <td>콘텐츠 추출</td>
                     <td><span class="check">✓</span> trafilatura (SOTA)</td>
-                    <td>cheerio (basic)</td>
-                    <td>Basic</td>
+                    <td>cheerio (기본)</td>
+                    <td>기본</td>
                 </tr>
                 <tr>
-                    <td>Code Detection</td>
-                    <td><span class="check">✓</span> 21 languages</td>
-                    <td><span class="cross">✗</span></td>
-                    <td><span class="cross">✗</span></td>
-                </tr>
-                <tr>
-                    <td>API Signatures</td>
-                    <td><span class="check">✓</span> Auto-extracted</td>
+                    <td>코드 감지</td>
+                    <td><span class="check">✓</span> 21개 언어</td>
                     <td><span class="cross">✗</span></td>
                     <td><span class="cross">✗</span></td>
                 </tr>
                 <tr>
-                    <td>Date Extraction</td>
-                    <td><span class="check">✓</span> htmldate (95% accuracy)</td>
+                    <td>API 시그니처</td>
+                    <td><span class="check">✓</span> 자동 추출</td>
                     <td><span class="cross">✗</span></td>
                     <td><span class="cross">✗</span></td>
                 </tr>
                 <tr>
-                    <td>Query Expansion</td>
-                    <td><span class="check">✓</span> 3-5 subqueries</td>
+                    <td>날짜 추출</td>
+                    <td><span class="check">✓</span> htmldate (95% 정확도)</td>
                     <td><span class="cross">✗</span></td>
                     <td><span class="cross">✗</span></td>
                 </tr>
                 <tr>
-                    <td>Anti-bot Bypass</td>
+                    <td>쿼리 확장</td>
+                    <td><span class="check">✓</span> 3-5개 하위 쿼리</td>
+                    <td><span class="cross">✗</span></td>
+                    <td><span class="cross">✗</span></td>
+                </tr>
+                <tr>
+                    <td>안티봇 우회</td>
                     <td><span class="check">✓</span> StealthyFetcher</td>
                     <td><span class="cross">✗</span></td>
                     <td><span class="cross">✗</span></td>
                 </tr>
                 <tr>
-                    <td>API Keys Required</td>
-                    <td><span class="check">✓</span> None</td>
-                    <td>None</td>
-                    <td>Required</td>
+                    <td>API 키 필요</td>
+                    <td><span class="check">✓</span> 불필요</td>
+                    <td>불필요</td>
+                    <td>필요</td>
                 </tr>
                 <tr>
-                    <td>Deep Research Pipeline</td>
-                    <td><span class="check">✓</span> Full pipeline</td>
+                    <td>딥리서치 파이프라인</td>
+                    <td><span class="check">✓</span> 전체 파이프라인</td>
                     <td><span class="cross">✗</span></td>
                     <td><span class="cross">✗</span></td>
                 </tr>
@@ -935,9 +935,9 @@ URL: https://dev.to/...
 
     <section class="section" id="install">
         <div class="section-header">
-            <div class="section-tag">Installation</div>
-            <h2 class="section-title">Get Started in Seconds</h2>
-            <p class="section-desc">Install clco-deep-research in your favorite coding agent.</p>
+            <div class="section-tag">설치</div>
+            <h2 class="section-title">몇 초 만에 시작하기</h2>
+            <p class="section-desc">선호하는 코딩 에이전트에 clco-deep-research를 설치하세요.</p>
         </div>
         <div class="install-tabs">
             <button class="install-tab active" onclick="switchTab('claude-code')">Claude Code</button>
@@ -950,7 +950,7 @@ URL: https://dev.to/...
             <div class="code-block">
                 <div class="code-header">
                     <span class="code-lang">JSON</span>
-                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('claude-code-config').innerText)">Copy</button>
+                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('claude-code-config').innerText)">복사</button>
                 </div>
                 <div class="code-body">
                     <pre id="claude-code-config">{
@@ -963,13 +963,13 @@ URL: https://dev.to/...
 }</pre>
                 </div>
             </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">~/.claude.json</code></p>
+            <p style="color: var(--text-secondary); margin-top: 1rem;"><code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">~/.claude.json</code>에 추가</p>
         </div>
         <div id="claude-desktop" class="install-panel">
             <div class="code-block">
                 <div class="code-header">
                     <span class="code-lang">JSON</span>
-                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('claude-desktop-config').innerText)">Copy</button>
+                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('claude-desktop-config').innerText)">복사</button>
                 </div>
                 <div class="code-body">
                     <pre id="claude-desktop-config">{
@@ -982,13 +982,13 @@ URL: https://dev.to/...
 }</pre>
                 </div>
             </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS)</p>
+            <p style="color: var(--text-secondary); margin-top: 1rem;"><code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">~/Library/Application Support/Claude/claude_desktop_config.json</code>에 추가 (macOS)</p>
         </div>
         <div id="cursor" class="install-panel">
             <div class="code-block">
                 <div class="code-header">
                     <span class="code-lang">JSON</span>
-                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('cursor-config').innerText)">Copy</button>
+                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('cursor-config').innerText)">복사</button>
                 </div>
                 <div class="code-body">
                     <pre id="cursor-config">{
@@ -1001,13 +1001,13 @@ URL: https://dev.to/...
 }</pre>
                 </div>
             </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.cursor/mcp.json</code> or Cursor Settings → MCP</p>
+            <p style="color: var(--text-secondary); margin-top: 1rem;"><code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.cursor/mcp.json</code>에 추가 또는 Cursor 설정 → MCP</p>
         </div>
         <div id="vscode" class="install-panel">
             <div class="code-block">
                 <div class="code-header">
                     <span class="code-lang">JSON</span>
-                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('vscode-config').innerText)">Copy</button>
+                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('vscode-config').innerText)">복사</button>
                 </div>
                 <div class="code-body">
                     <pre id="vscode-config">{
@@ -1021,13 +1021,13 @@ URL: https://dev.to/...
 }</pre>
                 </div>
             </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to VS Code <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.vscode/mcp.json</code></p>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">VS Code <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.vscode/mcp.json</code>에 추가</p>
         </div>
         <div id="windsurf" class="install-panel">
             <div class="code-block">
                 <div class="code-header">
                     <span class="code-lang">JSON</span>
-                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('windsurf-config').innerText)">Copy</button>
+                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('windsurf-config').innerText)">복사</button>
                 </div>
                 <div class="code-body">
                     <pre id="windsurf-config">{
@@ -1040,32 +1040,32 @@ URL: https://dev.to/...
 }</pre>
                 </div>
             </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to Windsurf <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.windsurf/mcp_config.json</code></p>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">Windsurf <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.windsurf/mcp_config.json</code>에 추가</p>
         </div>
     </section>
 
     <section class="section">
         <div class="section-header">
-            <div class="section-tag">Demo</div>
-            <h2 class="section-title">See It in Action</h2>
-            <p class="section-desc">Example interactions with clco-deep-research in Claude Code.</p>
+            <div class="section-tag">데모</div>
+            <h2 class="section-title">실제 사용 예시</h2>
+            <p class="section-desc">Claude Code에서 clco-deep-research를 사용하는 예시.</p>
         </div>
         <div class="code-block">
             <div class="code-header">
                 <span class="code-lang">Claude Code</span>
             </div>
             <div class="code-body">
-                <pre><span class="comment"># Simple web search</span>
+                <pre><span class="comment"># 간단한 웹 검색</span>
 $ /web_search python asyncio best practices
 
-<span class="comment"># Deep research with query expansion</span>
+<span class="comment"># 쿼리 확장이 있는 딥리서치</span>
 $ /deep_research rust error handling patterns
-→ Expands to 5 subqueries, crawls 8 sources, synthesizes results
+→ 5개 하위 쿼리로 확장, 8개 소스 크롤링, 결과 종합
 
-<span class="comment"># Fetch a specific page</span>
+<span class="comment"># 특정 페이지 가져오기</span>
 $ /fetch_page https://docs.python.org/3/library/asyncio.html
 
-<span class="comment"># Parallel search for comparison</span>
+<span class="comment"># 비교를 위한 병렬 검색</span>
 $ /parallel_search ["python vs go concurrency", "python vs rust performance"]</pre>
             </div>
         </div>
@@ -1076,11 +1076,11 @@ $ /parallel_search ["python vs go concurrency", "python vs rust performance"]</p
             <a href="https://github.com/claudianus/clco-deep-research-mcp" target="_blank">GitHub</a>
             <a href="https://pypi.org/project/clco-deep-research-mcp/" target="_blank">PyPI</a>
             <a href="https://github.com/claudianus/clco-deep-research-mcp/issues" target="_blank">Issues</a>
-            <a href="https://github.com/claudianus/clco-deep-research-mcp/blob/main/LICENSE" target="_blank">License</a>
+            <a href="https://github.com/claudianus/clco-deep-research-mcp/blob/main/LICENSE" target="_blank">라이선스</a>
         </div>
         <p class="footer-copy">
-            MIT License — Built for the coding agent era. 
-            Made with 💜 by <a href="https://github.com/claudianus" style="color: var(--accent-primary); text-decoration: none;">claudianus</a>
+            MIT License — 코딩 에이전트 시대를 위해 만들어졌습니다.
+            <a href="https://github.com/claudianus" style="color: var(--accent-primary); text-decoration: none;">claudianus</a>가 💜으로 제작
         </p>
     </footer>
 
@@ -1089,7 +1089,7 @@ $ /parallel_search ["python vs go concurrency", "python vs rust performance"]</p
             navigator.clipboard.writeText(text).then(() => {
                 const btn = event.target;
                 const original = btn.textContent;
-                btn.textContent = 'Copied!';
+                btn.textContent = '복사됨!';
                 setTimeout(() => btn.textContent = original, 2000);
             });
         }

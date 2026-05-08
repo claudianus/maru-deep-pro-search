@@ -673,8 +673,12 @@
                 4-engine SERP scraping + trafilatura extraction + code-aware analysis. Zero API keys required.
             </p>
             <div class="hero-install animate-in delay-3">
-                <code><span class="comment"># Install globally</span><br>pip install clco-deep-research-mcp</code>
+                <code><span class="comment"># One-line install (if pip is available)</span><br>pip install clco-deep-research-mcp</code>
                 <button class="copy-btn" onclick="copyToClipboard('pip install clco-deep-research-mcp')">Copy</button>
+            </div>
+            <div class="hero-install animate-in delay-3" style="margin-top: 1rem;">
+                <code><span class="comment"># If pip is not available (use Python built-in)</span><br>python3 -m pip install clco-deep-research-mcp</code>
+                <button class="copy-btn" onclick="copyToClipboard('python3 -m pip install clco-deep-research-mcp')">Copy</button>
             </div>
             <div class="hero-stats animate-in delay-3">
                 <div class="stat">
@@ -1068,6 +1072,55 @@ $ /fetch_page https://docs.python.org/3/library/asyncio.html
 <span class="comment"># Parallel search for comparison</span>
 $ /parallel_search ["python vs go concurrency", "python vs rust performance"]</pre>
             </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-header">
+            <div class="section-tag">Agent Setup</div>
+            <h2 class="section-title">Connect to Your Coding Agent</h2>
+            <p class="section-desc">Install in one line and start using immediately in Claude Code, Cursor, VS Code, and more.</p>
+        </div>
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">Claude Code</span>
+                <button class="copy-btn" onclick="copyToClipboard('claude mcp add clco-deep-research pip:clco-deep-research-mcp')">Copy</button>
+            </div>
+            <div class="code-body">
+                <pre># Add to Claude Code in one line
+claude mcp add clco-deep-research pip:clco-deep-research-mcp</pre>
+            </div>
+        </div>
+        <div class="code-block" style="margin-top: 1.5rem;">
+            <div class="code-header">
+                <span class="code-lang">Cursor / VS Code / Windsurf</span>
+                <button class="copy-btn" onclick="copyToClipboard('pip install clco-deep-research-mcp')">Copy</button>
+            </div>
+            <div class="code-body">
+                <pre># 1. Install first
+pip install clco-deep-research-mcp
+
+# 2. Add to your agent's MCP settings
+{
+  "mcpServers": {
+    "clco-deep-research": {
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
+    }
+  }
+}</pre>
+            </div>
+        </div>
+        <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-tertiary); border-radius: 1rem; border: 1px solid var(--border);">
+            <h4 style="margin-bottom: 1rem; color: var(--accent-primary);">💡 Don't have pip installed?</h4>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">pip comes bundled with Python. Check if you have it:</p>
+            <code style="display: block; padding: 1rem; background: var(--bg-primary); border-radius: 0.5rem; font-family: 'JetBrains Mono', monospace;">
+python3 --version  # Check Python version
+python3 -m pip --version  # Check pip version
+            </code>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">
+                No pip? Follow the <a href="https://pip.pypa.io/en/stable/installation/" target="_blank" style="color: var(--accent-primary);">pip installation guide</a>.
+            </p>
         </div>
     </section>
 

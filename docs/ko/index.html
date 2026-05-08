@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>clco-deep-research-mcp — 코딩 에이전트를 위한 묣은 딥리서치 MCP</title>
-    <meta name="description" content="코딩 에이전트 최적화 묣은 딥리서치 MCP. 4엔진 SERP 스크래핑 + trafilatura 추출 + 코드 인식 분석. API 키 불필요.">
+    <title>clco-deep-research-mcp — 코딩 에이전트를 위한 무료 딥리서치 MCP</title>
+    <meta name="description" content="코딩 에이전트 최적화 무료 딥리서치 MCP. 4엔진 SERP 스크래핑 + trafilatura 추출 + 코드 인식 분석. API 키 불필요.">
     <link rel="alternate" hreflang="en" href="https://claudianus.github.io/clco-deep-research-mcp/">
     <link rel="alternate" hreflang="ko" href="https://claudianus.github.io/clco-deep-research-mcp/ko/">
     <link rel="alternate" hreflang="x-default" href="https://claudianus.github.io/clco-deep-research-mcp/">
@@ -669,12 +669,16 @@
                 코딩 에이전트를 위한<br><span>딥리서치 MCP</span>
             </h1>
             <p class="hero-subtitle animate-in delay-2">
-                Claude Code의 내장 web_search를 완전히 대체하는 묣은 딥리서치 MCP.
+                Claude Code의 내장 web_search를 완전히 대체하는 무료 딥리서치 MCP.
                 4엔진 SERP 스크래핑 + trafilatura 추출 + 코드 인식 분석. API 키 불필요.
             </p>
             <div class="hero-install animate-in delay-3">
-                <code><span class="comment"># 전역 설치</span><br>pip install clco-deep-research-mcp</code>
+                <code><span class="comment"># 한 줄 설치 (pip이 있는 경우)</span><br>pip install clco-deep-research-mcp</code>
                 <button class="copy-btn" onclick="copyToClipboard('pip install clco-deep-research-mcp')">복사</button>
+            </div>
+            <div class="hero-install animate-in delay-3" style="margin-top: 1rem;">
+                <code><span class="comment"># pip이 없는 경우 (Python 내장 모듈 사용)</span><br>python3 -m pip install clco-deep-research-mcp</code>
+                <button class="copy-btn" onclick="copyToClipboard('python3 -m pip install clco-deep-research-mcp')">복사</button>
             </div>
             <div class="hero-stats animate-in delay-3">
                 <div class="stat">
@@ -734,10 +738,10 @@
             <div class="feature-card">
                 <div class="feature-icon">🧠</div>
                 <h3 class="feature-title">deep_research</h3>
-                <p class="feature-desc">전체 파이프라인: 쿼리 확장 → 병렬 검색 → 관련성 스코어링 → 다중 패스 크롤링 → 콘텐츠 종합.</p>
+                <p class="feature-desc">전체 처리 과정: 쿼리 확장 → 병렬 검색 → 관련성 점수 매기기 → 다중 패스 크롤링 → 콘텐츠 종합.</p>
                 <div class="feature-meta">
                     <span class="feature-badge">쿼리 확장</span>
-                    <span class="feature-badge">BFS 크롤러</span>
+                    <span class="feature-badge">너비 우선 탐색 크롤러</span>
                 </div>
             </div>
             <div class="feature-card">
@@ -764,7 +768,7 @@
     <section class="section" id="pipeline">
         <div class="section-header">
             <div class="section-tag">아키텍처</div>
-            <h2 class="section-title">딥리서치 파이프라인</h2>
+            <h2 class="section-title">딥리서치 처리 과정</h2>
             <p class="section-desc">간단한 쿼리를 포괄적이고 구조화된 연구 결과로 변환하는 다단계 파이프라인.</p>
         </div>
         <div class="pipeline">
@@ -773,7 +777,7 @@
                     <div class="step-number">1</div>
                     <div class="step-content">
                         <h3>쿼리 확장</h3>
-                        <p>최신 개발, 튜토리얼, API 문서, 문제 해결, 비교를 커버하는 3-5개의 직교 하위 쿼리 생성.</p>
+                        <p>최신 개발, 튜토리얼, API 문서, 문제 해결, 비교를 커버하는 3-5개의 서로 다른 관점의 하위 쿼리 생성.</p>
                     </div>
                 </div>
                 <div class="pipeline-step">
@@ -786,7 +790,7 @@
                 <div class="pipeline-step">
                     <div class="step-number">3</div>
                     <div class="step-content">
-                        <h3>중복 제거 및 스코어링</h3>
+                        <h3>중복 제거 및 점수 매기기</h3>
                         <p>URL 정규화 + 콘텐츠 해싱. 권위 도메인, 콘텐츠 유형, 최신성, 위치로 점수화.</p>
                     </div>
                 </div>
@@ -794,7 +798,7 @@
                     <div class="step-number">4</div>
                     <div class="step-content">
                         <h3>다중 패스 크롤링</h3>
-                        <p>깊이 제한 BFS. 동일 도메인 링크 우선순위. 더 깊은 커버리지를 위한 선택적 외부 링크 추적.</p>
+                        <p>깊이 제한 너비 우선 탐색. 동일 도메인 링크 우선순위. 더 깊은 커버리지를 위한 선택적 외부 링크 추적.</p>
                     </div>
                 </div>
                 <div class="pipeline-step">
@@ -883,7 +887,7 @@ URL: https://dev.to/...
                 </tr>
                 <tr>
                     <td>콘텐츠 추출</td>
-                    <td><span class="check">✓</span> trafilatura (SOTA)</td>
+                    <td><span class="check">✓</span> trafilatura (최신 기술)</td>
                     <td>cheerio (기본)</td>
                     <td>기본</td>
                 </tr>
@@ -924,8 +928,8 @@ URL: https://dev.to/...
                     <td>필요</td>
                 </tr>
                 <tr>
-                    <td>딥리서치 파이프라인</td>
-                    <td><span class="check">✓</span> 전체 파이프라인</td>
+                    <td>딥리서치 처리 과정</td>
+                    <td><span class="check">✓</span> 전체 처리 과정</td>
                     <td><span class="cross">✗</span></td>
                     <td><span class="cross">✗</span></td>
                 </tr>
@@ -1068,6 +1072,55 @@ $ /fetch_page https://docs.python.org/3/library/asyncio.html
 <span class="comment"># 비교를 위한 병렬 검색</span>
 $ /parallel_search ["python vs go concurrency", "python vs rust performance"]</pre>
             </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-header">
+            <div class="section-tag">에이전트 설치</div>
+            <h2 class="section-title">코딩 에이전트에 바로 연결</h2>
+            <p class="section-desc">Claude Code, Cursor, VS Code 등에서 한 줄로 설치하고 바로 사용하세요.</p>
+        </div>
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">Claude Code</span>
+                <button class="copy-btn" onclick="copyToClipboard('claude mcp add clco-deep-research pip:clco-deep-research-mcp')">복사</button>
+            </div>
+            <div class="code-body">
+                <pre># Claude Code에 한 줄로 추가
+claude mcp add clco-deep-research pip:clco-deep-research-mcp</pre>
+            </div>
+        </div>
+        <div class="code-block" style="margin-top: 1.5rem;">
+            <div class="code-header">
+                <span class="code-lang">Cursor / VS Code / Windsurf</span>
+                <button class="copy-btn" onclick="copyToClipboard('pip install clco-deep-research-mcp')">복사</button>
+            </div>
+            <div class="code-body">
+                <pre># 1. 먼저 설치
+pip install clco-deep-research-mcp
+
+# 2. 설정 파일에 추가 (각 에이전트의 MCP 설정에 붙여넣기)
+{
+  "mcpServers": {
+    "clco-deep-research": {
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
+    }
+  }
+}</pre>
+            </div>
+        </div>
+        <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-tertiary); border-radius: 1rem; border: 1px solid var(--border);">
+            <h4 style="margin-bottom: 1rem; color: var(--accent-primary);">💡 pip이 설치되어 있지 않다면?</h4>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Python을 설치하면 기본으로 포함됩니다. 다음 명령어로 확인하세요:</p>
+            <code style="display: block; padding: 1rem; background: var(--bg-primary); border-radius: 0.5rem; font-family: 'JetBrains Mono', monospace;">
+python3 --version  # Python 버전 확인
+python3 -m pip --version  # pip 버전 확인
+            </code>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">
+                pip이 없다면 <a href="https://pip.pypa.io/en/stable/installation/" target="_blank" style="color: var(--accent-primary);">pip 설치 가이드</a>를 참고하세요.
+            </p>
         </div>
     </section>
 

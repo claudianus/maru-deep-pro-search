@@ -1,0 +1,21 @@
+uv.lock
+  ai_agent 275
+src/clco_deep_research/research/expander.py
+  s_0a52b2ee00b31f::t_4f414b73cb3b3a 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "65dd04e8c81e8a0d96d2e6e2f6f0adda8ab52862",
+  "prompts": {},
+  "sessions": {
+    "s_0a52b2ee00b31f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1faeff4f1ffeu20YapOfPfg0jK",
+        "model": "unknown"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

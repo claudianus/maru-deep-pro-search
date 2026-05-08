@@ -1,7 +1,7 @@
 [project]
 name = "clco-deep-research-mcp"
 version = "0.3.7"
-description = "Free, coding-agent-optimized deep research MCP — 4-engine SERP scraping + trafilatura extraction + code-aware analysis. Zero API keys required."
+description = "Free deep research MCP for coding agents — 4-engine web scraping + content extraction + code analysis. Zero API keys. One-line install."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
@@ -42,7 +42,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/claudianus/clco-deep-research-mcp"
+Homepage = "https://claudianus.github.io/clco-deep-research-mcp/"
+Documentation = "https://claudianus.github.io/clco-deep-research-mcp/"
 Repository = "https://github.com/claudianus/clco-deep-research-mcp"
 Issues = "https://github.com/claudianus/clco-deep-research-mcp/issues"
 

@@ -1,5 +1,6 @@
 <p align="center">
   <a href="https://claudianus.github.io/clco-deep-research-mcp/">🌐 Website</a> •
+  <a href="https://claudianus.github.io/clco-deep-research-mcp/ko/">🇰🇷 한국어</a> •
   <a href="https://pypi.org/project/clco-deep-research-mcp/">📦 PyPI</a> •
   <a href="https://github.com/claudianus/clco-deep-research-mcp">⭐ GitHub</a>
 </p>
@@ -21,20 +22,43 @@
 
 <p align="center">
   Claude Code의 <code>web_search</code>를 완전히 대체합니다 | Replaces Claude Code's built-in <code>web_search</code><br>
-  API 키 불필요, 완전 묣이 | Zero API keys required, completely free
+  API 키 불필요, 완전 묣은 | Zero API keys required, completely free
 </p>
 
 ---
 
 ## 🚀 Quick Start | 빠른 시작
 
+### One-Line Install | 한 줄 설치
+
 ```bash
-# Install globally | 전역 설치
+# Install with pip | pip으로 설치
 pip install clco-deep-research-mcp
 
-# Run | 실행
-python3 -m clco_deep_research.server
+# Or if pip is not available | pip이 없는 경우
+python3 -m pip install clco-deep-research-mcp
 ```
+
+### Connect to Your Agent | 에이전트에 연결
+
+**Claude Code** — One line | 한 줄로 추가:
+```bash
+claude mcp add clco-deep-research pip:clco-deep-research-mcp
+```
+
+**Cursor / VS Code / Windsurf** — Add to MCP settings | MCP 설정에 추가:
+```json
+{
+  "mcpServers": {
+    "clco-deep-research": {
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
+    }
+  }
+}
+```
+
+**Don't have pip?** — [Installation Guide](https://pip.pypa.io/en/stable/installation/) | [설치 가이드](https://pip.pypa.io/en/stable/installation/)
 
 ---
 
@@ -108,26 +132,26 @@ python3 -m clco_deep_research.server
 
 ---
 
-## 🔄 Deep Research Pipeline | 딥리서치 파이프라인
+## 🔄 Deep Research Pipeline | 딥리서치 처리 과정
 
 ```
 Query | 쿼리
   ↓
-[Query Expansion | 쿼리 확장] → 3-5 orthogonal subqueries | 직교 하위 쿼리
+[Query Expansion | 쿼리 확장] → 3-5 different angle subqueries | 다양한 관점의 하위 쿼리
   ↓
-[Parallel Search | 병렬 검색] → Execute across engines | 다중 엔진 실행
+[Parallel Search | 병렬 검색] → Execute across engines | 여러 검색엔진 동시 실행
   ↓
-[Deduplication | 중복 제거] → URL normalization + content hashing
+[Deduplication | 중복 제거] → URL normalization + content hashing | URL 표준화 + 내용 해싱
   ↓
-[Relevance Scoring | 관련성 스코어링] → Authority + type + freshness + position
+[Relevance Scoring | 관련성 점수 매기기] → Authority + type + freshness + position | 신뢰도 + 유형 + 최신성 + 순위
   ↓
-[Multi-Pass Crawling | 다중 패스 크롤링] → BFS with depth limit | 깊이 제한 BFS
+[Multi-Pass Crawling | 다중 패스 크롤링] → Breadth-first search with depth limit | 깊이 제한 너비 우선 탐색
   ↓
-[Content Extraction | 콘텐츠 추출] → trafilatura + code-aware + structured data
+[Content Extraction | 콘텐츠 추출] → trafilatura + code-aware + structured data | 깨끗한 내용 + 코드 분석 + 구조화된 데이터
   ↓
-[Synthesis | 종합] → Aggregate by topic with confidence scores | 주제별 신뢰도 점수
+[Synthesis | 종합] → Aggregate by topic with confidence scores | 주제별 신뢰도 점수로 정리
   ↓
-[Formatting | 포맷팅] → Markdown with quality badges + relevance scores
+[Formatting | 포맷팅] → Markdown with quality badges + relevance scores | 품질 배지와 관련성 점수가 포함된 마크다운
 ```
 
 ---
@@ -199,7 +223,7 @@ pytest tests/test_query_expansion.py -v
 | Library | Version | 🇰🇷 목적 | 🇺🇸 Purpose |
 |---------|---------|---------|------------|
 | [Scrapling](https://github.com/D4Vinci/Scrapling) | ≥0.2.0 | 브라우저/HTTP 가져오기, 안티봇 | Browser/HTTP fetching, anti-bot |
-| [trafilatura](https://trafilatura.readthedocs.io/) | ≥2.0.0 | 주요 콘텐츠 추출 (SOTA) | Main content extraction (SOTA) |
+| [trafilatura](https://trafilatura.readthedocs.io/) | ≥2.0.0 | 주요 콘텐츠 추출 (최신 기술) | Main content extraction (state-of-the-art) |
 | [htmldate](https://htmldate.readthedocs.io/) | ≥1.9.4 | 게시 날짜 추출 | Publication date extraction |
 | [Pygments](https://pygments.org/) | ≥2.20.0 | 구문 강조 (참조) | Syntax highlighting (reference) |
 | [MCP SDK](https://github.com/modelcontextprotocol/python-sdk) | ≥1.0.0 | Model Context Protocol 서버 | Model Context Protocol server |

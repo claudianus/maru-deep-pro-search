@@ -1,88 +1,88 @@
-"""MCP server entry point for clco-deep-research.
-
-Scrapling-native search: directly crawls search engine SERPs, fetches pages,
-and extracts LLM-optimized content. No API wrappers, no API key requirements.
-
-Run:
-    uvx clco-deep-research-mcp
-    python -m clco_deep_research.server
-"""
-
 from __future__ import annotations
 
 import logging
 import sys
-from typing import Any
 
-from mcp.server import Server
-from mcp.server.models import InitializationOptions
-from mcp.server.lowlevel.server import NotificationOptions
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.server.fastmcp import FastMCP
 
-from .tools import TOOLS
+mcp = FastMCP("clco-deep-research")
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.StreamHandler(sys.stderr)],
+_logger = logging.getLogger("clco_deep_research")
+_logger.setLevel(logging.INFO)
+
+_stderr_handler = logging.StreamHandler(sys.stderr)
+_stderr_handler.setFormatter(
+    logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 )
-
-server = Server("clco-deep-research")
-
-
-@server.list_tools()
-async def handle_list_tools() -> list[Tool]:
-    """List all available tools with their schemas."""
-    return [
-        Tool(
-            name=name,
-            description=desc,
-            inputSchema=schema,
-        )
-        for name, (_handler, desc, schema) in TOOLS.items()
-    ]
+_logger.addHandler(_stderr_handler)
+_logger.propagate = False
 
 
-@server.call_tool()
-async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
-    """Execute a tool by name with the given arguments."""
-    if name not in TOOLS:
-        return [TextContent(
-            type="text",
-            text=f"Error: Unknown tool '{name}'. Available tools: {', '.join(TOOLS.keys())}"
-        )]
+@mcp.tool()
+async def web_search(
+    query: str,
+    engine: str = "duckduckgo_lite",
+    max_results: int = 10,
+) -> str:
+    from .tools import tool_web_search
 
-    handler, _desc, _schema = TOOLS[name]
-
-    try:
-        result = await handler(**arguments)
-        return [TextContent(type="text", text=result)]
-    except Exception as e:
-        logging.exception("Tool '%s' failed: %s", name, e)
-        return [TextContent(type="text", text=f"Error executing '{name}': {e}")]
+    return await tool_web_search(query, engine, max_results)
 
 
-async def main():
-    """Main entry point for the MCP server."""
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-                server_name="clco-deep-research",
-                server_version="0.3.5",
-                capabilities=server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
-                ),
-            ),
-        )
+@mcp.tool()
+async def fetch_page(url: str, stealth: bool = False, max_tokens: int = 3000) -> str:
+    from .tools import tool_fetch_page
+
+    return await tool_fetch_page(url, stealth, max_tokens)
 
 
-def run():
-    import asyncio
-    asyncio.run(main())
+@mcp.tool()
+async def fetch_bulk(
+    urls: list[str],
+    stealth: bool = False,
+    max_concurrent: int = 5,
+    max_tokens: int = 1500,
+) -> str:
+    from .tools import tool_fetch_bulk
+
+    return await tool_fetch_bulk(urls, stealth, max_concurrent, max_tokens)
+
+
+@mcp.tool()
+async def deep_research(
+    query: str,
+    engine: str = "duckduckgo_lite",
+    max_sources: int = 8,
+    follow_links: bool = False,
+    expand_queries: bool = True,
+) -> str:
+    from .tools import tool_deep_research
+
+    return await tool_deep_research(
+        query, engine, max_sources, follow_links, expand_queries
+    )
+
+
+@mcp.tool()
+async def stealthy_fetch(url: str, max_tokens: int = 3000) -> str:
+    from .tools import tool_stealthy_fetch
+
+    return await tool_stealthy_fetch(url, max_tokens)
+
+
+@mcp.tool()
+async def parallel_search(
+    queries: list[str],
+    engine: str = "duckduckgo_lite",
+    max_results: int = 5,
+) -> str:
+    from .tools import tool_parallel_search
+
+    return await tool_parallel_search(queries, engine, max_results)
+
+
+def run() -> None:
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

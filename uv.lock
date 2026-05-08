@@ -272,7 +272,7 @@ wheels = [
 
 [[package]]
 name = "clco-deep-research-mcp"
-version = "0.3.4"
+version = "0.3.5"
 source = { editable = "." }
 dependencies = [
     { name = "htmldate" },

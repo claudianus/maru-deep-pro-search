@@ -82,7 +82,11 @@ async def parallel_search(
 
 
 def run() -> None:
-    mcp.run(transport="stdio")
+    import asyncio
+    try:
+        mcp.run(transport="stdio")
+    except Exception:
+        asyncio.run(mcp.run_sse())
 
 
 if __name__ == "__main__":

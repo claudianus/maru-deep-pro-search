@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>clco-deep-research-mcp — Free Deep Research MCP for Coding Agents</title>
     <meta name="description" content="The free, coding-agent-optimized deep research MCP. 4-engine SERP scraping + trafilatura extraction + code-aware analysis. Zero API keys required.">
+    <link rel="alternate" hreflang="en" href="https://claudianus.github.io/clco-deep-research-mcp/">
+    <link rel="alternate" hreflang="ko" href="https://claudianus.github.io/clco-deep-research-mcp/ko/">
+    <link rel="alternate" hreflang="x-default" href="https://claudianus.github.io/clco-deep-research-mcp/">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -41,7 +44,6 @@
             overflow-x: hidden;
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -53,7 +55,6 @@
             border-radius: 4px;
         }
 
-        /* Navigation */
         .nav {
             position: fixed;
             top: 0;
@@ -88,6 +89,7 @@
             display: flex;
             gap: 2rem;
             list-style: none;
+            align-items: center;
         }
 
         .nav-links a {
@@ -100,6 +102,35 @@
 
         .nav-links a:hover {
             color: var(--text-primary);
+        }
+
+        .lang-switch {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .lang-switch a {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .lang-switch a.active {
+            background: var(--accent-gradient);
+            color: white;
+        }
+
+        .lang-switch a:not(.active) {
+            color: var(--text-secondary);
+        }
+
+        .lang-switch a:not(.active):hover {
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.1);
         }
 
         .nav-cta {
@@ -118,7 +149,6 @@
             box-shadow: var(--shadow-glow);
         }
 
-        /* Hero Section */
         .hero {
             min-height: 100vh;
             display: flex;
@@ -268,7 +298,6 @@
             margin-top: 0.25rem;
         }
 
-        /* Section Styles */
         .section {
             padding: 6rem 2rem;
             max-width: 1200px;
@@ -306,7 +335,6 @@
             margin: 0 auto;
         }
 
-        /* Features Grid */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -366,7 +394,6 @@
             font-weight: 500;
         }
 
-        /* Pipeline Section */
         .pipeline {
             background: var(--bg-secondary);
             border-radius: 1.5rem;
@@ -423,7 +450,6 @@
             font-size: 0.9375rem;
         }
 
-        /* Code Block */
         .code-block {
             background: var(--bg-primary);
             border: 1px solid var(--border);
@@ -466,7 +492,6 @@
         .code-body .comment { color: #5c6370; font-style: italic; }
         .code-body .function { color: #61afef; }
 
-        /* Benchmark Table */
         .benchmark-table {
             width: 100%;
             border-collapse: collapse;
@@ -505,7 +530,6 @@
             color: var(--error);
         }
 
-        /* Installation Tabs */
         .install-tabs {
             display: flex;
             gap: 0.5rem;
@@ -544,7 +568,6 @@
             display: block;
         }
 
-        /* Footer */
         .footer {
             border-top: 1px solid var(--border);
             padding: 4rem 2rem;
@@ -574,7 +597,6 @@
             font-size: 0.875rem;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -598,7 +620,6 @@
             }
         }
 
-        /* Animations */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -620,7 +641,6 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="nav">
         <div class="nav-container">
             <div class="nav-logo">clco-deep-research</div>
@@ -629,17 +649,22 @@
                 <li><a href="#pipeline">Pipeline</a></li>
                 <li><a href="#benchmarks">Benchmarks</a></li>
                 <li><a href="#install">Install</a></li>
+                <li>
+                    <div class="lang-switch">
+                        <a href="/clco-deep-research-mcp/" class="active">EN</a>
+                        <a href="/clco-deep-research-mcp/ko/">KO</a>
+                    </div>
+                </li>
             </ul>
             <a href="https://github.com/claudianus/clco-deep-research-mcp" class="nav-cta" target="_blank">GitHub</a>
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero">
         <div class="hero-bg"></div>
         <div class="hero-grid"></div>
         <div class="hero-content">
-            <div class="hero-badge animate-in">v0.3.0 Now Available</div>
+            <div class="hero-badge animate-in">v0.3.6 Now Available</div>
             <h1 class="hero-title animate-in delay-1">
                 Deep Research MCP for<br><span>Coding Agents</span>
             </h1>
@@ -648,8 +673,8 @@
                 4-engine SERP scraping + trafilatura extraction + code-aware analysis. Zero API keys required.
             </p>
             <div class="hero-install animate-in delay-3">
-                <code><span class="comment"># One-shot install</span><br>uvx clco-deep-research-mcp</code>
-                <button class="copy-btn" onclick="copyToClipboard('uvx clco-deep-research-mcp')">Copy</button>
+                <code><span class="comment"># Install globally</span><br>pip install clco-deep-research-mcp</code>
+                <button class="copy-btn" onclick="copyToClipboard('pip install clco-deep-research-mcp')">Copy</button>
             </div>
             <div class="hero-stats animate-in delay-3">
                 <div class="stat">
@@ -672,7 +697,6 @@
         </div>
     </section>
 
-    <!-- Features Section -->
     <section class="section" id="features">
         <div class="section-header">
             <div class="section-tag">Features</div>
@@ -737,7 +761,6 @@
         </div>
     </section>
 
-    <!-- Pipeline Section -->
     <section class="section" id="pipeline">
         <div class="section-header">
             <div class="section-tag">Architecture</div>
@@ -792,7 +815,6 @@
         </div>
     </section>
 
-    <!-- Code-Aware Section -->
     <section class="section">
         <div class="section-header">
             <div class="section-tag">Code-Aware</div>
@@ -837,7 +859,6 @@ URL: https://dev.to/...
         </div>
     </section>
 
-    <!-- Benchmarks Section -->
     <section class="section" id="benchmarks">
         <div class="section-header">
             <div class="section-tag">Benchmarks</div>
@@ -912,7 +933,6 @@ URL: https://dev.to/...
         </table>
     </section>
 
-    <!-- Installation Section -->
     <section class="section" id="install">
         <div class="section-header">
             <div class="section-tag">Installation</div>
@@ -936,8 +956,8 @@ URL: https://dev.to/...
                     <pre id="claude-code-config">{
   "mcpServers": {
     "clco-deep-research": {
-      "command": "uvx",
-      "args": ["clco-deep-research-mcp"]
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
     }
   }
 }</pre>
@@ -955,8 +975,8 @@ URL: https://dev.to/...
                     <pre id="claude-desktop-config">{
   "mcpServers": {
     "clco-deep-research": {
-      "command": "uvx",
-      "args": ["clco-deep-research-mcp"]
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
     }
   }
 }</pre>
@@ -974,8 +994,8 @@ URL: https://dev.to/...
                     <pre id="cursor-config">{
   "mcpServers": {
     "clco-deep-research": {
-      "command": "uvx",
-      "args": ["clco-deep-research-mcp"]
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
     }
   }
 }</pre>
@@ -991,16 +1011,17 @@ URL: https://dev.to/...
                 </div>
                 <div class="code-body">
                     <pre id="vscode-config">{
-  "cline.mcpServers": {
+  "servers": {
     "clco-deep-research": {
-      "command": "uvx",
-      "args": ["clco-deep-research-mcp"]
+      "type": "stdio",
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
     }
   }
 }</pre>
                 </div>
             </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to VS Code <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">settings.json</code> (Cline/Roo Code extension)</p>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to VS Code <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.vscode/mcp.json</code></p>
         </div>
         <div id="windsurf" class="install-panel">
             <div class="code-block">
@@ -1012,18 +1033,17 @@ URL: https://dev.to/...
                     <pre id="windsurf-config">{
   "mcpServers": {
     "clco-deep-research": {
-      "command": "uvx",
-      "args": ["clco-deep-research-mcp"]
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
     }
   }
 }</pre>
                 </div>
             </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to Windsurf <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">mcp_config.json</code></p>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">Add to Windsurf <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.windsurf/mcp_config.json</code></p>
         </div>
     </section>
 
-    <!-- Demo Section -->
     <section class="section">
         <div class="section-header">
             <div class="section-tag">Demo</div>
@@ -1051,7 +1071,6 @@ $ /parallel_search ["python vs go concurrency", "python vs rust performance"]</p
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="footer-links">
             <a href="https://github.com/claudianus/clco-deep-research-mcp" target="_blank">GitHub</a>
@@ -1086,7 +1105,6 @@ $ /parallel_search ["python vs go concurrency", "python vs rust performance"]</p
             document.getElementById(tabId).classList.add('active');
         }
 
-        // Smooth scroll for nav links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();

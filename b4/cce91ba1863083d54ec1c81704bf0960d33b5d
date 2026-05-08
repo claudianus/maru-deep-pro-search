@@ -1,0 +1,20 @@
+src/clco_deep_research/server.py
+  s_0a52b2ee00b31f::t_28e59d1eb4ef36 29
+  s_0a52b2ee00b31f::t_bbe61c95b0eff7 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "b4cce91ba1863083d54ec1c81704bf0960d33b5d",
+  "prompts": {},
+  "sessions": {
+    "s_0a52b2ee00b31f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1faeff4f1ffeu20YapOfPfg0jK",
+        "model": "unknown"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+uv.lock
+  ai_agent 275
+README.md
+  s_0a52b2ee00b31f::t_797a8ccbdde06d 42-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "110fd6b2c8d0182b4f677472d85978b4dbbf6af8",
+  "prompts": {},
+  "sessions": {
+    "s_0a52b2ee00b31f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1faeff4f1ffeu20YapOfPfg0jK",
+        "model": "unknown"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

@@ -1,0 +1,406 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - link "maru-search" [ref=e6] [cursor=pointer]:
+        - /url: /maru-search/
+        - generic [ref=e7]: maru-search
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - link "Why maru-search" [ref=e10] [cursor=pointer]:
+            - /url: "#features"
+          - link "8 Tools" [ref=e11] [cursor=pointer]:
+            - /url: "#tools"
+          - link "Get Started" [ref=e12] [cursor=pointer]:
+            - /url: "#install"
+        - link "English" [ref=e15] [cursor=pointer]:
+          - /url: /maru-search/
+        - link "한국어" [ref=e16] [cursor=pointer]:
+          - /url: /maru-search/ko
+        - link [ref=e19] [cursor=pointer]:
+          - /url: https://github.com/claudianus/maru-search
+        - link [ref=e21] [cursor=pointer]:
+          - /url: https://pypi.org/project/maru-search/
+  - main [ref=e23]:
+    - generic [ref=e28]:
+      - generic [ref=e29]: MCP Server
+      - heading "Universal AI Search MCP" [level=1] [ref=e30]
+      - paragraph [ref=e31]
+      - paragraph [ref=e33]: Zero API keys. Direct scraping. Perplexity-level answers with inline citations. All MCP clients supported.
+      - generic [ref=e35]:
+        - generic [ref=e36]: $
+        - generic [ref=e37]: pip install maru-search
+        - button [ref=e38] [cursor=pointer]
+      - generic [ref=e40]:
+        - link "Install Now" [ref=e41] [cursor=pointer]:
+          - /url: "#install"
+          - generic [ref=e43]: Install Now
+        - link "See Deep Research" [ref=e44] [cursor=pointer]:
+          - /url: "#pipeline"
+          - generic [ref=e46]: See Deep Research
+    - generic [ref=e49]:
+      - paragraph [ref=e51]: Everything runs locally. No cloud LLM. No paid search API.
+      - generic [ref=e52]:
+        - generic [ref=e55]:
+          - generic [ref=e56]: "0"
+          - generic [ref=e57]: API Keys Required
+        - generic [ref=e60]:
+          - generic [ref=e61]: "8"
+          - generic [ref=e62]: Specialized Tools
+        - generic [ref=e65]:
+          - generic [ref=e66]: "21"
+          - generic [ref=e67]: Languages Detected
+        - generic [ref=e70]:
+          - generic [ref=e71]: "124"
+          - generic [ref=e72]: Passing Tests
+    - generic [ref=e74]:
+      - generic [ref=e75]:
+        - generic [ref=e76]: Dominance
+        - heading "Why maru-search dominates" [level=2] [ref=e77]
+        - paragraph [ref=e78]: Not just another search wrapper. A full research engine.
+      - table [ref=e81]:
+        - rowgroup [ref=e82]:
+          - row "Feature maru-search Brave Search MCP Perplexity MCP Basic Scrapers" [ref=e83]:
+            - columnheader "Feature" [ref=e84]
+            - columnheader "maru-search" [ref=e85]
+            - columnheader "Brave Search MCP" [ref=e86]
+            - columnheader "Perplexity MCP" [ref=e87]
+            - columnheader "Basic Scrapers" [ref=e88]
+        - rowgroup [ref=e89]:
+          - row "Zero API keys Yes No Paid only Partial" [ref=e90]:
+            - cell "Zero API keys" [ref=e91]
+            - cell "Yes" [ref=e92]:
+              - generic [ref=e93]: "Yes"
+            - cell "No" [ref=e94]:
+              - generic [ref=e95]: "No"
+            - cell "Paid only" [ref=e96]:
+              - generic [ref=e97]: Paid only
+            - cell "Partial" [ref=e98]:
+              - generic [ref=e99]: Partial
+          - row "Deep Research Pipeline Yes No Yes No" [ref=e100]:
+            - cell "Deep Research Pipeline" [ref=e101]
+            - cell "Yes" [ref=e102]:
+              - generic [ref=e103]: "Yes"
+            - cell "No" [ref=e104]:
+              - generic [ref=e105]: "No"
+            - cell "Yes" [ref=e106]:
+              - generic [ref=e107]: "Yes"
+            - cell "No" [ref=e108]:
+              - generic [ref=e109]: "No"
+          - row "Native Citations Yes No Yes No" [ref=e110]:
+            - cell "Native Citations" [ref=e111]
+            - cell "Yes" [ref=e112]:
+              - generic [ref=e113]: "Yes"
+            - cell "No" [ref=e114]:
+              - generic [ref=e115]: "No"
+            - cell "Yes" [ref=e116]:
+              - generic [ref=e117]: "Yes"
+            - cell "No" [ref=e118]:
+              - generic [ref=e119]: "No"
+          - row "BM25 + Metadata Ranking Yes No No No" [ref=e120]:
+            - cell "BM25 + Metadata Ranking" [ref=e121]
+            - cell "Yes" [ref=e122]:
+              - generic [ref=e123]: "Yes"
+            - cell "No" [ref=e124]:
+              - generic [ref=e125]: "No"
+            - cell "No" [ref=e126]:
+              - generic [ref=e127]: "No"
+            - cell "No" [ref=e128]:
+              - generic [ref=e129]: "No"
+          - row "Code-Aware (21 langs) Yes No Partial No" [ref=e130]:
+            - cell "Code-Aware (21 langs)" [ref=e131]
+            - cell "Yes" [ref=e132]:
+              - generic [ref=e133]: "Yes"
+            - cell "No" [ref=e134]:
+              - generic [ref=e135]: "No"
+            - cell "Partial" [ref=e136]:
+              - generic [ref=e137]: Partial
+            - cell "No" [ref=e138]:
+              - generic [ref=e139]: "No"
+          - row "3-Tier Anti-Bot Yes No No Partial" [ref=e140]:
+            - cell "3-Tier Anti-Bot" [ref=e141]
+            - cell "Yes" [ref=e142]:
+              - generic [ref=e143]: "Yes"
+            - cell "No" [ref=e144]:
+              - generic [ref=e145]: "No"
+            - cell "No" [ref=e146]:
+              - generic [ref=e147]: "No"
+            - cell "Partial" [ref=e148]:
+              - generic [ref=e149]: Partial
+          - row "Korean Language Support Yes No Partial No" [ref=e150]:
+            - cell "Korean Language Support" [ref=e151]
+            - cell "Yes" [ref=e152]:
+              - generic [ref=e153]: "Yes"
+            - cell "No" [ref=e154]:
+              - generic [ref=e155]: "No"
+            - cell "Partial" [ref=e156]:
+              - generic [ref=e157]: Partial
+            - cell "No" [ref=e158]:
+              - generic [ref=e159]: "No"
+          - row "Multi-Engine Registry Yes No No Partial" [ref=e160]:
+            - cell "Multi-Engine Registry" [ref=e161]
+            - cell "Yes" [ref=e162]:
+              - generic [ref=e163]: "Yes"
+            - cell "No" [ref=e164]:
+              - generic [ref=e165]: "No"
+            - cell "No" [ref=e166]:
+              - generic [ref=e167]: "No"
+            - cell "Partial" [ref=e168]:
+              - generic [ref=e169]: Partial
+          - row "Smart Token Management Yes No No No" [ref=e170]:
+            - cell "Smart Token Management" [ref=e171]
+            - cell "Yes" [ref=e172]:
+              - generic [ref=e173]: "Yes"
+            - cell "No" [ref=e174]:
+              - generic [ref=e175]: "No"
+            - cell "No" [ref=e176]:
+              - generic [ref=e177]: "No"
+            - cell "No" [ref=e178]:
+              - generic [ref=e179]: "No"
+          - row "Freshness Scoring Yes No Partial No" [ref=e180]:
+            - cell "Freshness Scoring" [ref=e181]
+            - cell "Yes" [ref=e182]:
+              - generic [ref=e183]: "Yes"
+            - cell "No" [ref=e184]:
+              - generic [ref=e185]: "No"
+            - cell "Partial" [ref=e186]:
+              - generic [ref=e187]: Partial
+            - cell "No" [ref=e188]:
+              - generic [ref=e189]: "No"
+    - generic [ref=e192]:
+      - generic [ref=e193]:
+        - generic [ref=e194]: Pipeline
+        - heading "7-Phase Deep Research Pipeline" [level=2] [ref=e195]
+        - paragraph [ref=e196]: Not a search wrapper. A research engine.
+      - generic [ref=e200]:
+        - generic [ref=e201]:
+          - generic [ref=e205]:
+            - generic [ref=e206]: Phase 1
+            - heading "Query Expansion" [level=3] [ref=e207]
+            - paragraph [ref=e208]: Auto-generates sub-queries from templates
+          - generic [ref=e210]: "1"
+        - generic [ref=e212]:
+          - generic [ref=e216]:
+            - generic [ref=e217]: Phase 2
+            - heading "Multi-Engine Search" [level=3] [ref=e218]
+            - paragraph [ref=e219]: Parallel scraping across engines
+          - generic [ref=e221]: "2"
+        - generic [ref=e223]:
+          - generic [ref=e227]:
+            - generic [ref=e228]: Phase 3
+            - heading "Deduplication" [level=3] [ref=e229]
+            - paragraph [ref=e230]: URL normalization & content hashing
+          - generic [ref=e232]: "3"
+        - generic [ref=e234]:
+          - generic [ref=e238]:
+            - generic [ref=e239]: Phase 4
+            - heading "BM25 Ranking" [level=3] [ref=e240]
+            - paragraph [ref=e241]: Local relevance + authority + freshness
+          - generic [ref=e243]: "4"
+        - generic [ref=e245]:
+          - generic [ref=e249]:
+            - generic [ref=e250]: Phase 5
+            - heading "Concurrent Crawl" [level=3] [ref=e251]
+            - paragraph [ref=e252]: Fetch top results in parallel
+          - generic [ref=e254]: "5"
+        - generic [ref=e256]:
+          - generic [ref=e260]:
+            - generic [ref=e261]: Phase 6
+            - heading "Link Following" [level=3] [ref=e262]
+            - paragraph [ref=e263]: Optional deep-link traversal
+          - generic [ref=e265]: "6"
+        - generic [ref=e267]:
+          - generic [ref=e271]:
+            - generic [ref=e272]: Phase 7
+            - heading "Synthesis" [level=3] [ref=e273]
+            - paragraph [ref=e274]: Cited answer with token budget
+          - generic [ref=e276]: "7"
+    - generic [ref=e279]:
+      - generic [ref=e280]:
+        - generic [ref=e281]: Intelligence
+        - heading "BM25 beats raw search ranking" [level=2] [ref=e282]
+        - paragraph [ref=e283]: Search engines sort by ads & SEO. We sort by relevance.
+      - generic [ref=e284]:
+        - generic [ref=e285]:
+          - heading "Raw Search Order" [level=3] [ref=e286]
+          - generic [ref=e287]:
+            - generic [ref=e288]:
+              - generic [ref=e289]: "1"
+              - generic [ref=e290]: SEO-optimized blog with thin content
+              - generic [ref=e291]: SEO spam
+            - generic [ref=e292]:
+              - generic [ref=e293]: "2"
+              - generic [ref=e294]: 3-year-old Medium tutorial
+              - generic [ref=e295]: Stale
+            - generic [ref=e296]:
+              - generic [ref=e297]: "3"
+              - generic [ref=e298]: Official documentation page
+              - generic [ref=e299]: Official
+            - generic [ref=e300]:
+              - generic [ref=e301]: "4"
+              - generic [ref=e302]: GitHub issue with working solution
+              - generic [ref=e303]: Code
+            - generic [ref=e304]:
+              - generic [ref=e305]: "5"
+              - generic [ref=e306]: Stack Overflow accepted answer
+              - generic [ref=e307]: Solved
+        - generic [ref=e308]:
+          - heading "BM25 Re-Ranked" [level=3] [ref=e310]
+          - generic [ref=e311]:
+            - generic [ref=e312]:
+              - generic [ref=e313]: "1"
+              - generic [ref=e314]: Stack Overflow accepted answer
+              - generic [ref=e315]: Solved
+            - generic [ref=e316]:
+              - generic [ref=e317]: "2"
+              - generic [ref=e318]: Official documentation page
+              - generic [ref=e319]: Official
+            - generic [ref=e320]:
+              - generic [ref=e321]: "3"
+              - generic [ref=e322]: GitHub issue with working solution
+              - generic [ref=e323]: Code
+            - generic [ref=e324]:
+              - generic [ref=e325]: "4"
+              - generic [ref=e326]: 3-year-old Medium tutorial
+              - generic [ref=e327]: Stale
+            - generic [ref=e328]:
+              - generic [ref=e329]: "5"
+              - generic [ref=e330]: SEO-optimized blog with thin content
+              - generic [ref=e331]: SEO spam
+      - generic [ref=e336]:
+        - heading "Why this matters" [level=4] [ref=e337]
+        - paragraph [ref=e338]: BM25 scores content density, authority domains get +2.0, fresh pages +1.5, code-heavy pages +1.0. Search engines can't do this without access to page content.
+    - generic [ref=e340]:
+      - generic [ref=e341]:
+        - generic [ref=e342]: Capabilities
+        - heading "Why maru-search?" [level=2] [ref=e343]
+      - generic [ref=e344]:
+        - generic [ref=e346]:
+          - heading "100% Free" [level=3] [ref=e349]
+          - paragraph [ref=e350]: No OpenAI, Google API, Bing API. Only direct scraping.
+        - generic [ref=e352]:
+          - heading "Citation-Native" [level=3] [ref=e355]
+          - paragraph [ref=e356]: Every result gets [1], [2] IDs. LLMs cite sources accurately.
+        - generic [ref=e358]:
+          - heading "Multi-Engine" [level=3] [ref=e361]
+          - paragraph [ref=e362]: SearchEngineRegistry makes adding new scrapers trivial.
+        - generic [ref=e364]:
+          - heading "BM25 Ranking" [level=3] [ref=e367]
+          - paragraph [ref=e368]: Local relevance scores + authority/freshness metadata.
+        - generic [ref=e370]:
+          - heading "Code-Aware" [level=3] [ref=e373]
+          - paragraph [ref=e374]: 21-language detection, API signature extraction, code-text ratio.
+        - generic [ref=e376]:
+          - heading "Freshness Scoring" [level=3] [ref=e379]
+          - paragraph [ref=e380]: htmldate extraction, stale content warnings, auto year-injection.
+    - generic [ref=e382]:
+      - generic [ref=e383]:
+        - generic [ref=e384]: Toolbox
+        - heading "8 Tools" [level=2] [ref=e385]
+        - paragraph [ref=e386]: From quick answers to deep research.
+      - generic [ref=e387]:
+        - generic [ref=e389]:
+          - generic [ref=e390]: "1"
+          - generic [ref=e391]:
+            - generic [ref=e392]:
+              - heading "answer" [level=3] [ref=e393]
+              - generic [ref=e394]: Core
+            - paragraph [ref=e395]: Direct answer with inline citations
+        - generic [ref=e397]:
+          - generic [ref=e398]: "2"
+          - generic [ref=e399]:
+            - heading "web_search" [level=3] [ref=e401]
+            - paragraph [ref=e402]: Scrape, rank, return cited results
+        - generic [ref=e404]:
+          - generic [ref=e405]: "3"
+          - generic [ref=e406]:
+            - generic [ref=e407]:
+              - heading "search_with_citations" [level=3] [ref=e408]
+              - generic [ref=e409]: Academic
+            - paragraph [ref=e410]: Pre-numbered citations for academic writing
+        - generic [ref=e412]:
+          - generic [ref=e413]: "4"
+          - generic [ref=e414]:
+            - heading "fetch_page" [level=3] [ref=e416]
+            - paragraph [ref=e417]: Extract single URL content
+        - generic [ref=e419]:
+          - generic [ref=e420]: "5"
+          - generic [ref=e421]:
+            - heading "fetch_bulk" [level=3] [ref=e423]
+            - paragraph [ref=e424]: Parallel fetch multiple URLs
+        - generic [ref=e426]:
+          - generic [ref=e427]: "6"
+          - generic [ref=e428]:
+            - generic [ref=e429]:
+              - heading "deep_research" [level=3] [ref=e430]
+              - generic [ref=e431]: Premium
+            - paragraph [ref=e432]: Auto-expand, crawl, synthesize with citations
+        - generic [ref=e434]:
+          - generic [ref=e435]: "7"
+          - generic [ref=e436]:
+            - generic [ref=e437]:
+              - heading "stealthy_fetch" [level=3] [ref=e438]
+              - generic [ref=e439]: Anti-Bot
+            - paragraph [ref=e440]: Anti-bot bypass for protected sites
+        - generic [ref=e442]:
+          - generic [ref=e443]: "8"
+          - generic [ref=e444]:
+            - heading "parallel_search" [level=3] [ref=e446]
+            - paragraph [ref=e447]: Run multiple searches simultaneously
+    - generic [ref=e449]:
+      - generic [ref=e450]:
+        - generic [ref=e451]: Zero API Cost
+        - heading "Perplexity-level answers, zero API cost" [level=2] [ref=e452]
+        - paragraph [ref=e453]: One line of Python. No OpenAI bill.
+      - generic [ref=e454]:
+        - generic [ref=e455]:
+          - button "Quick Answer" [ref=e456] [cursor=pointer]
+          - button "Deep Research" [ref=e457] [cursor=pointer]
+          - button "Cited Search" [ref=e458] [cursor=pointer]
+        - generic [ref=e459]:
+          - button [ref=e465] [cursor=pointer]
+          - code [ref=e468]: 400">"text-pink-400">from maru_search.tools 400">"text-pink-400">import answer result = 400">answer(400">'What is quantum error correction?') 400">"text-pink-400">print(result) 400">"text-pink-400">class=400">"text-gray-500"># => Answer 400">"text-pink-400">with [1], [2] inline citations
+    - generic [ref=e470]:
+      - heading "Get Started" [level=2] [ref=e472]
+      - generic [ref=e473]:
+        - generic [ref=e475]:
+          - heading "pip" [level=3] [ref=e476]
+          - generic [ref=e478]:
+            - code [ref=e479]: pip install maru-search
+            - button [ref=e480] [cursor=pointer]
+          - heading "Claude Code" [level=3] [ref=e482]
+          - generic [ref=e484]:
+            - code [ref=e485]: claude mcp add maru-search pip:maru-search
+            - button [ref=e486] [cursor=pointer]
+        - generic [ref=e489]:
+          - heading "MCP Config" [level=3] [ref=e490]
+          - generic [ref=e492]: "{ \"mcpServers\": { \"maru-search\": { \"command\": \"python3\", \"args\": [ \"-m\", \"maru_search.server\" ] } } }"
+          - heading "Environment Variables" [level=3] [ref=e493]
+          - generic [ref=e494]:
+            - generic [ref=e495]:
+              - code [ref=e496]: MARU_SEARCH_ENGINE
+              - generic [ref=e497]: duckduckgo_lite
+            - generic [ref=e498]:
+              - code [ref=e499]: MARU_SEARCH_MAX_RESULTS
+              - generic [ref=e500]: "10"
+            - generic [ref=e501]:
+              - code [ref=e502]: MARU_SEARCH_MAX_CONCURRENT
+              - generic [ref=e503]: "5"
+    - generic [ref=e505]:
+      - generic [ref=e506]:
+        - generic [ref=e507]: Architecture
+        - heading "Architecture" [level=2] [ref=e508]
+        - paragraph [ref=e509]: Clean, modular, and extensible.
+      - generic [ref=e512]: Loading diagram...
+  - contentinfo [ref=e513]:
+    - generic [ref=e514]:
+      - paragraph [ref=e515]:
+        - text: Built with 100% open source, 0% API keys ·
+        - link "claudianus/maru-search" [ref=e516] [cursor=pointer]:
+          - /url: https://github.com/claudianus/maru-search
+      - generic [ref=e517]:
+        - link "Home" [ref=e518] [cursor=pointer]:
+          - /url: /maru-search/
+        - link "한국어" [ref=e519] [cursor=pointer]:
+          - /url: /maru-search/ko
+        - link "Changelog" [ref=e520] [cursor=pointer]:
+          - /url: https://github.com/claudianus/maru-search/blob/main/CHANGELOG.md

@@ -31,16 +31,16 @@ flowchart TD
     C --> F[Future Engine...]
     D & E & F --> G[Result Deduplicator]
     G --> H[BM25 Ranker]
-    H --> I{Authority Boost?<br/>+2.0}
-    H --> J{Freshness?<br/>+1.5}
-    H --> K{Code Density?<br/>+1.0}
+    H --> I{"Authority Boost?<br/>+2.0"}
+    H --> J{"Freshness?<br/>+1.5"}
+    H --> K{"Code Density?<br/>+1.0"}
     I & J & K --> L[Ranked Results]
     L --> M[Content Extractor]
     M --> N[trafilatura]
     M --> O[htmldate]
     M --> P[Code Analyzer]
     N & O & P --> Q[Smart Synthesizer]
-    Q --> R[Cited Answer<br/>with [1], [2], [3]]
+    Q --> R["Cited Answer<br/>with [1], [2], [3]"]
 
     style A fill:#1e1b4b,stroke:#6366f1,color:#e2e2ea
     style R fill:#1e1b4b,stroke:#6366f1,color:#e2e2ea

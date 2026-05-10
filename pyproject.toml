@@ -1,6 +1,6 @@
 [project]
 name = "maru-search"
-version = "0.6.2"
+version = "0.6.3"
 description = "Universal AI search MCP server — Perplexity-level quality with zero API keys. Multi-engine web scraping, intelligent ranking, and citation-native answers."
 readme = "README.md"
 license = { text = "MIT" }

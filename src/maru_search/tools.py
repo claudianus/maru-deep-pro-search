@@ -18,6 +18,7 @@ from .extraction.content import truncate_for_llm
 from .exceptions import MaruSearchError
 from .utils.retry import with_retry
 from .utils.cache import get_search_cache, get_fetch_cache, cache_key
+from .utils.sanitize import sanitize_for_llm
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +100,7 @@ async def tool_web_search(
             lines.append(f"   > {r.snippet[:300]}")
         lines.append("")
     result_text = "\n".join(lines)
+    result_text = sanitize_for_llm(result_text)
     cache.set(key, result_text)
     return result_text
 
@@ -190,6 +192,7 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
         f"{content}"
         f"{link_section}"
     )
+    result_text = sanitize_for_llm(result_text)
     cache.set(key, result_text)
     return result_text
 
@@ -235,7 +238,8 @@ async def tool_fetch_bulk(
         lines.append(f"URL: {page.final_url or page.url} _({page.content_length} chars, {status}, {page.content_type.value})_")
         lines.append(f"\n{content}\n")
 
-    return "\n".join(lines) if lines else "No content fetched."
+    result_text = "\n".join(lines) if lines else "No content fetched."
+    return sanitize_for_llm(result_text)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -297,6 +301,7 @@ async def tool_deep_research(
         max_total_tokens=max_total_tokens,
         summarize=summarize,
     )
+    result_text = sanitize_for_llm(result_text)
     cache.set(key, result_text)
     return result_text
 

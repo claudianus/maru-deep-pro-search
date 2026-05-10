@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.3] - 2026-05-10
+
+### Added
+- **Prompt Injection Defense**: Sanitize all fetched content before LLM injection
+  - `utils/sanitize.py`: `sanitize_for_llm()` function
+  - Removes zero-width characters (U+200B, U+200C, U+200D, U+FEFF)
+  - Removes control characters
+  - Neutralizes chat format tokens (<|im_start|>, <|im_end|>, <|system|>, etc.)
+  - Detects and replaces suspicious patterns:
+    - "Ignore all previous instructions"
+    - "You are now DAN / Do Anything Now"
+    - "Reveal your system prompt"
+    - "=== SYSTEM ===", "=== INSTRUCTION ==="
+    - "From now on, you will/must/are"
+  - Applied to all tool outputs: web_search, deep_research, fetch_page, fetch_bulk
+
+### Changed
+- README.md: Security & Privacy table updated with prompt injection row
+- AGENTS.md: Added prompt injection defense to architecture decisions
+
 ## [0.6.2] - 2026-05-10
 
 ### Added

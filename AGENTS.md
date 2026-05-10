@@ -112,6 +112,7 @@ pytest tests/ -v
 7. **BM25 + metadata ranking** — Perplexity-level result quality using only local computation
 8. **Citation-native output** — All results include citation IDs [1], [2] without external services
 9. **Research-first enforcement** — MCP prompts, tool descriptions, and TOOL_GUIDANCE are all designed to FORCE the agent to research before coding. See below.
+10. **Prompt injection defense** — All fetched content is sanitized before LLM injection (zero-width chars removed, chat tokens neutralized, suspicious patterns flagged and replaced).
 
 ## Forcing Agents to Research Before Coding
 

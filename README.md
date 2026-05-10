@@ -327,6 +327,7 @@ agent:
 | **PII exposure** | ❌ No user data stored or logged. Stateless by design. |
 | **Supply chain** | ✅ Single PyPI package. No hidden dependencies on proprietary services. |
 | **Self-hosting** | ✅ Run entirely on your machine. Source code is MIT-licensed. |
+| **Prompt injection** | ✅ All fetched content sanitized before LLM injection (zero-width chars, chat tokens, suspicious patterns neutralized) |
 
 ---
 

@@ -63,3 +63,4 @@ dist/
 # ── Misc ──
 *.bak
 *.tmp
+.playwright-mcp/

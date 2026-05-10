@@ -27,9 +27,13 @@ flowchart TD
     A[User Query] --> B[Query Expander]
     B --> C[SearchEngineRegistry]
     C --> D[DuckDuckGo Lite]
-    C --> E[DuckDuckGo HTML]
-    C --> F[Future Engine...]
-    D & E & F --> G[Result Deduplicator]
+    C --> E[DuckDuckGo]
+    C --> F[SearXNG]
+    C --> G2[Bing]
+    C --> G3[Google]
+    C --> G4[Naver]
+    C --> G5[Qwant]
+    D & E & F & G2 & G3 & G4 & G5 --> G[Result Deduplicator]
     G --> H[BM25 Ranker]
     H --> I{"Authority Boost?<br/>+2.0"}
     H --> J{"Freshness?<br/>+1.5"}
@@ -49,6 +53,10 @@ flowchart TD
     style D fill:#0f172a,stroke:#475569,color:#94a3b8
     style E fill:#0f172a,stroke:#475569,color:#94a3b8
     style F fill:#0f172a,stroke:#475569,color:#94a3b8
+    style G2 fill:#0f172a,stroke:#475569,color:#94a3b8
+    style G3 fill:#0f172a,stroke:#475569,color:#94a3b8
+    style G4 fill:#0f172a,stroke:#475569,color:#94a3b8
+    style G5 fill:#0f172a,stroke:#475569,color:#94a3b8
     style N fill:#0f172a,stroke:#475569,color:#94a3b8
     style O fill:#0f172a,stroke:#475569,color:#94a3b8
     style P fill:#0f172a,stroke:#475569,color:#94a3b8

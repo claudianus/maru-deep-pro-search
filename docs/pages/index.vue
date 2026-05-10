@@ -9,5 +9,6 @@
   <CodeShowcaseSection />
   <VibeCoderSection />
   <InstallSection id="install" />
+  <ArchitectureSection />
   <ArchitectureDiagramSection />
 </template>

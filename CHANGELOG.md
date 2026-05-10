@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.1] - 2026-05-10
+
+### Changed
+- **Docs from scratch**: README and GitHub Pages completely rewritten
+  - README: 400+ lines → ~100 lines. Core message only.
+  - GitHub Pages: Nuxt replaced with static HTML (`docs/index.html`). No build step.
+- **One-liner install scripts**: `scripts/install.sh` and `scripts/install.ps1`
+  - macOS/Linux: `curl | bash`
+  - Windows: `irm | iex`
+  - Installs package + runs setup wizard in one step
+- **pyproject.toml cleanup**: SPDX license string, fixed URLs, setuptools>=77.0
+
 ## [0.8.0] - 2026-05-10
 
 ### Added

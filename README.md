@@ -119,7 +119,7 @@ Your agent will call `deep_research`, which auto-expands queries, crawls top res
 
 ---
 
-## 7 Search Engines
+## 8 Search Engines
 
 All engines implement the `SearchEngine` ABC and are registered in `SearchEngineRegistry`.
 
@@ -128,6 +128,7 @@ All engines implement the `SearchEngine` ABC and are registered in `SearchEngine
 | **SearXNG** | JSON API | Low | Meta-search — covers Google, Bing, DDG simultaneously. 6 public instances with rotation. |
 | **DuckDuckGo** | HTML scrape | Low | Full HTML interface with fallback selectors. |
 | **DuckDuckGo Lite** | HTML scrape | Low | Lightweight version — fastest, default engine. |
+| **Startpage** | HTML scrape | Low | Google results via privacy proxy. No API key. |
 | **Bing** | HTML scrape | Medium | Direct Microsoft scraping with stealth support. |
 | **Google** | HTML scrape | **High** | Best-effort with StealthyFetcher. Falls back to SearXNG on CAPTCHA. |
 | **Naver** | HTML scrape | Medium | Korean search with dedicated content-type detection for Korean domains. |

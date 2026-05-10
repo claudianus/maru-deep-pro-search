@@ -33,7 +33,8 @@ flowchart TD
     C --> G3[Google]
     C --> G4[Naver]
     C --> G5[Qwant]
-    D & E & F & G2 & G3 & G4 & G5 --> G[Result Deduplicator]
+    C --> G6[Startpage]
+    D & E & F & G2 & G3 & G4 & G5 & G6 --> G[Result Deduplicator]
     G --> H[BM25 Ranker]
     H --> I{"Authority Boost?<br/>+2.0"}
     H --> J{"Freshness?<br/>+1.5"}
@@ -57,6 +58,7 @@ flowchart TD
     style G3 fill:#0f172a,stroke:#475569,color:#94a3b8
     style G4 fill:#0f172a,stroke:#475569,color:#94a3b8
     style G5 fill:#0f172a,stroke:#475569,color:#94a3b8
+    style G6 fill:#0f172a,stroke:#475569,color:#94a3b8
     style N fill:#0f172a,stroke:#475569,color:#94a3b8
     style O fill:#0f172a,stroke:#475569,color:#94a3b8
     style P fill:#0f172a,stroke:#475569,color:#94a3b8

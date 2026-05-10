@@ -71,7 +71,13 @@ src/maru_search/
 ├── engines/               # Search engine implementations + registry
 │   ├── base.py            # SearchEngine ABC, SearchResult/PageContent
 │   ├── registry.py        # SearchEngineRegistry (factory pattern)
-│   └── duckduckgo.py      # DuckDuckGoEngine (SERP + fetch)
+│   ├── duckduckgo.py      # DuckDuckGoEngine (SERP + fetch)
+│   ├── searxng.py         # SearXNGEngine (JSON API + 6-instance failover)
+│   ├── bing.py            # BingEngine (HTML scrape)
+│   ├── google.py          # GoogleEngine (CAPTCHA detection + fallback)
+│   ├── naver.py           # NaverEngine (Korean search)
+│   ├── qwant.py           # QwantEngine (European privacy)
+│   └── startpage.py       # StartpageEngine (Google via privacy proxy)
 ├── extraction/            # Content extraction utilities
 │   ├── code.py            # 21-language detection, API extraction
 │   └── content.py         # truncate_for_llm, headings, token estimation

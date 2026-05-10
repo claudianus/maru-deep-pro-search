@@ -87,5 +87,11 @@ def _register_builtins() -> None:
     except ImportError as exc:
         logger.warning("Could not register Google engine: %s", exc)
 
+    try:
+        from .startpage import StartpageEngine
+        SearchEngineRegistry.register("startpage", StartpageEngine)
+    except ImportError as exc:
+        logger.warning("Could not register Startpage engine: %s", exc)
+
 
 _register_builtins()

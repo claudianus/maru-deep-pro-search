@@ -15,7 +15,8 @@ class TestSearchEngineRegistry:
         assert "bing" in engines
         assert "naver" in engines
         assert "qwant" in engines
-        assert len(engines) >= 6
+        assert "startpage" in engines
+        assert len(engines) >= 7
 
     def test_create_duckduckgo(self):
         engine = SearchEngineRegistry.create("duckduckgo")
@@ -50,8 +51,13 @@ class TestSearchEngineRegistry:
         engine = SearchEngineRegistry.create("google")
         assert engine.name == "google"
 
+    def test_create_startpage(self):
+        engine = SearchEngineRegistry.create("startpage")
+        assert engine.name == "startpage"
+
     def test_is_registered(self):
         assert SearchEngineRegistry.is_registered("searxng")
         assert SearchEngineRegistry.is_registered("bing")
         assert SearchEngineRegistry.is_registered("google")
+        assert SearchEngineRegistry.is_registered("startpage")
         assert not SearchEngineRegistry.is_registered("yahoo")

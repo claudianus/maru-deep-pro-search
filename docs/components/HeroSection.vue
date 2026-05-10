@@ -25,17 +25,22 @@
         </p>
 
         <div class="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <div class="flex w-full max-w-md items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/80 px-4 py-3 font-mono text-sm backdrop-blur">
-            <span class="text-gray-500">$</span>
-            <span class="text-gray-200">pip install maru-deep-pro-search</span>
-            <UButton
-              :icon="copied ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
-              color="gray"
-              variant="ghost"
-              size="xs"
-              class="ml-auto"
-              @click="copyInstall"
-            />
+          <div class="flex w-full max-w-md flex-col gap-2 rounded-lg border border-indigo-500/30 bg-gray-900/80 px-4 py-3 backdrop-blur">
+            <div class="flex items-center gap-2 font-mono text-sm">
+              <span class="text-gray-500">$</span>
+              <span class="text-emerald-400">maru-deep-pro-search setup</span>
+              <UButton
+                :icon="copied ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
+                color="gray"
+                variant="ghost"
+                size="xs"
+                class="ml-auto"
+                @click="copyInstall"
+              />
+            </div>
+            <div class="text-xs text-gray-500">
+              Auto-detects your AI agent · Injects MCP config · Enforces research-first rules
+            </div>
           </div>
         </div>
 
@@ -67,7 +72,7 @@ const { t } = useI18n()
 const copied = ref(false)
 
 function copyInstall() {
-  navigator.clipboard.writeText('pip install maru-deep-pro-search')
+  navigator.clipboard.writeText('pip install maru-deep-pro-search && maru-deep-pro-search setup')
   copied.value = true
   setTimeout(() => copied.value = false, 2000)
 }

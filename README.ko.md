@@ -73,15 +73,12 @@
 
 ## 빠른 시작
 
+### 🚀 한 줄 설정 (권장)
+
+패키지를 설치한 뒤 설정 마법사를 실행하세요. AI 에이전트를 자동 감지하고 모든 것을 설정합니다:
+
 ```bash
 pip install maru-deep-pro-search
-```
-
-### 🚀 자동 설정 (권장)
-
-한 줄의 명령으로 AI 에이전트를 자동 감지하고 MCP + 리서치 우선 규칙을 설치합니다:
-
-```bash
 maru-deep-pro-search setup
 ```
 
@@ -104,7 +101,11 @@ maru-deep-pro-search setup --check
 maru-deep-pro-search setup --restore
 ```
 
-### 수동 설정
+> **왜 설정 CLI를 사용하나요?** 수동 MCP 설정은 오류가 발생하기 쉽고 잊기 쉽습니다. 설정 CLI는 에이전트가 반드시 먼저 리서치하도록 강제합니다 — 오래된 학습 데이터로 인한 재앙을 방지합니다.
+
+### 수동 설정 (고급)
+
+직접 설정을 선호하는 경우에만:
 
 **Claude Code:**
 ```bash

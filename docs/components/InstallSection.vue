@@ -7,21 +7,24 @@
 
       <div class="mx-auto grid max-w-6xl gap-8 lg:grid-cols-3">
         <!-- Auto Setup -->
-        <UCard class="border-gray-800 bg-gray-900/40" :ui="{ body: { base: 'p-6' } }">
-          <div class="mb-4 flex items-center gap-2">
-            <UIcon name="i-heroicons-rocket-launch" class="text-emerald-400" />
-            <h3 class="text-lg font-semibold">{{ $t('install.autoTitle') }}</h3>
+        <UCard class="border-indigo-500/30 bg-indigo-950/10" :ui="{ body: { base: 'p-6' } }">
+          <div class="mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-heroicons-rocket-launch" class="text-emerald-400" />
+              <h3 class="text-lg font-semibold">{{ $t('install.autoTitle') }}</h3>
+            </div>
+            <UBadge color="emerald" variant="subtle" size="sm">Recommended</UBadge>
           </div>
           <p class="mb-4 text-sm text-gray-400">{{ $t('install.autoDesc') }}</p>
           <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
             <div class="flex items-center justify-between">
-              <code class="text-gray-300">maru-deep-pro-search setup</code>
+              <code class="text-emerald-400">maru-deep-pro-search setup</code>
               <UButton
                 :icon="copied.setup ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
                 color="gray"
                 variant="ghost"
                 size="xs"
-                @click="copy('setup', 'maru-deep-pro-search setup')"
+                @click="copy('setup', 'pip install maru-deep-pro-search && maru-deep-pro-search setup')"
               />
             </div>
           </div>
@@ -125,7 +128,7 @@
 </template>
 
 <script setup>
-const copied = reactive({ pip: false, claude: false })
+const copied = reactive({ setup: false, pip: false, claude: false })
 function copy(key, text) {
   navigator.clipboard.writeText(text)
   copied[key] = true

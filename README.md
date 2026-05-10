@@ -73,15 +73,12 @@
 
 ## Quick Start
 
+### 🚀 One-Liner Setup (Recommended)
+
+Install the package, then run the setup wizard. It auto-detects your AI agent and configures everything:
+
 ```bash
 pip install maru-deep-pro-search
-```
-
-### 🚀 Automatic Setup (Recommended)
-
-One command auto-detects your AI agent and installs MCP + research-first rules:
-
-```bash
 maru-deep-pro-search setup
 ```
 
@@ -104,7 +101,11 @@ maru-deep-pro-search setup --check
 maru-deep-pro-search setup --restore
 ```
 
-### Manual Setup
+> **Why use the setup CLI?** Manual MCP config is error-prone and easy to forget. The setup CLI guarantees your agent is forced to research first — no stale training data disasters.
+
+### Manual Setup (Advanced)
+
+Only if you prefer configuring by hand:
 
 **Claude Code:**
 ```bash

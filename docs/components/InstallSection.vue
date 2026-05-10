@@ -16,16 +16,32 @@
             <UBadge color="emerald" variant="subtle" size="sm">Recommended</UBadge>
           </div>
           <p class="mb-4 text-sm text-gray-400">{{ $t('install.autoDesc') }}</p>
-          <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
-            <div class="flex items-center justify-between">
-              <code class="text-emerald-400">maru-deep-pro-search setup</code>
-              <UButton
-                :icon="copied.setup ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
-                color="gray"
-                variant="ghost"
-                size="xs"
-                @click="copy('setup', 'pip install maru-deep-pro-search && maru-deep-pro-search setup')"
-              />
+          <div class="space-y-2">
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Step 1: Install</div>
+            <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
+              <div class="flex items-center justify-between">
+                <code class="text-gray-300">pip install maru-deep-pro-search</code>
+                <UButton
+                  :icon="copied.setup ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
+                  color="gray"
+                  variant="ghost"
+                  size="xs"
+                  @click="copy('setup', 'pip install maru-deep-pro-search && maru-deep-pro-search setup')"
+                />
+              </div>
+            </div>
+            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Step 2: Configure</div>
+            <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
+              <div class="flex items-center justify-between">
+                <code class="text-emerald-400">maru-deep-pro-search setup</code>
+                <UButton
+                  :icon="copied.setup ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
+                  color="gray"
+                  variant="ghost"
+                  size="xs"
+                  @click="copy('setup', 'pip install maru-deep-pro-search && maru-deep-pro-search setup')"
+                />
+              </div>
             </div>
           </div>
           <div class="mt-4 space-y-2 text-sm text-gray-400">
@@ -60,21 +76,7 @@
 
         <!-- Manual -->
         <UCard class="border-gray-800 bg-gray-900/40" :ui="{ body: { base: 'p-6' } }">
-          <h3 class="mb-4 text-lg font-semibold">pip</h3>
-          <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
-            <div class="flex items-center justify-between">
-              <code class="text-gray-300">pip install maru-deep-pro-search</code>
-              <UButton
-                :icon="copied.pip ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
-                color="gray"
-                variant="ghost"
-                size="xs"
-                @click="copy('pip', 'pip install maru-deep-pro-search')"
-              />
-            </div>
-          </div>
-
-          <h3 class="mb-4 mt-8 text-lg font-semibold">Claude Code</h3>
+          <h3 class="mb-4 text-lg font-semibold">Claude Code</h3>
           <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
             <div class="flex items-center justify-between">
               <code class="text-gray-300">claude mcp add maru-deep-pro-search pip:maru-deep-pro-search</code>

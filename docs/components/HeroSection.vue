@@ -28,6 +28,11 @@
           <div class="flex w-full max-w-md flex-col gap-2 rounded-lg border border-indigo-500/30 bg-gray-900/80 px-4 py-3 backdrop-blur">
             <div class="flex items-center gap-2 font-mono text-sm">
               <span class="text-gray-500">$</span>
+              <span class="text-gray-300">pip install</span>
+              <span class="text-emerald-400">maru-deep-pro-search</span>
+            </div>
+            <div class="flex items-center gap-2 font-mono text-sm">
+              <span class="text-gray-500">$</span>
               <span class="text-emerald-400">maru-deep-pro-search setup</span>
               <UButton
                 :icon="copied ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
@@ -39,7 +44,7 @@
               />
             </div>
             <div class="text-xs text-gray-500">
-              Auto-detects your AI agent · Injects MCP config · Enforces research-first rules
+              1. Install → 2. Auto-detects your AI agent · Injects MCP config · Enforces research-first rules
             </div>
           </div>
         </div>

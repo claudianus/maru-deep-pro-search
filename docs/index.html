@@ -7,6 +7,20 @@
     <meta name="description" content="Zero-API-key MCP server for AI search. Scrapes search engines directly and returns cited answers.">
     <link rel="alternate" hreflang="en" href="https://claudianus.github.io/maru-search/">
     <link rel="alternate" hreflang="ko" href="https://claudianus.github.io/maru-search/ko/">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('maru-lang');
+            const path = window.location.pathname;
+            if (saved === 'ko' && !path.includes('/ko/')) {
+                window.location.href = '/maru-search/ko/';
+            } else if (!saved) {
+                const lang = navigator.language || navigator.userLanguage;
+                if (lang && lang.startsWith('ko') && !path.includes('/ko/')) {
+                    window.location.href = '/maru-search/ko/';
+                }
+            }
+        })();
+    </script>
     <style>
         :root { --bg: #0a0a0f; --bg2: #12121a; --text: #e0e0e5; --muted: #888; --accent: #6366f1; --border: #222; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,7 +45,7 @@
     </style>
 </head>
 <body>
-    <div class="lang-switch"><a href="/maru-search/ko/">KO</a></div>
+    <div class="lang-switch"><a href="/maru-search/ko/" onclick="localStorage.setItem('maru-lang','ko')">KO</a></div>
 
     <header>
         <h1>maru-search</h1>

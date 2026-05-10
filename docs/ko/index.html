@@ -7,6 +7,20 @@
     <meta name="description" content="API 키 없이 검색엔진을 직접 스크래핑하고 인출 기반 답변을 제공하는 MCP 서버.">
     <link rel="alternate" hreflang="en" href="https://claudianus.github.io/maru-search/">
     <link rel="alternate" hreflang="ko" href="https://claudianus.github.io/maru-search/ko/">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('maru-lang');
+            const path = window.location.pathname;
+            if (saved === 'en' && path.includes('/ko/')) {
+                window.location.href = '/maru-search/';
+            } else if (!saved) {
+                const lang = navigator.language || navigator.userLanguage;
+                if (lang && !lang.startsWith('ko') && path.includes('/ko/')) {
+                    window.location.href = '/maru-search/';
+                }
+            }
+        })();
+    </script>
     <style>
         :root { --bg: #0a0a0f; --bg2: #12121a; --text: #e0e0e5; --muted: #888; --accent: #6366f1; --border: #222; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,7 +45,7 @@
     </style>
 </head>
 <body>
-    <div class="lang-switch"><a href="/maru-search/">EN</a></div>
+    <div class="lang-switch"><a href="/maru-search/" onclick="localStorage.setItem('maru-lang','en')">EN</a></div>
 
     <header>
         <h1>maru-search</h1>

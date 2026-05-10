@@ -16,6 +16,7 @@
   "dependencies": {
     "@nuxt/ui": "^2.21.0",
     "@nuxtjs/i18n": "^9.1.0",
-    "mermaid": "^11.14.0"
+    "mermaid": "^11.14.0",
+    "shiki": "^4.0.2"
   }
 }

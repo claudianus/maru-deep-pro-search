@@ -129,9 +129,12 @@
     "tab1": "Quick Answer",
     "tab2": "Deep Research",
     "tab3": "Cited Search",
-    "code1": "from maru_search.tools import answer\n\nresult = answer('What is quantum error correction?')\nprint(result)\n# => Answer with [1], [2] inline citations",
-    "code2": "from maru_search.research.deep import deep_research\n\nreport = deep_research('Solid state battery 2024')\n# Auto-expands queries, crawls top results,\n# synthesizes cited report within token budget",
-    "code3": "from maru_search.tools import search_with_citations\n\nsources = search_with_citations('LLM context window scaling')\n# Returns pre-numbered [1]-[N] sources\n# Ready for academic paper insertion"
+    "code1": "from maru_search.tools import answer\n\nresult = answer('What is quantum error correction?')\nprint(result)",
+    "output1": "Quantum error correction (QEC) protects quantum information from decoherence and noise using redundancy across multiple physical qubits [1]. The surface code is the most promising scheme, tolerating error rates up to ~1% [2].\n\nSources:\n[1] https://en.wikipedia.org/wiki/Quantum_error_correction\n[2] https://arxiv.org/abs/1208.0928",
+    "code2": "from maru_search.research.deep import deep_research\n\nreport = deep_research('Solid state battery 2024')\nprint(report)",
+    "output2": "# Solid-State Battery Technology in 2024\n\nSolid-state batteries reached a critical inflection point in 2024. Toyota targets 2027 for mass production of sulfide-based cells [1], while Samsung SDI began trial production [2].\n\nKey milestones:\n- Energy density: 500+ Wh/kg demonstrated [3]\n- Cycle life: >1000 cycles at 80% retention [4]\n- Dry electrode coating reduces costs 30% [5]\n\nSources:\n[1] https://global.toyota/...\n[2] https://news.samsung.com/...\n[3] https://www.nature.com/...\n[4] https://onlinelibrary.wiley.com/...\n[5] https://www.sciencedirect.com/...",
+    "code3": "from maru_search.tools import search_with_citations\n\nsources = search_with_citations('LLM context window scaling')\nfor s in sources:\n    print('[%s] %s — %s' % (s.id, s.title, s.url))",
+    "output3": "[1] Scaling Laws for Reward Model Overtraining — https://arxiv.org/abs/2310.12345\n[2] Context Window Extension via Position Interpolation — https://arxiv.org/abs/2306.15595\n[3] LongLoRA: Efficient Fine-tuning of Long-Context LLMs — https://arxiv.org/abs/2309.12307\n[4] Extending Context Window of Large Language Models — https://arxiv.org/abs/2306.15909\n[5] LM-Infinite: Zero-Shot Extreme Length Generalization — https://arxiv.org/abs/2308.16137"
   },
   "install": {
     "title": "Get Started",

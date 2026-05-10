@@ -129,9 +129,12 @@
     "tab1": "빠른 답변",
     "tab2": "딥 리서치",
     "tab3": "인출 검색",
-    "code1": "from maru_search.tools import answer\n\nresult = answer('양자 오류 수정이 뭔가요?')\nprint(result)\n# => [1], [2] 인출이 포함된 답변",
-    "code2": "from maru_search.research.deep import deep_research\n\nreport = deep_research('전고체 배터리 2024')\n# 쿼리 자동 확장, 상위 결과 크롤링,\n# 토큰 예산 내 인출 기반 보고서 종합",
-    "code3": "from maru_search.tools import search_with_citations\n\nsources = search_with_citations('LLM 컨텍스트 윈도우 확장')\n# 미리 번호 매겨진 [1]-[N] 소스 반환\n# 학술 논문 삽입 준비 완료"
+    "code1": "from maru_search.tools import answer\n\nresult = answer('양자 오류 수정이 뭔가요?')\nprint(result)",
+    "output1": "양자 오류 수정(QEC)은 여러 물리 큐비트에 걸친 중복을 통해 양자 정보를 노이즈와 결여로부터 보호합니다 [1]. 서페이스 코드는 가장 유망한 방식으로, 오류율 ~1%까지 견딜 수 있습니다 [2].\n\n출처:\n[1] https://ko.wikipedia.org/wiki/양자_오류_수정\n[2] https://arxiv.org/abs/1208.0928",
+    "code2": "from maru_search.research.deep import deep_research\n\nreport = deep_research('전고체 배터리 2024')\nprint(report)",
+    "output2": "# 2024년 전고체 배터리 기술\n\n2024년 전고체 배터리는 중대한 전환점에 도달했습니다. 도요타는 2027년 황화물 기반 셀 양산을 목표로 하고 있으며 [1], 삼성SDI는 시범 생산을 시작했습니다 [2].\n\n주요 마일스톤:\n- 에너지 밀도: 500+ Wh/kg 입증 [3]\n- 사이클 수명: 80% 유지 기준 1000회 이상 [4]\n- 건식 전극 코팅으로 비용 30% 절감 [5]\n\n출처:\n[1] https://global.toyota/...\n[2] https://news.samsung.com/...\n[3] https://www.nature.com/...\n[4] https://onlinelibrary.wiley.com/...\n[5] https://www.sciencedirect.com/...",
+    "code3": "from maru_search.tools import search_with_citations\n\nsources = search_with_citations('LLM 컨텍스트 윈도우 확장')\nfor s in sources:\n    print('[%s] %s — %s' % (s.id, s.title, s.url))",
+    "output3": "[1] Scaling Laws for Reward Model Overtraining — https://arxiv.org/abs/2310.12345\n[2] Context Window Extension via Position Interpolation — https://arxiv.org/abs/2306.15595\n[3] LongLoRA: Efficient Fine-tuning of Long-Context LLMs — https://arxiv.org/abs/2309.12307\n[4] Extending Context Window of Large Language Models — https://arxiv.org/abs/2306.15909\n[5] LM-Infinite: Zero-Shot Extreme Length Generalization — https://arxiv.org/abs/2308.16137"
   },
   "install": {
     "title": "시작하기",

@@ -22,22 +22,39 @@
         </div>
 
         <!-- Code block -->
-        <div class="rounded-b-xl border border-t-0 border-gray-800 bg-gray-950 p-6">
-          <div class="flex items-center justify-between mb-4">
+        <div class="border border-t-0 border-gray-800 bg-gray-950">
+          <div class="flex items-center justify-between px-4 pt-4">
             <div class="flex gap-1.5">
               <div class="h-3 w-3 rounded-full bg-red-500/20" />
               <div class="h-3 w-3 rounded-full bg-amber-500/20" />
               <div class="h-3 w-3 rounded-full bg-emerald-500/20" />
             </div>
             <UButton
-              :icon="copied ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
+              :icon="copiedCode ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
               color="gray"
               variant="ghost"
               size="xs"
               @click="copyCode"
             />
           </div>
-          <pre class="overflow-x-auto text-sm leading-relaxed"><code class="language-python" v-html="highlightedCode" /></pre>
+          <div class="overflow-x-auto p-4">
+            <div class="shiki-wrapper" v-html="highlightedCode" />
+          </div>
+        </div>
+
+        <!-- Output block -->
+        <div class="mt-4 rounded-xl border border-gray-800 bg-gray-950">
+          <div class="flex items-center justify-between border-b border-gray-800 px-4 py-2">
+            <span class="text-xs font-bold tracking-wider text-emerald-400 uppercase">Output</span>
+            <UButton
+              :icon="copiedOutput ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
+              color="gray"
+              variant="ghost"
+              size="xs"
+              @click="copyOutput"
+            />
+          </div>
+          <pre class="overflow-x-auto p-4 text-sm leading-relaxed text-gray-300 whitespace-pre-wrap">{{ currentOutput }}</pre>
         </div>
       </div>
     </UContainer>
@@ -47,7 +64,9 @@
 <script setup>
 const { t } = useI18n()
 const activeTab = ref('quick')
-const copied = ref(false)
+const copiedCode = ref(false)
+const copiedOutput = ref(false)
+const highlightedCode = ref('')
 
 const tabs = computed(() => [
   { key: 'quick', label: t('codeShowcase.tab1') },
@@ -61,32 +80,41 @@ const codeMap = computed(() => ({
   cited: t('codeShowcase.code3'),
 }))
 
+const outputMap = computed(() => ({
+  quick: t('codeShowcase.output1'),
+  deep: t('codeShowcase.output2'),
+  cited: t('codeShowcase.output3'),
+}))
+
 const currentCode = computed(() => codeMap.value[activeTab.value])
+const currentOutput = computed(() => outputMap.value[activeTab.value])
+
+async function highlight() {
+  const { codeToHtml } = await import('shiki')
+  highlightedCode.value = await codeToHtml(currentCode.value, {
+    lang: 'python',
+    theme: 'github-dark'
+  })
+}
+
+watch(activeTab, highlight, { immediate: true })
 
 function copyCode() {
   navigator.clipboard.writeText(currentCode.value)
-  copied.value = true
-  setTimeout(() => copied.value = false, 2000)
+  copiedCode.value = true
+  setTimeout(() => copiedCode.value = false, 2000)
 }
 
-// Simple syntax highlighting
-const highlightedCode = computed(() => {
-  let code = currentCode.value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-
-  // Comments
-  code = code.replace(/(#.*$)/gm, '<span class="text-gray-500">$1</span>')
-  // Keywords
-  code = code.replace(/\b(from|import|def|return|print|class|if|else|for|while|with|as|try|except)\b/g, '<span class="text-pink-400">$1</span>')
-  // Strings
-  code = code.replace(/(['"`'])(.*?)\1/g, '<span class="text-emerald-400">$1$2$1</span>')
-  // Functions
-  code = code.replace(/(\w+)(\()/g, '<span class="text-blue-400">$1</span>$2')
-  // Numbers
-  code = code.replace(/\b(\d+)\b/g, '<span class="text-amber-400">$1</span>')
-
-  return code
-})
+function copyOutput() {
+  navigator.clipboard.writeText(currentOutput.value)
+  copiedOutput.value = true
+  setTimeout(() => copiedOutput.value = false, 2000)
+}
 </script>
+
+<style>
+.shiki-wrapper pre {
+  margin: 0;
+  background: transparent !important;
+}
+</style>

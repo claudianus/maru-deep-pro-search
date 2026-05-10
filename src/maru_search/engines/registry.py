@@ -81,5 +81,11 @@ def _register_builtins() -> None:
     except ImportError as exc:
         logger.warning("Could not register Qwant engine: %s", exc)
 
+    try:
+        from .google import GoogleEngine
+        SearchEngineRegistry.register("google", GoogleEngine)
+    except ImportError as exc:
+        logger.warning("Could not register Google engine: %s", exc)
+
 
 _register_builtins()

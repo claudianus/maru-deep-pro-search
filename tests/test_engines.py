@@ -46,7 +46,12 @@ class TestSearchEngineRegistry:
         with pytest.raises(ValueError, match="Unknown engine"):
             SearchEngineRegistry.create("nonexistent")
 
+    def test_create_google(self):
+        engine = SearchEngineRegistry.create("google")
+        assert engine.name == "google"
+
     def test_is_registered(self):
         assert SearchEngineRegistry.is_registered("searxng")
         assert SearchEngineRegistry.is_registered("bing")
-        assert not SearchEngineRegistry.is_registered("google")
+        assert SearchEngineRegistry.is_registered("google")
+        assert not SearchEngineRegistry.is_registered("yahoo")

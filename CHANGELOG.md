@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.2] - 2026-05-10
+
+### Added
+- **TTL Cache Layer**: In-memory LRU cache to eliminate redundant scraping
+  - `utils/cache.py`: `TTLCache` with configurable maxsize and TTL
+  - Search cache: 200 entries, 5 min TTL (web_search, deep_research, answer)
+  - Fetch cache: 100 entries, 10 min TTL (fetch_page, fetch_bulk)
+  - Cache keys include all parameters for precise invalidation
+- **Smart Engine Selection + Fuzzy Dedupe**: Reduce token waste from duplicate results
+  - Engine quality metadata: `quality_tier`, `typical_latency_ms`, `reliability_score`
+  - `SearchEngineRegistry.recommend_engines()`: Auto-selects top 2-3 engines
+  - Multi-engine `deep_research`: Primary engine for depth, secondary for breadth
+  - Jaccard similarity fuzzy dedupe on titles/snippets (threshold: 0.72)
+- **Tests**: 147 passing (was 138), 9 new cache tests + 3 fuzzy dedupe tests
+
 ## [0.6.1] - 2026-05-10
 
 ### Added

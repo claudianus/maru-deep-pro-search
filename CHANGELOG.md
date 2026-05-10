@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-05-10
+
+### Added
+- **Zero Trust Prompt Injection Defense**: Complete rewrite of sanitize module
+  - **Metadata tagging + Agent delegation model** (instead of silent censorship)
+  - `analyze_content()` → returns transparent `RiskReport` with:
+    - Risk level: LOW / MEDIUM / HIGH / CRITICAL
+    - Warnings: zero-width chars, chat tokens, mixed scripts, signatures
+    - 10-language attack signature DB (en, ko, zh, ja, ru, es, fr, de, ar, pt)
+    - Cyrillic lookalike normalization
+    - Optional embedding-based detection via sentence-transformers
+  - `wrap_external_content()` → wraps content in structural boundaries:
+    - `[EXTERNAL CONTENT]` header with source URL
+    - Risk level emoji indicator
+    - Sanitization report
+    - **SECURITY REMINDER FOR AGENT**: explicit warning not to trust the content
+    - `[END EXTERNAL CONTENT]` footer
+  - Applied to all tool outputs with actual source URLs
+  - MCP prompt `always_research_first` updated with security protocol section
+
+### Changed
+- README.md: Security & Privacy table updated
+- AGENTS.md: Architecture decisions updated with Zero Trust model
+- `tools.py`: All tools now pass real source URLs to `wrap_external_content()`
+
 ## [0.6.3] - 2026-05-10
 
 ### Added

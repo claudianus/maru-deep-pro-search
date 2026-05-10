@@ -15,5 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
+      - run: rm -rf dist/
       - run: uv build
       - run: uv publish --trusted-publishing always

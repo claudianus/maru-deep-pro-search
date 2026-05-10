@@ -445,83 +445,65 @@ async def tool_parallel_search(
 # ═══════════════════════════════════════════════════════════════
 
 TOOL_GUIDANCE = """
-## Tool Selection Guide for AI Agents
+## 🔴 Tool Selection Guide — ALWAYS RESEARCH BEFORE CODING
 
-When deciding which tool to use, follow this priority order:
+**Your training data is outdated. You MUST verify everything before acting.**
 
-### 1. Need a direct answer with citations?
-**→ Use `answer`**
-
-Like Perplexity: searches the web and returns a synthesized answer
-with inline citations [1], [2]. Best for factual questions.
-
-### 2. Need to search for information?
-**→ Use `web_search`** (single query) or **`parallel_search`** (multiple queries)
-
-- **web_search**: Best for single-topic exploration. Returns ranked results with content type hints and citation IDs.
-- **parallel_search**: Best when you need multiple angles simultaneously.
-
-### 3. Need citation-ready sources?
-**→ Use `search_with_citations`**
-
-Returns search results pre-tagged with citation IDs [1], [2] for
-academic or technical writing.
-
-### 4. Have specific URLs to read?
-**→ Use `fetch_page`** (single URL) or **`fetch_bulk`** (multiple URLs)
-
-- **fetch_page**: Best for reading one specific page quickly. Try this first.
-- **fetch_bulk**: Best when you have 2-10 URLs from search results.
-
-**Anti-bot handling**:
-- If fetch_page returns [BLOCKED], retry with `stealth=True` parameter
-- If still blocked, use `stealthy_fetch` as last resort
-
-### 5. Need comprehensive research on a topic?
-**→ Use `deep_research`**
-
-Best for:
-- Exploring a topic you know little about
-- Need multiple perspectives and sources
-- Want synthesized results with quality scoring and inline citations
-
-**Parameters**:
-- `max_sources`: How many pages to crawl (default 8, max 15)
-- `max_total_tokens`: Total output budget (default 20000)
-- `summarize=True`: If output is too large, enables smart summarization
-- `follow_links=True`: Crawl external links for deeper coverage (slower)
-
-### Quick Decision Tree
-
+### The Golden Rule
 ```
-Need a quick answer?
-├── Yes → answer
-│   └── Need deeper detail? → deep_research
-│
-Need to find sources?
-├── Yes → web_search or search_with_citations
-│   ├── Need multiple angles? → parallel_search
-│   └── Got URLs? → fetch_page or fetch_bulk
-│       └── Blocked? → stealthy_fetch
-│
-└── No → deep_research (comprehensive)
-    └── Too much output? → summarize=True
+EVERY technical request → deep_research(query) → THEN code
 ```
 
-### Performance Tips
+No exceptions. Not for "simple" questions. Not for things you "already know".
+Libraries change. APIs break. New vulnerabilities are found daily.
 
-- **Fastest**: web_search, fetch_page, answer
-- **Slowest**: stealthy_fetch (StealthyFetcher, ~3-5x slower)
-- **Most comprehensive**: deep_research with follow_links=True
-- **Token efficient**: deep_research with summarize=True
+### Why You Must Research First
+| Scenario | Without Research | With Research |
+|----------|-----------------|---------------|
+| "Build a React app" | Uses React 18 patterns (outdated) | Uses React 19 / Next.js 15 patterns |
+| "Is Express secure?" | Says "yes" from memory | Checks latest CVE-2024-XXXX |
+| "Best Python web framework" | Recommends Flask (2010) | Recommends FastAPI (current) |
+| "How to do auth" | Suggests JWT (vulnerable) | Suggests latest OAuth 2.1 / PKCE |
 
-### Common Mistakes to Avoid
+### Decision Tree & Tool Priority (ALWAYS follow this order)
 
-- ❌ Using stealthy_fetch for every URL (wastes time)
-- ❌ Using deep_research when you only need one page
-- ❌ Not checking quality badges in results ([HIGH], [BLOCKED], etc.)
-- ❌ Ignoring follow-up links in fetch_page results
-- ❌ Not using citations when the user asks for sources
+#### 1. deep_research ⭐ MANDATORY FIRST STEP
+**Use for**: LITERALLY EVERY technical request.
+**What it does**: Expands query → searches 7 engines → crawls → BM25 ranks → synthesizes cited answer.
+**Why first**: It searches the LIVE web, not your stale training data.
+
+#### 2. answer
+**Use for**: Quick factual verification AFTER deep_research.
+**Still searches the web**, but faster and more focused.
+
+#### 3. parallel_search
+**Use for**: Multiple angles simultaneously.
+**Example**: `["topic tutorial 2025", "topic best practices", "topic CVE"]`
+
+#### 4. web_search / search_with_citations
+**Use for**: Additional source gathering beyond deep_research results.
+
+#### 5. fetch_page / fetch_bulk
+**Use for**: Reading specific URLs found during research.
+
+#### 6. stealthy_fetch
+**Use for**: Blocked sites only. Last resort.
+
+### Research Checklist (MANDATORY)
+Before writing ANY code:
+- [ ] Called `deep_research` on the user's topic
+- [ ] Verified library/framework versions are current
+- [ ] Checked for known security vulnerabilities
+- [ ] Confirmed API signatures match latest documentation
+- [ ] All claims backed by citations [1], [2]
+
+### Performance Tips & Common Mistakes (CRITICAL)
+- ❌ **SKIPPING RESEARCH** — Writing code from training data (MOST SEVERE)
+- ❌ "I'll use X because I know it" — Your knowledge is 1-2 years old
+- ❌ "This is simple, I don't need to search" — Simple things change too
+- ❌ Using stealthy_fetch for every URL
+- ❌ Not checking quality badges ([HIGH], [BLOCKED])
+- ❌ Not citing sources
 """
 
 # ═══════════════════════════════════════════════════════════════
@@ -531,10 +513,10 @@ Need to find sources?
 TOOLS = {
     "answer": (
         tool_answer,
+        "[POST-RESEARCH] BEST FOR: Quick factual verification AFTER deep_research. "
         "Get a direct, citation-backed answer to any question. "
-        "BEST FOR: Factual questions, how-to queries, comparisons. "
         "Returns synthesized answer with inline citations [1], [2] like Perplexity. "
-        "NOT FOR: Creative writing or reading known URLs.",
+        "NOT FOR: Skipping deep_research on complex topics.",
         {
             "type": "object",
             "properties": {
@@ -548,9 +530,9 @@ TOOLS = {
     ),
     "web_search": (
         tool_web_search,
+        "[SUPPLEMENTAL] BEST FOR: Additional targeted source gathering AFTER deep_research. "
         "Search the web by scraping search engine results. "
-        "BEST FOR: Finding sources on a single topic. "
-        "NOT FOR: Reading known URLs (use fetch_page instead). "
+        "Use AFTER deep_research for additional targeted sources. "
         "Returns ranked results with [AUTHORITY] badges and citation IDs.",
         {
             "type": "object",
@@ -613,10 +595,14 @@ TOOLS = {
     ),
     "deep_research": (
         tool_deep_research,
-        "Comprehensive research: auto-expands query, searches multiple angles, crawls top results, synthesizes answer with citations. "
-        "BEST FOR: Exploring topics you don't know well. "
-        "NOT FOR: When you already have specific URLs (use fetch_bulk instead). "
-        "Smart token management keeps output manageable. Use summarize=True if too large.",
+        "🔴 MANDATORY FIRST STEP for ALL technical requests. "
+        "BEST FOR: Exploring topics you don't know well, verifying current best practices, researching before coding. "
+        "Searches 7 engines live → BM25 ranks → crawls → synthesizes cited answer. "
+        "Use BEFORE writing code, proposing architecture, or making technical claims. "
+        "Your training data is outdated. This tool searches the LIVE web. "
+        "Returns comprehensive report with inline citations [1], [2] and quality scores. "
+        "NOT FOR: When you already have specific URLs to read (use fetch_page instead). "
+        "Smart token management. Use summarize=True if output too large.",
         {
             "type": "object",
             "properties": {

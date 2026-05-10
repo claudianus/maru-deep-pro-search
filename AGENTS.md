@@ -105,3 +105,82 @@ pytest tests/ -v
 6. **Engine registry pattern** — `SearchEngineRegistry` enables multi-engine support (all free scrapers)
 7. **BM25 + metadata ranking** — Perplexity-level result quality using only local computation
 8. **Citation-native output** — All results include citation IDs [1], [2] without external services
+9. **Research-first enforcement** — MCP prompts, tool descriptions, and TOOL_GUIDANCE are all designed to FORCE the agent to research before coding. See below.
+
+## Forcing Agents to Research Before Coding
+
+The #1 problem with AI coding agents: they rely on stale training data instead of live web search. `maru-search` solves this at the MCP server level through three enforcement mechanisms:
+
+### 1. MCP Prompts (Server-Level)
+
+The server exposes 4 prompts via `prompts/list` and `prompts/get`:
+
+| Prompt | Purpose |
+|--------|---------|
+| `always_research_first` | 🔴 **MANDATORY protocol** — Forces the agent to call `deep_research` before ANY technical decision |
+| `tool_selection_guide` | Updated to emphasize `deep_research` as the mandatory first step |
+| `anti_bot_strategy` | Escalation ladder for blocked sites |
+| `research_workflow` | Phase 0 = mandatory `deep_research` before coding |
+
+**How it works:** MCP clients (Claude Desktop, Claude Code, etc.) that support prompt resources will load these prompts into context. The `always_research_first` prompt uses explicit ALL-CAPS rules like "NEVER write code based solely on training data".
+
+### 2. Tool Descriptions (LLM-Level)
+
+The `deep_research` tool description is written to maximize the LLM's probability of calling it first:
+
+```
+🔴 MANDATORY FIRST STEP for ALL technical requests.
+Searches 7 engines live → BM25 ranks → crawls → synthesizes cited answer.
+Use BEFORE writing code, proposing architecture, or making technical claims.
+Your training data is outdated. This tool searches the LIVE web.
+```
+
+Other tools are tagged `[POST-RESEARCH]` or `[SUPPLEMENTAL]` to signal they are secondary.
+
+### 3. TOOL_GUIDANCE (Context-Level)
+
+The `TOOL_GUIDANCE` string injected into tool context includes:
+- **Rule Zero**: "NEVER write code based solely on training data"
+- **Golden Rule**: `EVERY technical request → deep_research(query) → THEN code`
+- **Research Checklist**: Mandatory checkboxes before writing code
+- **Violation Examples**: Shows what happens when agents skip research
+
+### Agent-Specific Configuration
+
+For agents that support custom system prompts, add this to force research-first behavior:
+
+**Claude Desktop / Claude Code:**
+Add to `claude_desktop_config.json` MCP settings or use the `/mcp` prompt.
+
+**Cursor / VS Code / Windsurf:**
+Add to `.cursorrules` or agent settings:
+```
+BEFORE writing any code or making technical recommendations,
+you MUST call the maru-search deep_research tool to verify
+all library versions, APIs, and best practices are current.
+Your training data is outdated. Always research first.
+```
+
+**Kimi Code CLI:**
+Create `~/.kimi/agents/research-first.yaml`:
+```yaml
+version: 1
+agent:
+  extend: default
+  name: research-first
+  system_prompt_path: ./research-prompt.md
+```
+
+With `research-prompt.md`:
+```markdown
+# Research-First Agent
+
+For EVERY user request — no matter how simple — follow:
+1. Call deep_research(query) from maru-search MCP
+2. Verify all information is current
+3. THEN write code or answer
+
+Your training data has a cutoff date. The web does not.
+```
+
+Then run: `kimi --agent-file ~/.kimi/agents/research-first.yaml`

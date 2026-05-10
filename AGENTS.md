@@ -1,4 +1,4 @@
-# Agent Instructions for maru-search
+# Agent Instructions for maru-deep-pro-search
 
 > **CRITICAL REMINDER**: PyPI deployment is handled **automatically by GitHub Actions**. Do NOT attempt manual PyPI uploads via `twine`.
 
@@ -6,11 +6,11 @@
 
 ### PyPI Publishing (AUTOMATED)
 
-The project uses **GitHub Actions** with **trusted publishing** to deploy to PyPI automatically:
+The project uses **GitHub Actions** to deploy to PyPI automatically:
 
 - **Trigger**: Push a git tag starting with `v` (e.g., `v0.5.0`)
 - **Workflow**: `.github/workflows/publish.yml`
-- **Method**: Trusted publishing (no API tokens needed)
+- **Method**: Uses `PYPI_API_TOKEN` secret if available, falls back to trusted publishing
 
 **To release a new version:**
 
@@ -29,19 +29,18 @@ git push origin v0.5.0
 **What happens next:**
 1. GitHub Actions workflow `publish.yml` triggers automatically
 2. Builds sdist and wheel with `uv build`
-3. Publishes to PyPI with `uv publish --trusted-publishing always`
-4. Package appears on https://pypi.org/project/maru-search/
+3. Publishes to PyPI with `uv publish` (token or trusted publishing)
+4. Package appears on https://pypi.org/project/maru-deep-pro-search/
 
 ### DO NOT
 
 - ❌ Run `twine upload` manually
-- ❌ Store PyPI API tokens locally
-- ❌ Create `.pypirc` files
+- ❌ Run `twine upload` manually
 - ❌ Attempt direct uploads from local machine
 
 ### GitHub Pages Deployment
 
-GitHub Pages is automatically deployed from the `docs/` directory on every push to `main`.
+GitHub Pages is automatically deployed from the `docs/` directory on every push to `main`. The site is a single static HTML file (`docs/index.html`) — no build step needed.
 
 ## Version Bump Checklist
 
@@ -116,7 +115,7 @@ pytest tests/ -v
 
 ## Forcing Agents to Research Before Coding
 
-The #1 problem with AI coding agents: they rely on stale training data instead of live web search. `maru-search` solves this at the MCP server level through three enforcement mechanisms:
+The #1 problem with AI coding agents: they rely on stale training data instead of live web search. `maru-deep-pro-search` solves this at the MCP server level through three enforcement mechanisms:
 
 ### 1. MCP Prompts (Server-Level)
 
@@ -163,7 +162,7 @@ Add to `claude_desktop_config.json` MCP settings or use the `/mcp` prompt.
 Add to `.cursorrules` or agent settings:
 ```
 BEFORE writing any code or making technical recommendations,
-you MUST call the maru-search deep_research tool to verify
+you MUST call the maru-deep-pro-search deep_research tool to verify
 all library versions, APIs, and best practices are current.
 Your training data is outdated. Always research first.
 ```
@@ -183,7 +182,7 @@ With `research-prompt.md`:
 # Research-First Agent
 
 For EVERY user request — no matter how simple — follow:
-1. Call deep_research(query) from maru-search MCP
+1. Call deep_research(query) from maru-deep-pro-search MCP
 2. Verify all information is current
 3. THEN write code or answer
 

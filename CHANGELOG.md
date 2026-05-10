@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-05-10
+
+### Added
+- **Research-First Enforcement**: MCP prompts, tool descriptions, and TOOL_GUIDANCE designed to FORCE agents to research before coding
+  - `always_research_first` MCP prompt: MANDATORY protocol with Rule Zero, The Law, Research Checklist
+  - Enhanced `deep_research` tool description: "🔴 MANDATORY FIRST STEP for ALL technical requests"
+  - Strengthened `TOOL_GUIDANCE`: "NEVER write code based solely on training data"
+- **4th MCP Prompt**: `always_research_first` joins existing `tool_selection_guide`, `anti_bot_strategy`, `research_workflow`
+- **Documentation**:
+  - README.md: Agent Configuration section with per-client setup (Claude Code, Cursor, Kimi CLI)
+  - README.md: Comparison table (maru-search vs Perplexity API vs SerpAPI vs Google Custom Search)
+  - README.md: Real-World Usage / Vibe Coder scenarios section
+  - README.md: Security & Privacy comparison table
+  - AGENTS.md: "Forcing Agents to Research Before Coding" section with 3 enforcement mechanisms
+- **GitHub Pages**:
+  - `docs/public/readme.html`: index.html copy with auto-generation comment
+  - `docs/public/404.html`: SPA fallback with redirect to `/maru-search/`
+
+### Changed
+- `tools.py`: TOOL_GUIDANCE rewritten for aggressive research-first behavior
+- `tools.py`: All tool descriptions tagged with `[POST-RESEARCH]`, `[SUPPLEMENTAL]`, `[MANDATORY FIRST STEP]`
+- `server.py`: Prompt count 3 → 4
+- README.md: Architecture table updated (3 prompts → 4 prompts)
+- Tests: All 134 tests passing (added tool guidance assertions)
+
+## [0.5.2] - 2026-05-10
+
+### Changed
+- docs: Remove AI slop, update README and GitHub Pages content
+- docs: Fix Korean wording ("100% 묣" → "100% 공짜")
+- docs: Add Korean to README, auto language detection on GitHub Pages
+
+## [0.5.1] - 2026-05-10
+
+### Changed
+- Lower Python requirement to >=3.9 by replacing PEP 604 union types with Optional
+
 ## [0.5.0] - 2026-05-10
 
 ### Added

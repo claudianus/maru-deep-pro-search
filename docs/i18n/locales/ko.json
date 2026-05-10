@@ -26,10 +26,10 @@
     "subtitle": "모든 기능이 로컬에서 동작합니다. 클라우드 LLM 없음. 유료 검색 API 없음."
   },
   "comparison": {
-    "title": "maru-search가 압도하는 이유",
+    "title": "maru-deep-pro-search가 압도하는 이유",
     "subtitle": "검색 래퍼가 아닌, 완전한 리서치 엔진입니다.",
     "feature": "기능",
-    "us": "maru-search",
+    "us": "maru-deep-pro-search",
     "brave": "Brave Search MCP",
     "perplexity": "Perplexity MCP",
     "others": "기본 스크래퍼",
@@ -85,7 +85,7 @@
     "whyDesc": "BM25는 콘텐츠 밀도를 점수화하고, 권위 도메인은 +2.0, 신선한 페이지는 +1.5, 코드 중심 페이지는 +1.0을 부여합니다. 검색엔진은 페이지 콘텐츠에 접근할 수 없어 이를 할 수 없습니다."
   },
   "features": {
-    "title": "왜 maru-search인가?",
+    "title": "왜 maru-deep-pro-search인가?",
     "free": {
       "title": "100% 공짜",
       "desc": "OpenAI, Google API, Bing API 없음. 오직 직접 스크래핑만 사용."
@@ -139,7 +139,7 @@
   "install": {
     "title": "시작하기",
     "pip": "pip install maru-deep-pro-search",
-    "claude": "claude mcp add maru-deep-pro-search pip:maru-search",
+    "claude": "claude mcp add maru-deep-pro-search pip:maru-deep-pro-search",
     "config": "MCP 설정",
     "env": "환경 변수"
   },

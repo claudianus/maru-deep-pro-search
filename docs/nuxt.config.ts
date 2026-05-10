@@ -6,15 +6,15 @@ export default defineNuxtConfig({
     fallback: 'dark',
   },
   app: {
-    baseURL: '/maru-search/',
+    baseURL: '/maru-deep-pro-search/',
     head: {
-      title: 'maru-search',
+      title: 'maru-deep-pro-search',
       meta: [
         { name: 'description', content: 'Universal AI search MCP server. Zero API keys.' },
         { name: 'theme-color', content: '#0a0a0f' },
       ],
       link: [
-        { rel: 'icon', type: 'image/svg+xml', href: '/maru-search/favicon.svg' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/maru-deep-pro-search/favicon.svg' },
       ],
     },
   },

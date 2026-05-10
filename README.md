@@ -8,11 +8,11 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/maru-search/"><img src="https://img.shields.io/pypi/v/maru-search?style=flat-square&color=blue" alt="PyPI"></a>
-  <a href="https://pypi.org/project/maru-search/"><img src="https://img.shields.io/pypi/dm/maru-search?style=flat-square&color=blue" alt="Downloads"></a>
+  <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/v/maru-search?style=flat-square&color=blue" alt="PyPI"></a>
+  <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/dm/maru-search?style=flat-square&color=blue" alt="Downloads"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search/actions"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/publish.yml?style=flat-square&label=CI" alt="CI"></a>
-  <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/tests/"><img src="https://img.shields.io/badge/tests-134%20passing-brightgreen?style=flat-square" alt="Tests"></a>
-  <a href="https://pypi.org/project/maru-search/"><img src="https://img.shields.io/pypi/pyversions/maru-search?style=flat-square" alt="Python"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/tests/"><img src="https://img.shields.io/badge/tests-174%20passing-brightgreen?style=flat-square" alt="Tests"></a>
+  <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/pyversions/maru-search?style=flat-square" alt="Python"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search"><img src="https://img.shields.io/github/stars/claudianus/maru-deep-pro-search?style=flat-square&color=yellow" alt="Stars"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search"><img src="https://img.shields.io/github/forks/claudianus/maru-deep-pro-search?style=flat-square&color=orange" alt="Forks"></a>
@@ -20,8 +20,8 @@
 </p>
 
 <p align="center">
-  <a href="https://claudianus.github.io/maru-search/">🌐 Website</a> ·
-  <a href="https://pypi.org/project/maru-search/">📦 PyPI</a> ·
+  <a href="https://claudianus.github.io/maru-deep-pro-search/">🌐 Website</a> ·
+  <a href="https://pypi.org/project/maru-deep-pro-search/">📦 PyPI</a> ·
   <a href="https://github.com/claudianus/maru-deep-pro-search">💻 GitHub</a>
 </p>
 
@@ -74,14 +74,14 @@ pip install maru-deep-pro-search
 
 **Claude Code:**
 ```bash
-claude mcp add maru-deep-pro-search pip:maru-search
+claude mcp add maru-deep-pro-search pip:maru-deep-pro-search
 ```
 
 **Cursor / VS Code / Windsurf:**
 ```json
 {
   "mcpServers": {
-    "maru-search": {
+    "maru-deep-pro-search": {
       "command": "python3",
       "args": ["-m", "maru_deep_pro_search.server"]
     }
@@ -277,14 +277,14 @@ Injected into every tool context with:
 
 **Claude Code:**
 ```bash
-claude mcp add maru-deep-pro-search pip:maru-search
+claude mcp add maru-deep-pro-search pip:maru-deep-pro-search
 # The always_research_first prompt auto-injects
 ```
 
 **Cursor / VS Code / Windsurf:**
 Add to `.cursorrules` or agent settings:
 ```
-BEFORE writing any code, you MUST call the maru-search deep_research
+BEFORE writing any code, you MUST call the maru-deep-pro-search deep_research
 tool to verify all library versions, APIs, and best practices are current.
 Your training data is outdated. Always research first.
 ```
@@ -304,7 +304,7 @@ agent:
 
 ## Comparison
 
-| Feature | maru-search | Perplexity API | SerpAPI | Google Custom Search |
+| Feature | maru-deep-pro-search | Perplexity API | SerpAPI | Google Custom Search |
 |---------|------------|----------------|---------|---------------------|
 | **Cost** | Free | $5/1K requests | $50+/mo | $5/1K queries |
 | **API keys** | None required | Required | Required | Required |
@@ -353,7 +353,7 @@ All environment variables are optional:
 pytest tests/ -v
 ```
 
-**134 tests**, all passing. Coverage includes:
+**174 tests**, all passing. Coverage includes:
 - Search engine registry & multi-engine creation
 - BM25 ranking + cross-engine merge
 - Deep research token budget enforcement

@@ -29,7 +29,7 @@
     "title": "Why maru-search dominates",
     "subtitle": "Not just another search wrapper. A full research engine.",
     "feature": "Feature",
-    "us": "maru-search",
+    "us": "maru-deep-pro-search",
     "brave": "Brave Search MCP",
     "perplexity": "Perplexity MCP",
     "others": "Basic Scrapers",
@@ -85,7 +85,7 @@
     "whyDesc": "BM25 scores content density, authority domains get +2.0, fresh pages +1.5, code-heavy pages +1.0. Search engines can't do this without access to page content."
   },
   "features": {
-    "title": "Why maru-search?",
+    "title": "Why maru-deep-pro-search?",
     "free": {
       "title": "100% Free",
       "desc": "No OpenAI, Google API, Bing API. Only direct scraping."
@@ -139,7 +139,7 @@
   "install": {
     "title": "Get Started",
     "pip": "pip install maru-deep-pro-search",
-    "claude": "claude mcp add maru-deep-pro-search pip:maru-search",
+    "claude": "claude mcp add maru-deep-pro-search pip:maru-deep-pro-search",
     "config": "MCP Config",
     "env": "Environment Variables"
   },

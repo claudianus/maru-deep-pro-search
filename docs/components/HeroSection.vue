@@ -27,7 +27,7 @@
         <div class="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <div class="flex w-full max-w-md items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/80 px-4 py-3 font-mono text-sm backdrop-blur">
             <span class="text-gray-500">$</span>
-            <span class="text-gray-200">pip install maru-search</span>
+            <span class="text-gray-200">pip install maru-deep-pro-search</span>
             <UButton
               :icon="copied ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
               color="gray"
@@ -67,7 +67,7 @@ const { t } = useI18n()
 const copied = ref(false)
 
 function copyInstall() {
-  navigator.clipboard.writeText('pip install maru-search')
+  navigator.clipboard.writeText('pip install maru-deep-pro-search')
   copied.value = true
   setTimeout(() => copied.value = false, 2000)
 }

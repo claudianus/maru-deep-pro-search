@@ -10,13 +10,13 @@
           <h3 class="mb-4 text-lg font-semibold">pip</h3>
           <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
             <div class="flex items-center justify-between">
-              <code class="text-gray-300">pip install maru-search</code>
+              <code class="text-gray-300">pip install maru-deep-pro-search</code>
               <UButton
                 :icon="copied.pip ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
                 color="gray"
                 variant="ghost"
                 size="xs"
-                @click="copy('pip', 'pip install maru-search')"
+                @click="copy('pip', 'pip install maru-deep-pro-search')"
               />
             </div>
           </div>
@@ -41,11 +41,11 @@
           <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm leading-relaxed text-gray-300">
             <pre>{
   "mcpServers": {
-    "maru-search": {
+    "maru-deep-pro-search": {
       "command": "python3",
       "args": [
         "-m",
-        "maru_search.server"
+        "maru_deep_pro_search.server"
       ]
     }
   }

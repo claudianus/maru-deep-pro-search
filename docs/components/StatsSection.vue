@@ -30,6 +30,6 @@ const stats = computed(() => [
   { value: '0', label: t('stats.apiKeys') },
   { value: '8', label: t('stats.tools') },
   { value: '21', label: t('stats.languages') },
-  { value: '124', label: t('stats.tests') },
+  { value: '174', label: t('stats.tests') },
 ])
 </script>

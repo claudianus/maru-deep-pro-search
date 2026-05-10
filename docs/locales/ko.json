@@ -1,0 +1,61 @@
+{
+  "nav": {
+    "home": "Home",
+    "ko": "한국어"
+  },
+  "hero": {
+    "title": "범용 AI 검색 MCP",
+    "subtitle": "API 키 없이 검색엔진을 직접 스크래핑하고 인출 기반 답변을 반환합니다. 모든 MCP 클라이언트를 지원합니다.",
+    "install": "pip install maru-search",
+    "copy": "복사",
+    "copied": "복사 완료!",
+    "github": "GitHub",
+    "pypi": "PyPI"
+  },
+  "features": {
+    "title": "왜 maru-search인가?",
+    "free": {
+      "title": "100% 묣은",
+      "desc": "OpenAI, Google API, Bing API 없음. 오직 직접 스크래핑만 사용."
+    },
+    "citations": {
+      "title": "인출 기반",
+      "desc": "모든 결과에 [1], [2] ID 부여. LLM이 정확히 출처를 인용할 수 있음."
+    },
+    "multi": {
+      "title": "다중 엔진",
+      "desc": "SearchEngineRegistry로 새 스크래퍼 추가가 간단함."
+    },
+    "ranking": {
+      "title": "BM25 순위",
+      "desc": "로컬 관련성 점수 + 권위도/최신성 메타데이터."
+    },
+    "code": {
+      "title": "코드 인식",
+      "desc": "21개 언어 감지, API 시그니처 추출, 코드-텍스트 비율 측정."
+    }
+  },
+  "tools": {
+    "title": "8개 도구",
+    "desc": "빠른 답변부터 심층 리서치까지.",
+    "answer": "질문에 대한 인출이 포함된 직접 답변",
+    "web_search": "검색엔진 스크래핑, 인출 ID 포함 순위 결과",
+    "search_with_citations": "학술/기술 문서 작성용 사전 번호 인출 검색",
+    "fetch_page": "단일 URL 콘텐츠 추출",
+    "fetch_bulk": "다중 URL 병렬 페치",
+    "deep_research": "쿼리 자동 확장, 상위 결과 크롤링, 인출 기반 종합",
+    "stealthy_fetch": "보호된 사이트용 안티봇 우회",
+    "parallel_search": "다중 검색 동시 실행"
+  },
+  "install": {
+    "title": "시작하기",
+    "pip": "pip install maru-search",
+    "claude": "claude mcp add maru-search pip:maru-search",
+    "config": "MCP 설정",
+    "env": "환경 변수"
+  },
+  "arch": {
+    "title": "아키텍처",
+    "desc": "깔끔하고, 모듈화되어 있으며, 확장 가능합니다."
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "nav": {
+    "home": "Home",
+    "ko": "한국어"
+  },
+  "hero": {
+    "title": "Universal AI Search MCP",
+    "subtitle": "Zero API keys. Scrapes search engines directly and returns cited answers. Built for any MCP client.",
+    "install": "pip install maru-search",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "github": "GitHub",
+    "pypi": "PyPI"
+  },
+  "features": {
+    "title": "Why maru-search?",
+    "free": {
+      "title": "100% Free",
+      "desc": "No OpenAI, no Google API, no Bing API. Only direct scraping."
+    },
+    "citations": {
+      "title": "Citation-Native",
+      "desc": "Every result gets a [1], [2] ID. LLMs can cite sources accurately."
+    },
+    "multi": {
+      "title": "Multi-Engine",
+      "desc": "SearchEngineRegistry makes adding new scrapers trivial."
+    },
+    "ranking": {
+      "title": "BM25 Ranking",
+      "desc": "Local relevance scoring + authority/freshness metadata."
+    },
+    "code": {
+      "title": "Code-Aware",
+      "desc": "Detects 21 languages, extracts API signatures, measures code-to-text ratio."
+    }
+  },
+  "tools": {
+    "title": "8 Tools",
+    "desc": "From quick answers to deep research.",
+    "answer": "Direct cited answer to any question",
+    "web_search": "Scrape search engines, return ranked results with citation IDs",
+    "search_with_citations": "Search with pre-numbered citations for academic writing",
+    "fetch_page": "Extract clean content from a single URL",
+    "fetch_bulk": "Fetch multiple URLs in parallel",
+    "deep_research": "Auto-expand query, crawl top results, synthesize with citations",
+    "stealthy_fetch": "Full anti-bot bypass for protected sites",
+    "parallel_search": "Run multiple searches simultaneously"
+  },
+  "install": {
+    "title": "Get Started",
+    "pip": "pip install maru-search",
+    "claude": "claude mcp add maru-search pip:maru-search",
+    "config": "MCP Config",
+    "env": "Environment Variables"
+  },
+  "arch": {
+    "title": "Architecture",
+    "desc": "Clean, modular, extensible."
+  }
+}

@@ -68,17 +68,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search-plugin",
         description="Manage maru harness plugins.",
+        epilog="Examples:\n  maru-deep-pro-search-plugin list\n  maru-deep-pro-search-plugin install https://github.com/user/plugin.git\n  maru-deep-pro-search-plugin uninstall my-plugin",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--path", default=".", help="Project root (default: .)")
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(dest="command", help="Plugin commands")
 
     subparsers.add_parser("list", help="List installed plugins")
 
-    install_parser = subparsers.add_parser("install", help="Install a plugin from git URL or local path")
-    install_parser.add_argument("source", help="Git URL or local path")
+    install_parser = subparsers.add_parser("install", help="Install a plugin from Git URL or local path")
+    install_parser.add_argument("source", help="Git URL or local path to plugin")
 
-    uninstall_parser = subparsers.add_parser("uninstall", help="Remove a plugin")
-    uninstall_parser.add_argument("name", help="Plugin name")
+    uninstall_parser = subparsers.add_parser("uninstall", help="Remove an installed plugin")
+    uninstall_parser.add_argument("name", help="Plugin name to remove")
 
     args = parser.parse_args(argv)
 

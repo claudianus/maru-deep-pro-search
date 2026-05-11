@@ -60,13 +60,16 @@ def cmd_stats(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search stats",
-        description="Display KnowledgeStore statistics and health",
+        description="Display KnowledgeStore statistics, cache health, and usage metrics.",
+        epilog="Example: maru-deep-pro-search stats --db ./.maru/knowledge.db",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--db",
         type=str,
         default=None,
-        help="Path to knowledge database (default: .maru/knowledge.db)",
+        metavar="PATH",
+        help="Path to knowledge database (default: ./.maru/knowledge.db)",
     )
     args = parser.parse_args(argv)
     return cmd_stats(args)

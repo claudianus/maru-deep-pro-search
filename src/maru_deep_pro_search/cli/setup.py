@@ -166,38 +166,56 @@ def cmd_check(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search",
-        description="One-click setup for maru-deep-pro-search across AI agents.",
+        description=(
+            "Setup tool for maru-deep-pro-search — installs MCP config and "
+            "injects research-first rules into 19 supported AI agents."
+        ),
+        epilog=(
+            "Examples:\n"
+            "  maru-deep-pro-search setup              # Auto-detect and configure all agents\n"
+            "  maru-deep-pro-search setup --agents cursor claude  # Configure specific agents\n"
+            "  maru-deep-pro-search setup --list       # Show detected agents\n"
+            "  maru-deep-pro-search setup --check      # Verify config status\n"
+            "  maru-deep-pro-search setup --restore    # Restore from backup\n"
+            "\nSupported agents: " + ", ".join(sorted(ADAPTER_REGISTRY.keys()))
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # setup command (default)
-    setup_parser = subparsers.add_parser("setup", help="Configure AI agents")
+    setup_parser = subparsers.add_parser(
+        "setup",
+        help="Configure AI agents with MCP settings and research-first rules",
+        description="Auto-detect installed AI agents and inject MCP configuration.",
+    )
     setup_parser.add_argument(
         "--agents",
         nargs="+",
         choices=list(ADAPTER_REGISTRY.keys()),
-        help="Specific agents to configure (default: auto-detected)",
+        metavar="AGENT",
+        help="Specific agents to configure (default: auto-detect all)",
     )
     setup_parser.add_argument(
         "--scope",
         choices=["user", "project"],
         default="user",
-        help="Configuration scope",
+        help="Configuration scope: 'user' for global, 'project' for local (default: user)",
     )
     setup_parser.add_argument(
         "--restore",
         action="store_true",
-        help="Restore previous backups",
+        help="Restore agent configs from previous backups",
     )
     setup_parser.add_argument(
         "--list",
         action="store_true",
-        help="List detected agents",
+        help="List all detected AI agents and their status",
     )
     setup_parser.add_argument(
         "--check",
         action="store_true",
-        help="Check configuration status",
+        help="Check if MCP configs are correctly installed",
     )
 
     args = parser.parse_args(argv)

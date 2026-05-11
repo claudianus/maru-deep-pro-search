@@ -69,12 +69,14 @@ def cmd_generate_workflow(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search workflow",
-        description="Generate CI/CD workflow templates for automated research",
+        description="Generate CI/CD workflow templates for automated research pipelines.",
+        epilog="Example: maru-deep-pro-search workflow --force",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--force",
         action="store_true",
-        help="Overwrite existing workflow file",
+        help="Overwrite existing workflow file if it exists",
     )
     args = parser.parse_args(argv)
     return cmd_generate_workflow(args)

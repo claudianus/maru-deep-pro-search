@@ -30,7 +30,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--agents",
         nargs="+",
-        choices=["claude", "cursor", "kimi", "windsurf", "antigravity", "kilo", "opencode"],
+        choices=[
+            "claude", "cursor", "kimi", "windsurf", "antigravity", "kilo", "opencode",
+            "aider", "copilot", "continue", "cline", "zed", "jetbrains",
+            "supermaven", "cody", "codeium", "amazon_q", "devin", "tabnine",
+        ],
         help="Agents to configure at project scope",
     )
     parser.add_argument(

@@ -43,6 +43,7 @@
 - [Performance](#performance-characteristics)
 - [Configuration](#configuration-reference)
 - [Before & After](#before--after)
+- [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
 - [Tech Stack](#tech-stack)
 - [Testing](#testing)
@@ -583,6 +584,62 @@ All environment variables are optional. Runtime config is loaded via `pydantic-s
 | **Ranking** | Raw engine ordering | BM25 + semantic + metadata hybrid |
 | **Resilience** | Single point of failure | 10-engine failover + smart fallback |
 | **Persistence** | Stateless | Project-level SQLite knowledge store |
+
+---
+
+## Troubleshooting
+
+### Module not found after install
+```bash
+# Make sure you're using Python 3.10+
+python3 --version
+
+# If using uv, ensure the venv is active
+source .venv/bin/activate
+
+# Reinstall
+uv pip install -e ".[semantic]"
+```
+
+### Search engine returns no results
+```bash
+# Try a different engine
+MARU_SEARCH_ENGINE=bing maru-deep-pro-search
+
+# Check network connectivity
+curl -I https://duckduckgo.com
+
+# Enable debug logging
+MARU_SEARCH_DEBUG=1 maru-deep-pro-search
+```
+
+### Agent not detected by setup wizard
+```bash
+# Manually specify the agent
+maru-deep-pro-search setup --agent cursor
+
+# List supported agents
+maru-deep-pro-search setup --list-agents
+```
+
+### Docker container exits immediately
+```bash
+# Check logs
+docker logs maru-deep-pro-search
+
+# Run interactively for debugging
+docker run --rm -it maru-search bash
+```
+
+### High memory usage
+The semantic ranking model loads on first use and stays in memory:
+```bash
+# Disable semantic ranking (pure BM25)
+MARU_SEARCH_SEMANTIC=false maru-deep-pro-search
+
+# Or use the lite variant
+MARU_SEARCH_ENGINE=duckduckgo_lite
+```
 
 ---
 

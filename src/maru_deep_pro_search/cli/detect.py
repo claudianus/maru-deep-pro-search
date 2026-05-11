@@ -160,6 +160,50 @@ def _detect_codeium() -> bool:
     )
 
 
+# ── Amazon Q Developer ───────────────────────────────────────
+def _detect_amazon_q() -> bool:
+    home = Path.home()
+    vscode_ext = home / ".vscode" / "extensions"
+    has_q_ext = False
+    if vscode_ext.exists():
+        has_q_ext = any(
+            p.name.startswith("amazon-q")
+            for p in vscode_ext.iterdir()
+            if p.is_dir()
+        )
+    return (
+        shutil.which("q") is not None
+        or home.joinpath(".aws", "amazonq").exists()
+        or has_q_ext
+    )
+
+
+# ── Devin ────────────────────────────────────────────────────
+def _detect_devin() -> bool:
+    return (
+        shutil.which("devin") is not None
+        or Path.home().joinpath(".devin").exists()
+        or Path(".devin").exists()
+    )
+
+
+# ── Tabnine ──────────────────────────────────────────────────
+def _detect_tabnine() -> bool:
+    home = Path.home()
+    vscode_ext = home / ".vscode" / "extensions"
+    has_tabnine_ext = False
+    if vscode_ext.exists():
+        has_tabnine_ext = any(
+            "tabnine" in p.name.lower()
+            for p in vscode_ext.iterdir()
+            if p.is_dir()
+        )
+    return (
+        home.joinpath(".tabnine").exists()
+        or has_tabnine_ext
+    )
+
+
 # ── Registry ─────────────────────────────────────────────────
 AGENT_DETECTORS: dict[str, AgentDetector] = {
     "claude": _detect_claude_code,
@@ -178,6 +222,9 @@ AGENT_DETECTORS: dict[str, AgentDetector] = {
     "supermaven": _detect_supermaven,
     "cody": _detect_cody,
     "codeium": _detect_codeium,
+    "amazon_q": _detect_amazon_q,
+    "devin": _detect_devin,
+    "tabnine": _detect_tabnine,
 }
 
 

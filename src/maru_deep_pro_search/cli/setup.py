@@ -30,6 +30,9 @@ from .agents.jetbrains import JetBrainsAdapter
 from .agents.supermaven import SupermavenAdapter
 from .agents.cody import CodyAdapter
 from .agents.codeium import CodeiumAdapter
+from .agents.amazon_q import AmazonQAdapter
+from .agents.devin import DevinAdapter
+from .agents.tabnine import TabnineAdapter
 
 ADAPTER_REGISTRY = {
     "claude": ClaudeAdapter,
@@ -48,6 +51,9 @@ ADAPTER_REGISTRY = {
     "supermaven": SupermavenAdapter,
     "cody": CodyAdapter,
     "codeium": CodeiumAdapter,
+    "amazon_q": AmazonQAdapter,
+    "devin": DevinAdapter,
+    "tabnine": TabnineAdapter,
 }
 
 

@@ -69,6 +69,22 @@ def _compile_signatures() -> list[tuple[re.Pattern, str]]:
         (r"\.mcp\.json", "mcp"),
         (r"mcpServers", "mcp"),
         (r"mcp_server", "mcp"),
+        # Tool poisoning / shadowing / rug pull patterns
+        (r"tool\s+description\s*[:=]", "mcp"),
+        (r"shadow\s+(tool|function)", "mcp"),
+        (r"rug\s+pull", "mcp"),
+        (r"poison\s+(tool|mcp|server)", "mcp"),
+        (r"override\s+(tool|function|call)", "mcp"),
+        (r"hijack\s+(agent|session|tool)", "mcp"),
+        (r"cross[-_]?tool\s+poison", "mcp"),
+        (r"mpma\b", "mcp"),
+        (r"preference\s+manipulation", "mcp"),
+        (r"parasitic\s+toolchain", "mcp"),
+        # Unauthorized invocation
+        (r"auto[-_]?run\s*(=|:)\s*true", "mcp"),
+        (r"yolo\s+mode", "mcp"),
+        (r"approve\s+all", "mcp"),
+        (r"skip\s+confirmation", "mcp"),
         # Standard prompt injection
         (r"ignore\s+(all\s+)?previous\s+(instructions?|commands?|prompts?)", "en"),
         (r"ignore\s+above\s+(instructions?|commands?|prompts?)", "en"),

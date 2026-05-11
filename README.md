@@ -611,9 +611,25 @@ PRs welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 - Adding security signatures
 - Release process (automated via GitHub Actions — no manual PyPI pushes)
 
-See [CHANGELOG.md](./CHANGELOG.md) for release history.
+See [CHANGELOG.md](./CHANGELOG.md) for release history and [ROADMAP.md](./ROADMAP.md) for upcoming features.
 
-Please read our [Code of Conduct](./CODE_OF_CONDUCT.md) and [Security Policy](./SECURITY.md) before participating.
+Please read our [Code of Conduct](./CODE_OF_CONDUCT.md), [Security Policy](./SECURITY.md), and [LICENSE](./LICENSE) before participating.
+
+### Development quickstart
+
+```bash
+# Install with dev dependencies
+make install
+
+# Run tests
+make test
+
+# Run linter
+make lint
+
+# Format code
+make format
+```
 
 ---
 

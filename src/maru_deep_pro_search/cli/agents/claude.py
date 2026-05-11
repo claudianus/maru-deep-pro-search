@@ -86,7 +86,8 @@ class ClaudeAdapter(AgentAdapter):
         }
         write_json_safe(path, config)
 
-        # Also write .claude/settings.json with hooks
+        # Also write .claude/settings.json with hooks + hook scripts
+        self._write_hooks(scope)
         self._write_settings(scope)
         return True
 
@@ -100,26 +101,78 @@ class ClaudeAdapter(AgentAdapter):
         if new_content != content:
             write_text_safe(md_path, new_content)
 
-        # 2. Custom commands
+        # 2. Hook scripts (ensure they exist even if backup restored)
+        self._write_hooks(scope)
+
+        # 3. Custom commands
         self._write_commands(scope)
         return True
 
     # ── helpers ─────────────────────────────────────────────────
+    def _write_hooks(self, scope: str) -> None:
+        """Install the research-gate hook script that PreToolUse calls."""
+        hooks_dir = Path.home() / ".claude" / "hooks"
+        hooks_dir.mkdir(parents=True, exist_ok=True)
+
+        gate_script = hooks_dir / "maru_research_gate.py"
+        if not gate_script.exists():
+            gate_script.write_text(
+                '#!/usr/bin/env python3\n'
+                '"""Claude Code PreToolUse hook — blocks Edit/Write without research."""\n'
+                'import json, os, sys, time\n\n'
+                'def main() -> None:\n'
+                '    data = json.load(sys.stdin)\n'
+                '    tool_name = data.get("tool_name", "")\n'
+                '    if tool_name not in ("Edit", "Write"):\n'
+                '        sys.exit(0)\n'
+                '    marker = os.path.expanduser("~/.maru/last_research")\n'
+                '    if not os.path.exists(marker):\n'
+                '        print(json.dumps({\n'
+                '            "decision": "deny",\n'
+                '            "reason": "[MARU] Research required. Call deep_research(query=...) before editing code."\n'
+                '        }))\n'
+                '        sys.exit(0)\n'
+                '    elapsed = time.time() - os.path.getmtime(marker)\n'
+                '    if elapsed > 1800:\n'
+                '        print(json.dumps({\n'
+                '            "decision": "deny",\n'
+                '            "reason": f"[MARU] Research expired ({elapsed/60:.0f}min ago). Re-run deep_research."\n'
+                '        }))\n'
+                '        sys.exit(0)\n'
+                '    sys.exit(0)\n\n'
+                'if __name__ == "__main__":\n'
+                '    main()\n',
+                encoding="utf-8",
+            )
+            gate_script.chmod(0o755)
+
     def _write_settings(self, scope: str) -> None:
         path = self._settings_path(scope)
         settings: dict[str, Any] = read_json_safe(path)
 
-        # Ensure hooks structure
         if "hooks" not in settings:
             settings["hooks"] = {}
+
+        # 1. PreToolUse — BLOCK edit/write without research
+        if "PreToolUse" not in settings["hooks"]:
+            settings["hooks"]["PreToolUse"] = []
+        pre_matchers = [h.get("matcher", "") for h in settings["hooks"]["PreToolUse"]]
+        if "Edit|Write" not in pre_matchers:
+            settings["hooks"]["PreToolUse"].append({
+                "matcher": "Edit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": str(Path.home() / ".claude" / "hooks" / "maru_research_gate.py"),
+                    }
+                ],
+            })
+
+        # 2. PostToolUse — verify citations after edit/write
         if "PostToolUse" not in settings["hooks"]:
             settings["hooks"]["PostToolUse"] = []
-
-        # Add research verification hook (avoid duplicates)
-        existing_matchers = [
-            h.get("matcher", "") for h in settings["hooks"]["PostToolUse"]
-        ]
-        if "Write|Edit" not in existing_matchers:
+        post_matchers = [h.get("matcher", "") for h in settings["hooks"]["PostToolUse"]]
+        if "Write|Edit" not in post_matchers:
             settings["hooks"]["PostToolUse"].append({
                 "matcher": "Write|Edit",
                 "hooks": [
@@ -134,6 +187,16 @@ class ClaudeAdapter(AgentAdapter):
                     }
                 ],
             })
+
+        # 3. Permissions — restrict dangerous operations
+        if "permissions" not in settings:
+            settings["permissions"] = {}
+        if "deny" not in settings["permissions"]:
+            settings["permissions"]["deny"] = []
+        deny_patterns = settings["permissions"]["deny"]
+        for pattern in ["rm -rf /*", "DROP TABLE", "format c:", "> /dev/sda"]:
+            if pattern not in deny_patterns:
+                deny_patterns.append(pattern)
 
         write_json_safe(path, settings)
 

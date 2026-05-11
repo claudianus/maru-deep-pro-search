@@ -1,0 +1,230 @@
+"""Session-level enforcement engine — ensures research-before-action.
+
+This is the technical enforcement layer that makes "research first"
+a hard gate, not just a suggestion. Every MCP session is tracked,
+and tools that depend on research are blocked until deep_research
+has been successfully completed.
+"""
+
+from __future__ import annotations
+
+import threading
+import time
+from dataclasses import dataclass, field
+from typing import Any
+
+from ..exceptions import MaruSearchError
+
+
+class ResearchRequiredError(MaruSearchError):
+    """Raised when a tool is called before deep_research in the same session."""
+
+    def __init__(self, tool_name: str) -> None:
+        super().__init__(
+            f"[BLOCKED] '{tool_name}' requires prior deep_research call. "
+            f"Run deep_research(query=...) first to unlock this tool.",
+            retryable=False,
+        )
+
+
+class CodeGenerationBlockedError(MaruSearchError):
+    """Raised when code generation is attempted without research validation."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(
+            f"[BLOCKED] Code generation blocked: {reason} "
+            f"Run deep_research(query=...) and use generate_code(research_id=...) "
+            f"with valid citations from the research result.",
+            retryable=False,
+        )
+
+
+@dataclass
+class SessionState:
+    """Mutable state tracked per MCP session."""
+
+    session_id: str
+    created_at: float = field(default_factory=time.time)
+    research_done: bool = False
+    research_result: str = ""
+    research_query: str = ""
+    research_timestamp: float = 0.0
+    tools_called: list[str] = field(default_factory=list)
+    citations_found: list[str] = field(default_factory=list)
+    code_generated: bool = False
+
+    def record_tool(self, name: str) -> None:
+        self.tools_called.append(name)
+
+    def mark_research(self, query: str, result: str) -> None:
+        self.research_done = True
+        self.research_query = query
+        self.research_result = result
+        self.research_timestamp = time.time()
+        self._extract_citations(result)
+
+    def _extract_citations(self, text: str) -> None:
+        import re
+
+        self.citations_found = re.findall(r"\[(\d+)\]", text)
+
+    @property
+    def research_age_seconds(self) -> float:
+        if not self.research_timestamp:
+            return float("inf")
+        return time.time() - self.research_timestamp
+
+    @property
+    def is_fresh(self) -> bool:
+        """Research is considered stale after 30 minutes."""
+        return self.research_age_seconds < 1800
+
+
+class SessionEnforcer:
+    """Tracks every MCP session and enforces research-before-action policies."""
+
+    # Tools that REQUIRE deep_research to have been called first.
+    RESEARCH_DEPENDENT_TOOLS: set[str] = {
+        "fetch_page",
+        "fetch_bulk",
+        "stealthy_fetch",
+        "web_search",
+        "search_with_citations",
+        "answer",
+        "parallel_search",
+    }
+
+    # Tools that can be called WITHOUT prior research.
+    RESEARCH_EXEMPT_TOOLS: set[str] = {
+        "deep_research",
+    }
+
+    def __init__(self) -> None:
+        self._sessions: dict[str, SessionState] = {}
+        self._lock = threading.RLock()
+
+    def get_or_create(self, session_id: str) -> SessionState:
+        with self._lock:
+            if session_id not in self._sessions:
+                self._sessions[session_id] = SessionState(session_id=session_id)
+            return self._sessions[session_id]
+
+    def mark_research_done(
+        self, session_id: str, query: str, result: str
+    ) -> SessionState:
+        with self._lock:
+            state = self.get_or_create(session_id)
+            state.mark_research(query, result)
+            # Also touch filesystem marker so client-side hooks can check it
+            self._touch_research_marker()
+            return state
+
+    @staticmethod
+    def _touch_research_marker() -> None:
+        """Update the filesystem marker used by client-side hooks."""
+        import pathlib
+
+        marker = pathlib.Path.home() / ".maru" / "last_research"
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.touch()
+
+    def check_research(self, session_id: str, tool_name: str) -> SessionState:
+        """Verify that research was done before allowing a dependent tool.
+
+        Raises ResearchRequiredError if research has not been completed.
+        """
+        state = self.get_or_create(session_id)
+
+        if tool_name in self.RESEARCH_EXEMPT_TOOLS:
+            return state
+
+        if not state.research_done:
+            raise ResearchRequiredError(tool_name)
+
+        if not state.is_fresh:
+            raise ResearchRequiredError(
+                f"{tool_name} (research expired after 30min — run deep_research again)"
+            )
+
+        return state
+
+    def validate_code_generation(
+        self,
+        session_id: str,
+        research_id: str,
+        proposed_code: str,
+    ) -> dict[str, Any]:
+        """Validate that code generation is backed by actual research.
+
+        1. research_id must match a completed session.
+        2. proposed_code must contain at least one citation [N] from research.
+        3. Returns validation report with pass/fail and details.
+        """
+        state = self.get_or_create(session_id)
+
+        if not state.research_done:
+            raise CodeGenerationBlockedError(
+                "no research has been performed in this session."
+            )
+
+        if not state.is_fresh:
+            raise CodeGenerationBlockedError(
+                "research is stale (>30min). Re-run deep_research."
+            )
+
+        # Check for citations in proposed code
+        import re
+
+        code_citations = set(re.findall(r"\[(\d+)\]", proposed_code))
+        research_citations = set(state.citations_found)
+
+        missing = code_citations - research_citations
+        unmatched = research_citations - code_citations
+
+        validation = {
+            "passed": len(code_citations) > 0 and not missing,
+            "code_citations": sorted(code_citations),
+            "research_citations": sorted(research_citations),
+            "missing_citations": sorted(missing),
+            "unused_citations": sorted(unmatched),
+            "research_query": state.research_query,
+            "research_age_seconds": state.research_age_seconds,
+        }
+        return validation
+
+    def session_summary(self, session_id: str) -> dict[str, Any]:
+        state = self.get_or_create(session_id)
+        return {
+            "session_id": state.session_id,
+            "research_done": state.research_done,
+            "research_query": state.research_query,
+            "research_age_seconds": state.research_age_seconds,
+            "is_fresh": state.is_fresh,
+            "tools_called": state.tools_called,
+            "citations_found": state.citations_found,
+            "code_generated": state.code_generated,
+        }
+
+    def prune_stale_sessions(self, max_age_seconds: float = 3600) -> int:
+        """Remove sessions older than max_age_seconds. Returns count removed."""
+        now = time.time()
+        with self._lock:
+            stale = [
+                sid
+                for sid, s in self._sessions.items()
+                if now - s.created_at > max_age_seconds
+            ]
+            for sid in stale:
+                del self._sessions[sid]
+            return len(stale)
+
+
+# Global singleton enforcer instance
+_enforcer: SessionEnforcer | None = None
+
+
+def get_enforcer() -> SessionEnforcer:
+    global _enforcer
+    if _enforcer is None:
+        _enforcer = SessionEnforcer()
+    return _enforcer

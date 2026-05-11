@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import functools
 import logging
 import sys
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import Context, FastMCP
 
 mcp = FastMCP("maru-search")
 
@@ -16,6 +17,54 @@ _stderr_handler.setFormatter(
 )
 _logger.addHandler(_stderr_handler)
 _logger.propagate = False
+
+
+# ═══════════════════════════════════════════════════════════════
+# Enforcement Layer — Session-level research gates
+# ═══════════════════════════════════════════════════════════════
+
+def _get_session_id(ctx: Context | None) -> str:
+    """Extract a stable session identifier from the MCP context."""
+    if ctx is None:
+        return "unknown"
+    # client_id is stable for the lifetime of an MCP connection
+    return getattr(ctx, "client_id", None) or getattr(ctx, "request_id", "unknown")
+
+
+def _with_enforcement(tool_name: str | None = None):
+    """Decorator that injects session enforcement into MCP tools.
+
+    Research-dependent tools are blocked until deep_research has been
+    completed in the same session.  deep_research itself marks the
+    session as researched.
+    """
+    def decorator(fn):
+        name = tool_name or fn.__name__
+
+        @functools.wraps(fn)
+        async def wrapper(*args, ctx: Context | None = None, **kwargs):
+            from .harness.enforcer import get_enforcer
+
+            session_id = _get_session_id(ctx)
+            enforcer = get_enforcer()
+
+            if name == "deep_research":
+                # deep_research is exempt — it *is* the research step
+                result = await fn(*args, ctx=ctx, **kwargs)
+                # Mark session as researched with the result
+                enforcer.mark_research_done(
+                    session_id,
+                    query=kwargs.get("query", args[0] if args else ""),
+                    result=result,
+                )
+                return result
+
+            # All other tools must pass the research gate
+            enforcer.check_research(session_id, name)
+            return await fn(*args, ctx=ctx, **kwargs)
+
+        return wrapper
+    return decorator
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -301,12 +350,18 @@ def research_workflow() -> str:
 """
 
 
+# ═══════════════════════════════════════════════════════════════
+# MCP Tools — With Session Enforcement
+# ═══════════════════════════════════════════════════════════════
+
 @mcp.tool()
+@_with_enforcement("answer")
 async def answer(
     query: str,
     engine: str = "duckduckgo_lite",
     max_sources: int = 5,
     max_tokens: int = 8000,
+    ctx: Context | None = None,
 ) -> str:
     """Quick answer with inline citations for simple factual questions."""
     from .tools import tool_answer
@@ -314,10 +369,12 @@ async def answer(
 
 
 @mcp.tool()
+@_with_enforcement("web_search")
 async def web_search(
     query: str,
     engine: str = "duckduckgo_lite",
     max_results: int = 10,
+    ctx: Context | None = None,
 ) -> str:
     """Search and return ranked results with citations."""
     from .tools import tool_web_search
@@ -325,10 +382,12 @@ async def web_search(
 
 
 @mcp.tool()
+@_with_enforcement("search_with_citations")
 async def search_with_citations(
     query: str,
     engine: str = "duckduckgo_lite",
     max_results: int = 10,
+    ctx: Context | None = None,
 ) -> str:
     """Search with pre-numbered sources for academic writing."""
     from .tools import tool_search_with_citations
@@ -336,18 +395,26 @@ async def search_with_citations(
 
 
 @mcp.tool()
-async def fetch_page(url: str, stealth: bool = False, max_tokens: int = 6000) -> str:
+@_with_enforcement("fetch_page")
+async def fetch_page(
+    url: str,
+    stealth: bool = False,
+    max_tokens: int = 6000,
+    ctx: Context | None = None,
+) -> str:
     """Extract clean content from a single URL."""
     from .tools import tool_fetch_page
     return await tool_fetch_page(url, stealth, max_tokens)
 
 
 @mcp.tool()
+@_with_enforcement("fetch_bulk")
 async def fetch_bulk(
     urls: list[str],
     stealth: bool = False,
     max_concurrent: int = 5,
     max_tokens: int = 3000,
+    ctx: Context | None = None,
 ) -> str:
     """Parallel fetch multiple URLs with deduplication."""
     from .tools import tool_fetch_bulk
@@ -355,6 +422,7 @@ async def fetch_bulk(
 
 
 @mcp.tool()
+@_with_enforcement("deep_research")
 async def deep_research(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -364,6 +432,7 @@ async def deep_research(
     max_tokens_per_source: int = 2500,
     max_total_tokens: int = 20000,
     summarize: bool = False,
+    ctx: Context | None = None,
 ) -> str:
     """Full 7-phase research pipeline with query expansion and gap detection."""
     from .tools import tool_deep_research
@@ -374,37 +443,105 @@ async def deep_research(
 
 
 @mcp.tool()
-async def stealthy_fetch(url: str, max_tokens: int = 6000) -> str:
+@_with_enforcement("stealthy_fetch")
+async def stealthy_fetch(
+    url: str,
+    max_tokens: int = 6000,
+    ctx: Context | None = None,
+) -> str:
     """Anti-bot bypass fetch for protected sites."""
     from .tools import tool_stealthy_fetch
     return await tool_stealthy_fetch(url, max_tokens)
 
 
 @mcp.tool()
+@_with_enforcement("parallel_search")
 async def parallel_search(
     queries: list[str],
     engine: str = "duckduckgo_lite",
     max_results: int = 5,
+    ctx: Context | None = None,
 ) -> str:
     """Run multiple searches simultaneously for comparative analysis."""
     from .tools import tool_parallel_search
     return await tool_parallel_search(queries, engine, max_results)
 
 
+@mcp.tool()
+async def generate_code(
+    task_description: str,
+    proposed_code: str,
+    language: str = "python",
+    ctx: Context | None = None,
+) -> str:
+    """Generate code ONLY after deep_research has been completed.
+
+    This tool validates that your code is backed by research citations.
+    If validation fails, it returns a detailed report telling you exactly
+    what citations are missing or what research needs to be re-done.
+    """
+    from .harness.enforcer import CodeGenerationBlockedError, get_enforcer
+
+    session_id = _get_session_id(ctx)
+    enforcer = get_enforcer()
+
+    try:
+        report = enforcer.validate_code_generation(
+            session_id, task_description, proposed_code
+        )
+    except CodeGenerationBlockedError as exc:
+        return str(exc)
+
+    if not report["passed"]:
+        lines = [
+            "❌ CODE GENERATION BLOCKED — Research validation failed",
+            "",
+            f"Research query: {report['research_query']}",
+            f"Research age: {report['research_age_seconds']:.0f}s",
+            "",
+            "Citations found in your code:",
+            f"  {report['code_citations'] or '(none)'}",
+            "",
+            "Citations available from research:",
+            f"  {report['research_citations'] or '(none)'}",
+            "",
+        ]
+        if report["missing_citations"]:
+            lines.append(
+                f"⚠️  Citations referenced but NOT in research: {report['missing_citations']}"
+            )
+        if report["unused_citations"]:
+            lines.append(
+                f"💡 Research has unused citations you should cite: {report['unused_citations']}"
+            )
+        lines.extend([
+            "",
+            "ACTION REQUIRED:",
+            "1. Run deep_research() on your topic",
+            "2. Include [N] citations from research in your code",
+            "3. Call generate_code() again with validated code",
+        ])
+        return "\n".join(lines)
+
+    # Mark code as generated in session
+    state = enforcer.get_or_create(session_id)
+    state.code_generated = True
+
+    return (
+        f"✅ Code validated against research ({len(report['code_citations'])} citations).\n\n"
+        f"```{language}\n{proposed_code}\n```"
+    )
+
+
 def run() -> None:
     import asyncio
-    # Allow intuitive `maru-deep-pro-search setup` / `init` usage even though
-    # the primary entry point is the MCP server.
     if len(sys.argv) > 1:
         sub = sys.argv[1]
         if sub == "setup":
             from .cli.setup import main as _setup_main
-            # setup.py uses "setup" as an argparse subcommand, so we must
-            # include it in the forwarded argv.
             sys.exit(_setup_main(sys.argv[1:]))
         if sub == "init":
             from .cli.init_cmd import main as _init_main
-            # init_cmd.py has no subcommand; skip the "init" keyword.
             sys.exit(_init_main(sys.argv[2:]))
         if sub == "stats":
             from .cli.stats_cmd import main as _stats_main

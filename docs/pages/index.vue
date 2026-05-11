@@ -20,15 +20,19 @@
       </UContainer>
     </section>
 
-    <section class="border-t border-gray-800/60 py-8">
-      <UContainer class="text-center">
-        <p class="text-sm text-gray-500">{{ $t('license.text') }}</p>
-      </UContainer>
-    </section>
   </div>
 </template>
 
 <script setup lang="ts">
+import HeroSection from '~/components/landing/HeroSection.vue'
+import FeatureGrid from '~/components/landing/FeatureGrid.vue'
+import InstallBlock from '~/components/landing/InstallBlock.vue'
+import ArchitectureSection from '~/components/landing/ArchitectureSection.vue'
+import ToolsSection from '~/components/landing/ToolsSection.vue'
+import PerformanceSection from '~/components/landing/PerformanceSection.vue'
+import BeforeAfterSection from '~/components/landing/BeforeAfterSection.vue'
+import SectionTitle from '~/components/ui/SectionTitle.vue'
+
 const features = useFeatures();
 const tools = useTools();
 const metrics = usePerformanceMetrics();

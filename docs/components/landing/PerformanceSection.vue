@@ -13,6 +13,8 @@
 
 <script setup lang="ts">
 import type { PerformanceMetric } from '~/types';
+import SectionTitle from '~/components/ui/SectionTitle.vue'
+import DarkTable from '~/components/ui/DarkTable.vue'
 
 const columns = [
   { key: 'metric', label: 'Metric' },

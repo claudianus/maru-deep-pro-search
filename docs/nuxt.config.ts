@@ -18,7 +18,7 @@ export default defineNuxtConfig({
       { code: 'en', name: 'English' },
       { code: 'ko', name: '한국어' },
     ],
-    vueI18n: './i18n.config.ts',
+
     detectBrowserLanguage: false,
   },
   ssr: true,

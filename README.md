@@ -42,6 +42,7 @@
 - [Docker](#docker)
 - [Security](#security)
 - [For Researchers](#for-researchers)
+- [Performance Tips](#performance-tips)
 - [Performance](#performance-characteristics)
 - [Configuration](#configuration-reference)
 - [Before & After](#before--after)
@@ -655,6 +656,43 @@ MARU_SEARCH_ENGINE=academic maru-deep-pro-search
 - "ArXiv 2401.12345 citation count"
 - "Semantic Scholar attention mechanism survey"
 - "Compare BERT vs GPT-4 tokenization approaches"
+
+---
+
+## Performance Tips
+
+### For faster research
+```bash
+# Use the lite engine (faster, less blocked)
+MARU_SEARCH_ENGINE=duckduckgo_lite
+
+# Reduce concurrent fetches on slow networks
+MARU_SEARCH_MAX_CONCURRENT=2
+
+# Lower token budget for quicker answers
+MARU_SEARCH_MAX_TOKENS_TOTAL=8000
+```
+
+### For better results
+```bash
+# Enable semantic ranking (requires sentence-transformers)
+pip install maru-deep-pro-search[semantic]
+
+# Use academic engine for research queries
+MARU_SEARCH_ENGINE=academic
+
+# Increase quality threshold
+MARU_SEARCH_MIN_QUALITY_RESULTS=5
+```
+
+### For CI/CD pipelines
+```bash
+# Disable semantic model to save memory
+MARU_SEARCH_SEMANTIC=false
+
+# Use Docker for reproducible runs
+docker run --rm -i maru-search
+```
 
 ---
 

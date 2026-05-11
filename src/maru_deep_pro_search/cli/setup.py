@@ -23,6 +23,8 @@ from .agents.opencode import OpenCodeAdapter
 from .agents.windsurf import WindsurfAdapter
 from .agents.aider import AiderAdapter
 from .agents.copilot import CopilotAdapter
+from .agents.continue_ import ContinueAdapter
+from .agents.cline import ClineAdapter
 
 ADAPTER_REGISTRY = {
     "claude": ClaudeAdapter,
@@ -34,6 +36,8 @@ ADAPTER_REGISTRY = {
     "windsurf": WindsurfAdapter,
     "aider": AiderAdapter,
     "copilot": CopilotAdapter,
+    "continue": ContinueAdapter,
+    "cline": ClineAdapter,
 }
 
 

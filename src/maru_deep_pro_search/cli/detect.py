@@ -81,6 +81,22 @@ def _detect_copilot() -> bool:
     )
 
 
+# ── Continue ─────────────────────────────────────────────────
+def _detect_continue() -> bool:
+    return (
+        Path.home().joinpath(".continue", "config.json").exists()
+        or Path.home().joinpath(".config", "continue", "config.json").exists()
+    )
+
+
+# ── Cline ────────────────────────────────────────────────────
+def _detect_cline() -> bool:
+    return (
+        Path.home().joinpath(".vscode", "extensions", "saoudrizwan.claude-dev").exists()
+        or Path.home().joinpath(".vscode", "extensions", "claude-dev").exists()
+    )
+
+
 # ── Registry ─────────────────────────────────────────────────
 AGENT_DETECTORS: dict[str, AgentDetector] = {
     "claude": _detect_claude_code,
@@ -92,6 +108,8 @@ AGENT_DETECTORS: dict[str, AgentDetector] = {
     "windsurf": _detect_windsurf,
     "aider": _detect_aider,
     "copilot": _detect_copilot,
+    "continue": _detect_continue,
+    "cline": _detect_cline,
 }
 
 

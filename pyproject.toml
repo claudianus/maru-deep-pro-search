@@ -52,6 +52,7 @@ maru-deep-pro-search = "maru_deep_pro_search.server:run"
 maru-deep-pro-search-mcp = "maru_deep_pro_search.server:run"
 maru-deep-pro-search-setup = "maru_deep_pro_search.cli.setup:main"
 maru-deep-pro-search-init = "maru_deep_pro_search.cli.init_cmd:main"
+maru-deep-pro-search-plugin = "maru_deep_pro_search.cli.plugin_cmd:main"
 
 [tool.uvx]
 python = "3.12"

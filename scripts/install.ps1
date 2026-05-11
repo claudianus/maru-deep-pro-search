@@ -116,7 +116,8 @@ if ($useUv -and -not $uvBin) {
 Write-Host ""
 if ($useUv) {
     Write-Title "→ uv로 설치합니다..."
-    & $uvBin tool install --python $TargetPy maru-deep-pro-search
+    & $uvBin tool install --python $TargetPy --reinstall `
+        "git+https://github.com/claudianus/maru-deep-pro-search.git"
 } else {
     Write-Title "→ pip로 설치합니다..."
     & $pythonCmd -m pip install --user maru-deep-pro-search

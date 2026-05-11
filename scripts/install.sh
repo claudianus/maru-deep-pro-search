@@ -141,9 +141,10 @@ fi
 echo ""
 if [ "$USE_UV" = true ]; then
     echo -e "${BOLD}→ uv로 설치합니다...${NC}"
-    # uv tool install creates an isolated environment with the requested
-    # Python version and exposes the CLI globally via ~/.local/bin.
-    "$UV_BIN" tool install --python "${TARGET_PY}" maru-deep-pro-search
+    # Install directly from the GitHub repo so users always get the
+    # latest fixes without waiting for a PyPI release.
+    "$UV_BIN" tool install --python "${TARGET_PY}" --reinstall \
+        "git+https://github.com/claudianus/maru-deep-pro-search.git"
 else
     echo -e "${BOLD}→ pip로 설치합니다...${NC}"
     $PYTHON_CMD -m pip install --user maru-deep-pro-search

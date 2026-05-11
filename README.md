@@ -31,6 +31,7 @@
 
 - [One-liner Install](#one-liner-install)
 - [What it does](#what-it-does)
+  - [vs Alternatives](#vs-alternatives)
 - [Why built-in search isn't enough](#why-your-agents-built-in-web-search-isnt-enough)
 - [Architecture](#architecture)
 - [8 Tools](#8-tools)
@@ -81,8 +82,24 @@ Your AI coding agent has a critical flaw: it answers from stale training data. `
 | **Cite** | Every result gets `[1]`, `[2]` IDs — native citation architecture |
 | **Enforce** | Setup CLI injects mandatory research-first rules into your agent |
 | **Persist** | Harness platform stores project knowledge in SQLite with optional semantic embeddings |
+| **Audit** | SQLite-backed MCP tool call logging with anomaly detection |
+| **Sandbox** | Docker sandbox for isolated execution |
 
 **Core principle:** 100% free, forever. No OpenAI, no Anthropic, no Google Search API, no SerpAPI, no Bing API. Only direct scraping and local computation.
+
+### vs Alternatives
+
+| | maru-deep-pro-search | Perplexity API | Built-in Agent Search | SerpAPI |
+|---|:---:|:---:|:---:|:---:|
+| **Price** | Free | $5/1K calls | Free (limited) | $50+/mo |
+| **API keys** | None required | Required | Varies | Required |
+| **Engines** | 10 + failover | 1 (internal) | 1-2 | 1 at a time |
+| **Citations** | Native `[1]` IDs | Yes | Rare | No |
+| **Ranking** | BM25 + semantic + metadata | Proprietary | None | None |
+| **Prompt injection defense** | 72 signatures | Unknown | None | None |
+| **Audit logging** | Built-in | No | No | No |
+| **Self-hostable** | Yes | No | No | No |
+| **MCP-native** | Yes | No | Partial | No |
 
 ---
 
@@ -105,7 +122,7 @@ Modern AI coding agents ship with "web search" tools. They sound convenient — 
 
 This isn't a standalone search tool. It's a **search MCP server with harness setup tools** — it provides the search/fetch tools and injects the research-first rules into your agent.
 
-- **8-engine failover** — DuckDuckGo, Bing, Google, Naver, Qwant, Startpage, SearXNG, **Academic (ArXiv + Semantic Scholar)**. One fails? The next one picks up instantly.
+- **10-engine failover** — DuckDuckGo, Bing, Google, Naver, Qwant, Startpage, SearXNG, **Academic (ArXiv + Semantic Scholar)**, **Brave**, + lite variants. One fails? The next one picks up instantly.
 - **Perplexity-grade ranking** — BM25 relevance + semantic similarity + authority / freshness / code-density scoring. The best sources float to the top.
 - **Native citations** — Every claim gets `[1]`, `[2]`, `[3]`. Sources are real, traceable, and injected into the response.
 - **Deep research pipeline** — Auto query expansion → multi-angle search → smart fetch with anti-bot escalation → gap detection → synthesized cited answer.
@@ -525,7 +542,17 @@ All environment variables are optional. Runtime config is loaded via `pydantic-s
 ## Testing
 
 ```bash
+# Run all tests
 pytest tests/ -v
+
+# Run with coverage report
+pytest --cov=src/maru_deep_pro_search --cov-report=term-missing
+
+# Run specific module tests
+pytest tests/test_sanitize.py -v        # Security signatures
+pytest tests/test_research.py -v        # Deep research pipeline
+pytest tests/test_engines.py -v         # Search engines
+pytest tests/test_harness.py -v         # Harness persistence
 ```
 
 193 tests, all passing. Coverage includes unit tests for all engines, ranking algorithms, content extraction, sanitization, harness persistence, and integration tests for the full research pipeline.
@@ -534,9 +561,19 @@ pytest tests/ -v
 
 ## Contributing
 
-PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for coding style and PR guidelines.
+PRs welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
+- Development setup with `uv`
+- Adding new search engines or agent adapters
+- Adding security signatures
+- Release process (automated via GitHub Actions — no manual PyPI pushes)
 
 See [CHANGELOG.md](./CHANGELOG.md) for release history.
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=claudianus/maru-deep-pro-search&type=Date)](https://star-history.com/#claudianus/maru-deep-pro-search&Date)
 
 ---
 

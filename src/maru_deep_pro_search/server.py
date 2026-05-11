@@ -308,6 +308,7 @@ async def answer(
     max_sources: int = 5,
     max_tokens: int = 8000,
 ) -> str:
+    """Quick answer with inline citations for simple factual questions."""
     from .tools import tool_answer
     return await tool_answer(query, engine, max_sources, max_tokens)
 
@@ -318,6 +319,7 @@ async def web_search(
     engine: str = "duckduckgo_lite",
     max_results: int = 10,
 ) -> str:
+    """Search and return ranked results with citations."""
     from .tools import tool_web_search
     return await tool_web_search(query, engine, max_results)
 
@@ -328,12 +330,14 @@ async def search_with_citations(
     engine: str = "duckduckgo_lite",
     max_results: int = 10,
 ) -> str:
+    """Search with pre-numbered sources for academic writing."""
     from .tools import tool_search_with_citations
     return await tool_search_with_citations(query, engine, max_results)
 
 
 @mcp.tool()
 async def fetch_page(url: str, stealth: bool = False, max_tokens: int = 6000) -> str:
+    """Extract clean content from a single URL."""
     from .tools import tool_fetch_page
     return await tool_fetch_page(url, stealth, max_tokens)
 
@@ -345,6 +349,7 @@ async def fetch_bulk(
     max_concurrent: int = 5,
     max_tokens: int = 3000,
 ) -> str:
+    """Parallel fetch multiple URLs with deduplication."""
     from .tools import tool_fetch_bulk
     return await tool_fetch_bulk(urls, stealth, max_concurrent, max_tokens)
 
@@ -360,6 +365,7 @@ async def deep_research(
     max_total_tokens: int = 20000,
     summarize: bool = False,
 ) -> str:
+    """Full 7-phase research pipeline with query expansion and gap detection."""
     from .tools import tool_deep_research
     return await tool_deep_research(
         query, engine, max_sources, follow_links, expand_queries,
@@ -369,6 +375,7 @@ async def deep_research(
 
 @mcp.tool()
 async def stealthy_fetch(url: str, max_tokens: int = 6000) -> str:
+    """Anti-bot bypass fetch for protected sites."""
     from .tools import tool_stealthy_fetch
     return await tool_stealthy_fetch(url, max_tokens)
 
@@ -379,6 +386,7 @@ async def parallel_search(
     engine: str = "duckduckgo_lite",
     max_results: int = 5,
 ) -> str:
+    """Run multiple searches simultaneously for comparative analysis."""
     from .tools import tool_parallel_search
     return await tool_parallel_search(queries, engine, max_results)
 

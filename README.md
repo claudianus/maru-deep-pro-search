@@ -569,6 +569,8 @@ PRs welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 
 See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
+Please read our [Code of Conduct](./CODE_OF_CONDUCT.md) and [Security Policy](./SECURITY.md) before participating.
+
 ---
 
 ## Star History

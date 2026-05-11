@@ -52,6 +52,8 @@
 - [Tech Stack](#tech-stack)
 - [Testing](#testing)
 - [Contributing](#contributing)
+- [Citation](#citation)
+- [Star History](#star-history)
 
 ---
 
@@ -897,6 +899,22 @@ make lint
 
 # Format code
 make format
+```
+
+---
+
+## Citation
+
+If you use `maru-deep-pro-search` in your research or publications, please cite:
+
+```bibtex
+@software{maru_deep_pro_search,
+  title = {maru-deep-pro-search: Perplexity-grade web research MCP server},
+  author = {claudianus},
+  year = {2025},
+  url = {https://github.com/claudianus/maru-deep-pro-search},
+  version = {0.9.2}
+}
 ```
 
 ---

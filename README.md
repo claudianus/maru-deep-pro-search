@@ -53,6 +53,7 @@
 - [Tech Stack](#tech-stack)
 - [Testing](#testing)
 - [Contributing](#contributing)
+- [Acknowledgments](#acknowledgments)
 - [Related Projects](#related-projects)
 - [Citation](#citation)
 - [Star History](#star-history)
@@ -949,6 +950,16 @@ make lint
 # Format code
 make format
 ```
+
+---
+
+## Acknowledgments
+
+- **[trafilatura](https://trafilatura.readthedocs.io/)** — Core content extraction engine
+- **[scrapling](https://github.com/D4Vinci/scrapling)** — Async web scraping framework
+- **[rank-bm25](https://github.com/dorianbrown/rank_bm25)** — BM25 ranking implementation
+- **[sentence-transformers](https://sbert.net/)** — Semantic similarity models
+- **Huang et al. (2026)** — MCP security research that informed our 72-signature defense layer
 
 ---
 

@@ -38,6 +38,7 @@
 - [Technical Deep Dives](#technical-deep-dives)
 - [Docker](#docker)
 - [Security](#security)
+- [For Researchers](#for-researchers)
 - [Performance](#performance-characteristics)
 - [Configuration](#configuration-reference)
 - [Before & After](#before--after)
@@ -464,6 +465,19 @@ docker run --rm -p 8000:8000 maru-search --transport sse
 docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search
 ```
 
+**Docker Compose (recommended for persistent deployments):**
+
+```bash
+# Start with docker-compose
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop
+docker-compose down
+```
+
 The Dockerfile uses a **non-root user**, includes a health check, and ships with `uv` for fast dependency resolution. This aligns with MCP security best practices for sandboxing untrusted tool executions.
 
 ---
@@ -492,6 +506,36 @@ The Dockerfile uses a **non-root user**, includes a health check, and ships with
 - Stored in `.maru/audit.db` (SQLite)
 
 Reference: Implements recommendations from Huang et al. (2026) *"Are AI-assisted Development Tools Immune to Prompt Injection?"* (arXiv:2603.21642v1).
+
+---
+
+## For Researchers
+
+The **Academic engine** (`academic`) is purpose-built for research workflows. It queries both **ArXiv** and **Semantic Scholar** in parallel, then merges and deduplicates results using the same hybrid ranking pipeline as general web search.
+
+```bash
+# Use the academic engine explicitly
+MARU_SEARCH_ENGINE=academic maru-deep-pro-search
+
+# Or let the registry auto-detect research queries
+# (queries containing "paper", "arxiv", "citation", "doi" trigger academic preference)
+```
+
+**What makes it different from general web search:**
+
+| | Academic Engine | General Web Search |
+|---|---|---|
+| **Sources** | ArXiv + Semantic Scholar | DuckDuckGo, Bing, Google, etc. |
+| **PDF access** | Direct ArXiv PDF links | Landing pages only |
+| **Citations** | Citation counts from Semantic Scholar | None |
+| **Ranking** | Same BM25 + semantic hybrid | Same BM25 + semantic hybrid |
+| **Fallback** | Falls back to web search if <3 results | Falls back to next engine |
+
+**Example queries that benefit:**
+- "Latest transformer architecture papers 2024"
+- "ArXiv 2401.12345 citation count"
+- "Semantic Scholar attention mechanism survey"
+- "Compare BERT vs GPT-4 tokenization approaches"
 
 ---
 

@@ -1,0 +1,23 @@
+services:
+  maru-search:
+    build: .
+    container_name: maru-deep-pro-search
+    ports:
+      - "8080:8080"
+    environment:
+      - MARU_SEARCH_ENGINE=duckduckgo_lite
+      - MARU_SEARCH_MAX_RESULTS=10
+      - MARU_SEARCH_MAX_CONCURRENT=5
+      - MARU_SEARCH_TIMEOUT=30.0
+    volumes:
+      - maru-data:/home/maru/.maru
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  maru-data:

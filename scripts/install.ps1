@@ -1,13 +1,13 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    One-click installer for maru-deep-pro-search on Windows.
+    Interactive installer for maru-deep-pro-search on Windows.
 
 .DESCRIPTION
     • Detects the system Python version.
-    • If it is < 3.10, automatically installs Python 3.12 via uv.
-    • Installs the package globally (uv tool install or pip --user).
-    • Runs the setup wizard.
+    • If it is < 3.10, guides the user through installing Python 3.12 via uv.
+    • Installs the package globally from the GitHub repo.
+    • Optionally runs the setup wizard.
 #>
 
 $ErrorActionPreference = "Stop"
@@ -16,15 +16,30 @@ $MinPyMajor = 3
 $MinPyMinor = 10
 $TargetPy   = "$MinPyMajor.$MinPyMinor"
 
-function Write-Title($text) { Write-Host $text -ForegroundColor Cyan -Bold }
+# ── helpers ────────────────────────────────────────────────────
+function Write-Title($text) { Write-Host "`n$text" -ForegroundColor Cyan -Bold }
 function Write-Ok($text)    { Write-Host "  ✓ $text" -ForegroundColor Green }
 function Write-Warn($text)  { Write-Host "  ! $text" -ForegroundColor Yellow }
 function Write-Err($text)   { Write-Host "  ✗ $text" -ForegroundColor Red }
+function Write-Info($text)  { Write-Host "  ℹ $text" -ForegroundColor Blue }
+
+function Confirm($prompt, $default = "Y") {
+    $choice = Read-Host "$prompt [$default]"
+    if (-not $choice) { $choice = $default }
+    return $choice -match '^[Yy]$'
+}
+
+# ── banner ─────────────────────────────────────────────────────
+Write-Host ""
+Write-Host "╔══════════════════════════════════════════════════════════════╗" -Bold
+Write-Host "║  📦 maru-deep-pro-search 설치를 시작합니다                  ║" -Bold
+Write-Host "╚══════════════════════════════════════════════════════════════╝" -Bold
+Write-Host ""
 
 # ── 1. Discover Python ─────────────────────────────────────────
+Write-Title "1. Python 환경 확인"
 $pythonCmd = $null
 $pythonVersion = $null
-
 foreach ($cmd in @("python", "python3", "py")) {
     $found = Get-Command $cmd -ErrorAction SilentlyContinue
     if ($found) {
@@ -47,6 +62,27 @@ if ($pythonVersion) {
     }
 }
 
+$useUv = $false
+if ($pythonOk) {
+    Write-Ok "Python $pythonVersion 사용 가능"
+    Write-Info "이 버전으로 설치를 진행합니다."
+} else {
+    if ($pythonVersion) {
+        Write-Err "Python $pythonVersion 감지됨 (>=$TargetPy 필요)"
+    } else {
+        Write-Err "Python not found"
+    }
+    Write-Host ""
+    Write-Host "이 프로젝트는 Python $TargetPy 이상이 필요합니다." -ForegroundColor Yellow
+    if (Confirm "uv를 사용해 Python $TargetPy를 자동 설치하시겠습니까?") {
+        $useUv = $true
+    } else {
+        Write-Info "수동으로 Python $TargetPy를 설치한 후 다시 실행해 주세요."
+        Write-Info "  https://www.python.org/downloads/"
+        exit 1
+    }
+}
+
 # ── 2. Discover uv ─────────────────────────────────────────────
 $uvBin = Get-Command uv -ErrorAction SilentlyContinue
 if (-not $uvBin) {
@@ -54,17 +90,9 @@ if (-not $uvBin) {
     if (Test-Path $localUv) { $uvBin = $localUv }
 }
 
-# ── 3. Decide strategy ─────────────────────────────────────────
-$useUv = $false
-
-Write-Host ""
-Write-Title "📦 maru-deep-pro-search 설치를 시작합니다..."
-Write-Host ""
-
 if ($pythonOk) {
-    Write-Ok "Python $pythonVersion detected"
     if ($uvBin) {
-        Write-Ok "uv detected"
+        Write-Ok "uv 감지됨"
         $useUv = $true
     } else {
         Write-Host ""
@@ -75,65 +103,88 @@ if ($pythonOk) {
         if (-not $choice) { $choice = "2" }
         if ($choice -eq "2") { $useUv = $true }
     }
-} else {
-    if ($pythonVersion) {
-        Write-Err "Python $pythonVersion detected (>=$TargetPy required)"
-    } else {
-        Write-Err "Python not found"
-    }
-    Write-Host ""
-    Write-Host "이 프로젝트는 Python $TargetPy 이상이 필요합니다." -ForegroundColor Yellow
-    Write-Host "→ uv를 사용해 자동으로 해결합니다." -ForegroundColor Yellow
-    $useUv = $true
 }
 
-# ── 4. Ensure uv is installed ──────────────────────────────────
+# ── 3. Ensure uv is installed ──────────────────────────────────
 if ($useUv -and -not $uvBin) {
-    Write-Host ""
-    Write-Title "→ uv 설치 중..."
-    Write-Host "   https://astral.sh/uv/install.ps1"
-    irm https://astral.sh/uv/install.ps1 | iex
+    Write-Title "2. uv 설치"
+    if (Confirm "uv가 필요합니다. 지금 설치하시겠습니까?") {
+        Write-Host "   https://astral.sh/uv/install.ps1"
+        irm https://astral.sh/uv/install.ps1 | iex
 
-    # Refresh PATH
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-    $uvBin = Get-Command uv -ErrorAction SilentlyContinue
-    if (-not $uvBin) {
-        $localUv = Join-Path $env:LOCALAPPDATA "programs\uv\uv.exe"
-        if (Test-Path $localUv) { $uvBin = $localUv }
-    }
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+        $uvBin = Get-Command uv -ErrorAction SilentlyContinue
+        if (-not $uvBin) {
+            $localUv = Join-Path $env:LOCALAPPDATA "programs\uv\uv.exe"
+            if (Test-Path $localUv) { $uvBin = $localUv }
+        }
 
-    if (-not $uvBin) {
-        Write-Host ""
-        Write-Err "uv 설치에 실패했습니다."
-        Write-Host "수동으로 PowerShell 관리자 권한에서 실행해 주세요:"
-        Write-Host "   powershell -ExecutionPolicy ByPass -c `"irm https://astral.sh/uv/install.ps1 | iex`""
+        if (-not $uvBin) {
+            Write-Err "uv 설치에 실패했습니다."
+            Write-Info "수동으로 실행해 주세요:"
+            Write-Info "  powershell -ExecutionPolicy ByPass -c `"irm https://astral.sh/uv/install.ps1 | iex`""
+            exit 1
+        }
+        Write-Ok "uv 설치 완료  ($uvBin)"
+    } else {
+        Write-Info "uv 설치 후 다시 실행해 주세요."
+        Write-Info "  https://docs.astral.sh/uv/getting-started/installation/"
         exit 1
     }
-    Write-Ok "uv 설치 완료"
+}
+
+# ── 4. Detect existing install ─────────────────────────────────
+Write-Title "3. 기존 설치 확인"
+$existing = Get-Command maru-deep-pro-search -ErrorAction SilentlyContinue
+if ($existing) {
+    try {
+        $oldVer = & maru-deep-pro-search --version 2>$null
+    } catch { $oldVer = "unknown" }
+    Write-Warn "기존 설치 감지: $oldVer"
+    Write-Info "GitHub 최신 코드로 교체합니다."
+} else {
+    Write-Info "기존 설치 없음"
 }
 
 # ── 5. Install the package ─────────────────────────────────────
-Write-Host ""
+Write-Title "4. 패키지 설치"
 if ($useUv) {
-    Write-Title "→ uv로 설치합니다..."
+    Write-Info "GitHub 저장소에서 최신 코드를 받습니다..."
     & $uvBin tool install --python $TargetPy --reinstall `
         "git+https://github.com/claudianus/maru-deep-pro-search.git"
 } else {
-    Write-Title "→ pip로 설치합니다..."
+    Write-Info "PyPI에서 설치합니다..."
     & $pythonCmd -m pip install --user maru-deep-pro-search
 }
 
-# ── 6. Run setup wizard ────────────────────────────────────────
-Write-Host ""
-Write-Title "🚀 설정 마법사를 실행합니다..."
-Write-Host ""
-maru-deep-pro-search setup
+# Verify
+try {
+    $newVer = & maru-deep-pro-search --version 2>$null
+} catch { $newVer = "unknown" }
+Write-Ok "maru-deep-pro-search $newVer 설치 완료"
 
-# ── 7. Done ────────────────────────────────────────────────────
+# ── 6. Optional setup wizard ───────────────────────────────────
+Write-Title "5. 설정 마법사"
+Write-Host "설정 마법사는 AI 에이전트(Claude, Cursor, Kimi 등)를 자동 감지하고"
+Write-Host "MCP 서버를 등록하는 과정입니다."
 Write-Host ""
-Write-Host "✅ 완료! AI 에이전트가 설정되었습니다." -ForegroundColor Green -Bold
+if (Confirm "지금 설정 마법사를 실행하시겠습니까?") {
+    Write-Host ""
+    maru-deep-pro-search setup
+} else {
+    Write-Info "설정은 나중에 직접 실행할 수 있습니다:"
+    Write-Info "  maru-deep-pro-search setup"
+}
+
+# ── 7. Summary ─────────────────────────────────────────────────
+Write-Title "✅ 설치 완료 요약"
+Write-Ok "Python: ${pythonVersion:-${TargetPy} (via uv)}"
+Write-Ok "패키지: $newVer"
+Write-Ok "설치 위치: $(which maru-deep-pro-search)"
 Write-Host ""
-Write-Host "사용 가능한 명령어:"
-Write-Host "  maru-deep-pro-search setup        # 에이전트 재설정"
-Write-Host "  maru-deep-pro-search setup --list # 설치된 에이전트 목록"
+Write-Host "사용 가능한 명령어:" -Bold
+Write-Host "  maru-deep-pro-search setup         # 에이전트 설정"
+Write-Host "  maru-deep-pro-search setup --list  # 설치된 에이전트 목록"
+Write-Host "  maru-deep-pro-search init          # 프로젝트 하네스 초기화"
+Write-Host "  maru-deep-pro-search --version     # 버전 확인"
 Write-Host ""

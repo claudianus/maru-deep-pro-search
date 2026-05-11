@@ -15,6 +15,8 @@
   <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/tests/"><img src="https://img.shields.io/badge/tests-193%20passing-brightgreen?style=flat-square" alt="Tests"></a>
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/pyversions/maru-deep-pro-search?style=flat-square" alt="Python"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
+  <a href="#docker"><img src="https://img.shields.io/badge/Docker-ready-blue?style=flat-square&logo=docker" alt="Docker"></a>
+  <a href="#security"><img src="https://img.shields.io/badge/security-72%20signatures-red?style=flat-square&logo=shield" alt="Security"></a>
 </p>
 
 <p align="center">
@@ -22,6 +24,24 @@
   <a href="https://pypi.org/project/maru-deep-pro-search/">📦 PyPI</a> ·
   <a href="https://github.com/claudianus/maru-deep-pro-search">💻 GitHub</a>
 </p>
+
+---
+
+## 📑 Table of Contents
+
+- [One-liner Install](#one-liner-install)
+- [What it does](#what-it-does)
+- [Why built-in search isn't enough](#why-your-agents-built-in-web-search-isnt-enough)
+- [Architecture](#architecture)
+- [8 Tools](#8-tools)
+- [Technical Deep Dives](#technical-deep-dives)
+- [Docker](#docker)
+- [Security](#security)
+- [Performance](#performance-characteristics)
+- [Configuration](#configuration-reference)
+- [Before & After](#before--after)
+- [Testing](#testing)
+- [Contributing](#contributing)
 
 ---
 
@@ -55,7 +75,7 @@ Your AI coding agent has a critical flaw: it answers from stale training data. `
 
 | Capability | How |
 |-----------|-----|
-| **Search** | Scrapes 7 engines directly via async HTTP. No API keys. |
+| **Search** | Scrapes 10 engines directly via async HTTP. No API keys. |
 | **Rank** | BM25 + dense semantic similarity + authority/freshness/code-density scoring |
 | **Research** | 7-phase deep research pipeline with auto query expansion, smart fetch, and gap detection |
 | **Cite** | Every result gets `[1]`, `[2]` IDs — native citation architecture |
@@ -103,7 +123,8 @@ This isn't a standalone search tool. It's a **search MCP server with harness set
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │                         MCP Client Layer                              │
-│                (Claude Code, Cursor, Kimi, Windsurf)                  │
+│  (Claude Code, Cursor, Zed, JetBrains, Cody, Devin, Amazon Q,         │
+│   Tabnine, Codeium, Kimi, Windsurf, Aider, Copilot, Cline, ...)       │
 └───────────────────────────────┬───────────────────────────────────────┘
                                 │ JSON-RPC 2.0 / stdio
                                 ▼
@@ -124,7 +145,7 @@ This isn't a standalone search tool. It's a **search MCP server with harness set
 │                       Research Pipeline                               │
 │                                                                       │
 │  ┌─────────────┐   ┌─────────────┐   ┌─────────────────────────┐    │
-│  │ Query       │──▶│ 7 Engines   │──▶│ Result Merge &          │    │
+│  │ Query       │──▶│ 10 Engines  │──▶│ Result Merge &          │    │
 │  │ Expander    │   │ (async)     │   │ Fuzzy Deduplication     │    │
 │  │ (templates  │   │ Registry    │   │ (Jaccard + semantic)    │    │
 │  │ + synonyms) │   │ pattern)    │   │                         │    │
@@ -215,7 +236,7 @@ Before hitting any search engine, the original query is expanded using a templat
 
 ### Multi-Engine Search Layer
 
-Seven search engines are supported, all via direct scraping:
+Ten search engines are supported, all via direct scraping or open APIs:
 
 | Engine | Method | Failover |
 |--------|--------|----------|
@@ -227,6 +248,8 @@ Seven search engines are supported, all via direct scraping:
 | Naver | Korean-specific HTML scrape | — |
 | Qwant | European privacy-focused | — |
 | Startpage | Google via privacy proxy | — |
+| **Academic** | ArXiv API + Semantic Scholar API | No API key required |
+| **Brave** | Brave Search API | Optional `BRAVE_API_KEY` |
 
 **Registry pattern**: `SearchEngineRegistry` uses a factory with `_instances` dict for singleton reuse. All engines share the same `AsyncDynamicSession` instance, eliminating ~2s browser startup overhead per fetch.
 
@@ -387,6 +410,8 @@ Project-level knowledge persistence for long-running research workflows:
 ```bash
 maru-deep-pro-search init          # Initialize .maru/ in current directory
 maru-deep-pro-search setup         # Configure AI agent integration
+maru-deep-pro-search stats         # KnowledgeStore health & statistics
+maru-deep-pro-search workflow      # Generate GitHub Actions CI/CD workflow
 ```
 
 ### Citation Architecture
@@ -404,12 +429,61 @@ The `search_with_citations` tool returns sources in academic format with URLs, t
 
 ---
 
+## Docker
+
+Run the MCP server in a sandboxed container (recommended for production):
+
+```bash
+# Build
+docker build -t maru-search .
+
+# Run with stdio transport (for Claude Desktop, Cursor, etc.)
+docker run --rm -i maru-search
+
+# Run with SSE transport on port 8000
+docker run --rm -p 8000:8000 maru-search --transport sse
+
+# With volume for persistent knowledge store
+docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search
+```
+
+The Dockerfile uses a **non-root user**, includes a health check, and ships with `uv` for fast dependency resolution. This aligns with MCP security best practices for sandboxing untrusted tool executions.
+
+---
+
+## Security
+
+### Prompt Injection Defense
+
+`sanitize.py` implements a **72-pattern multi-layer defense** against prompt injection and tool poisoning:
+
+| Layer | What it does |
+|-------|-------------|
+| **Character-level** | Removes zero-width chars (`\u200b`, `\u200c`, `\u200d`), control chars, neutralizes chat tokens |
+| **Signature detection** | 72 regex patterns across 10+ languages (EN/KO/ZH/JA/RU/ES/FR/DE/AR/PT) |
+| **MCP-specific** | Detects tool poisoning, rug pulls, shadowing, MPMA, cross-tool poisoning, unauthorized invocation |
+| **Embedding-based** | Optional semantic similarity detector using `sentence-transformers` |
+| **Content wrapping** | All fetched content is wrapped in `[EXTERNAL CONTENT]` blocks with risk metadata |
+
+### Audit Logging
+
+`harness/audit.py` provides behavioral monitoring for tool invocations:
+
+- Logs every tool call (name, params, result size, duration)
+- **Anomaly detection**: rapid-fire (>5 in 5s), unusually large results, suspicious parameters, slow execution (>30s)
+- Per-tool rolling statistics for baseline comparison
+- Stored in `.maru/audit.db` (SQLite)
+
+Reference: Implements recommendations from Huang et al. (2026) *"Are AI-assisted Development Tools Immune to Prompt Injection?"* (arXiv:2603.21642v1).
+
+---
+
 ## Performance Characteristics
 
 | Metric | Target | Implementation |
 |--------|--------|----------------|
 | Cache hit (KnowledgeStore) | <100ms | SQLite FTS5 + indexed domain_stats |
-| Full `deep_research` | <10s | 7 engines, 5 concurrent, early abort at 3 HIGH results |
+| Full `deep_research` | <10s | 10 engines, 5 concurrent, early abort at 3 HIGH results |
 | Scrapling session startup | ~0ms (amortized) | Single session reused per engine instance |
 | Semantic model load | ~2s (first call only) | Lazy init, CPU-only |
 | Memory footprint | ~150MB base, +120MB with semantic | No GPU required |
@@ -443,7 +517,7 @@ All environment variables are optional. Runtime config is loaded via `pydantic-s
 | **Setup** | Manual MCP config per agent | One-liner auto-detects all agents |
 | **Cost** | $5–50/mo API fees | **$0 forever** |
 | **Ranking** | Raw engine ordering | BM25 + semantic + metadata hybrid |
-| **Resilience** | Single point of failure | 7-engine failover + smart fallback |
+| **Resilience** | Single point of failure | 10-engine failover + smart fallback |
 | **Persistence** | Stateless | Project-level SQLite knowledge store |
 
 ---

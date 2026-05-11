@@ -66,6 +66,38 @@ Your AI coding agent has a critical flaw: it answers from stale training data. `
 
 ---
 
+## Why your agent's built-in web search isn't enough
+
+Modern AI coding agents ship with "web search" tools. They sound convenient — until you actually rely on them.
+
+### The problem with built-in search
+
+| Built-in Web Search | Reality |
+|---------------------|---------|
+| **Single engine** | If DuckDuckGo blocks the request, you're dead in the water. No fallback. |
+| **Raw results** | Returns whatever the search engine spits out. No ranking, no quality filtering. |
+| **No citations** | The agent hallucinates sources or simply makes them up. |
+| **Shallow fetch** | Grabs a snippet and calls it a day. Misses critical API docs, version tables, code examples. |
+| **Zero defense** | Fetches arbitrary web pages with no protection against prompt injection, zero-width chars, or malicious content. |
+| **Passive** | The agent *can* search, but nothing forces it to. It still defaults to stale training data. |
+
+### What maru-deep-pro-search does differently
+
+This isn't a search tool. It's a **research enforcement platform**.
+
+- **7-engine failover** — DuckDuckGo, Bing, Google, Naver, Qwant, Startpage, SearXNG. One fails? The next one picks up instantly.
+- **Perplexity-grade ranking** — BM25 relevance + semantic similarity + authority / freshness / code-density scoring. The best sources float to the top.
+- **Native citations** — Every claim gets `[1]`, `[2]`, `[3]`. Sources are real, traceable, and injected into the response.
+- **Deep research pipeline** — Auto query expansion → multi-angle search → smart fetch with anti-bot escalation → gap detection → synthesized cited answer.
+- **Content quality analysis** — Detects code-heavy pages, API docs, stale content, and authority signals. Prioritizes official documentation over random blogs.
+- **Prompt injection defense** — Sanitizes fetched content: strips zero-width chars, neutralizes chat tokens, flags suspicious patterns.
+- **Research-first enforcement** — The setup CLI injects mandatory rules into your agent: "You MUST call deep_research before writing ANY code." No exceptions.
+- **Zero API keys** — 100% free, forever. No OpenAI, no Anthropic, no SerpAPI, no Bing API.
+
+**Bottom line:** Built-in search gives your agent a browser. `maru-deep-pro-search` gives it a research team with a chief-of-staff that forces them to use it.
+
+---
+
 ## Architecture
 
 ```

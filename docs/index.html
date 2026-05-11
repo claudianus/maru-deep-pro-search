@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>maru-deep-pro-search — Perplexity급 웹 리서치, 0 API 키</title>
+<meta name="description" content="AI 코딩 에이전트를 위한 Perplexity급 웹 리서치 MCP 서버. 7엔진 폴오버, BM25+시맨틱 랭킹, 네이티브 인용, 프롬프트 인젝션 방어. 100% 물방아.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        maru: {
+          50: '#f0fdfa',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0d9488',
+          700: '#0f766e',
+          800: '#115e59',
+          900: '#134e4a',
+          950: '#042f2e',
+        },
+        dark: {
+          950: '#030712',
+          900: '#0a0a0f',
+          800: '#12121a',
+          700: '#1a1a2e',
+          600: '#232336',
+        }
+      },
+      fontFamily: {
+        sans: ['Inter', 'Noto Sans KR', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+      animation: {
+        'float': 'float 6s ease-in-out infinite',
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'glow': 'glow 2s ease-in-out infinite alternate',
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        glow: {
+          '0%': { boxShadow: '0 0 20px rgba(20,184,166,0.3)' },
+          '100%': { boxShadow: '0 0 40px rgba(20,184,166,0.6)' },
+        }
+      }
+    }
+  }
+}
+</script>
+<style>
+body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; color: #e2e8f0; overflow-x: hidden; }
+.particles { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+.glass { background: rgba(18,18,26,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
+.glass-card { background: rgba(26,26,46,0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; }
+.glass-card:hover { transform: translateY(-4px); border-color: rgba(20,184,166,0.3); box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(20,184,166,0.1); }
+.gradient-text { background: linear-gradient(135deg, #2dd4bf, #0ea5e9, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
+.scroll-reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.scroll-reveal.visible { opacity: 1; transform: translateY(0); }
+.typing-cursor::after { content: '|'; animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.comparison-row { transition: all 0.3s ease; }
+.comparison-row:hover { background: rgba(20,184,166,0.05); }
+.tab-active { border-bottom: 2px solid #14b8a6; color: #14b8a6; }
+.engine-badge { background: rgba(20,184,166,0.1); border: 1px solid rgba(20,184,166,0.2); color: #2dd4bf; }
+</style>
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particles" class="particles"></canvas>
+
+<!-- Nav -->
+<nav class="fixed top-0 w-full z-50 glass border-b border-white/[0.04]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-maru-400 to-blue-500 flex items-center justify-center">
+          <i class="fas fa-search text-white text-sm"></i>
+        </div>
+        <span class="font-bold text-lg tracking-tight">maru-deep-pro-search</span>
+      </div>
+      <div class="hidden md:flex items-center gap-6">
+        <a href="#problem" class="text-sm text-gray-400 hover:text-white transition">문제</a>
+        <a href="#solution" class="text-sm text-gray-400 hover:text-white transition">해결</a>
+        <a href="#compare" class="text-sm text-gray-400 hover:text-white transition">비교</a>
+        <a href="#architecture" class="text-sm text-gray-400 hover:text-white transition">구조</a>
+        <a href="#install" class="text-sm text-gray-400 hover:text-white transition">설치</a>
+        <button onclick="toggleLang()" class="text-xs px-3 py-1 rounded-full glass text-maru-300 hover:text-maru-200 transition">EN / KO</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="relative min-h-screen flex items-center justify-center pt-16">
+  <div class="relative z-10 max-w-5xl mx-auto px-4 text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-maru-300 text-sm mb-8">
+      <span class="w-2 h-2 rounded-full bg-maru-400 animate-pulse"></span>
+      <span class="ko">Zero API Key · Perplexity급 품질</span>
+      <span class="en hidden">Zero API Key · Perplexity-Grade Quality</span>
+    </div>
+    <h1 class="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-tight">
+      <span class="ko">AI 에이전트에게<br><span class="gradient-text">리서치를 강제</span>하다</span>
+      <span class="en hidden">Force Your AI Agent<br>to <span class="gradient-text">Research First</span></span>
+    </h1>
+    <p class="text-xl md:text-2xl text-gray-400 mb-4 max-w-3xl mx-auto leading-relaxed">
+      <span class="ko">내장 웹 검색이 아닌, <span class="text-white font-semibold">7엔진 폴오버 · BM25+시맨틱 랭킹 · 네이티브 인용</span>을 탑재한 진짜 리서치 플랫폼</span>
+      <span class="en hidden">Not a toy search tool. A <span class="text-white font-semibold">7-engine failover · BM25+semantic ranking · citation-native</span> research enforcement platform.</span>
+    </p>
+    <div class="h-8 mb-10">
+      <span id="typing" class="text-maru-300 font-mono text-lg typing-cursor"></span>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="#install" class="px-8 py-4 rounded-xl bg-gradient-to-r from-maru-600 to-maru-500 text-white font-bold hover:shadow-lg hover:shadow-maru-500/30 transition animate-glow">
+        <i class="fas fa-rocket mr-2"></i>
+        <span class="ko">1줄 설치</span><span class="en hidden">One-Liner Install</span>
+      </a>
+      <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" class="px-8 py-4 rounded-xl glass text-white font-semibold hover:bg-white/10 transition">
+        <i class="fab fa-github mr-2"></i> GitHub
+      </a>
+    </div>
+    <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+      <div class="glass-card rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-maru-300">7</div>
+        <div class="text-xs text-gray-500 mt-1 ko">검색 엔진</div><div class="text-xs text-gray-500 mt-1 en hidden">Engines</div>
+      </div>
+      <div class="glass-card rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-blue-400">0</div>
+        <div class="text-xs text-gray-500 mt-1 ko">API 키</div><div class="text-xs text-gray-500 mt-1 en hidden">API Keys</div>
+      </div>
+      <div class="glass-card rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-purple-400">193</div>
+        <div class="text-xs text-gray-500 mt-1 ko">테스트 통과</div><div class="text-xs text-gray-500 mt-1 en hidden">Tests Passing</div>
+      </div>
+      <div class="glass-card rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-emerald-400">∞</div>
+        <div class="text-xs text-gray-500 mt-1 ko">무료 호출</div><div class="text-xs text-gray-500 mt-1 en hidden">Free Queries</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Problem -->
+<section id="problem" class="py-24 relative">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="text-center mb-16 scroll-reveal">
+      <h2 class="text-3xl md:text-5xl font-bold mb-4">
+        <span class="ko">내장 웹 검색의 <span class="text-red-400">6가지 치명적 결함</span></span>
+        <span class="en hidden">6 Fatal Flaws of <span class="text-red-400">Built-in Web Search</span></span>
+      </h2>
+      <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+        <span class="ko">편리해 보이지만, 실제로 의존하면 에이전트가 환각에 빠집니다</span>
+        <span class="en hidden">Convenient in theory. Dangerous in production.</span>
+      </p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="glass-card rounded-2xl p-6 scroll-reveal">
+        <div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
+          <i class="fas fa-server text-red-400 text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold mb-2 ko">단일 엔진 의존</h3><h3 class="text-lg font-bold mb-2 en hidden">Single Engine</h3>
+        <p class="text-gray-400 text-sm ko">DuckDuckGo가 차단되면 끝입니다. 폴오버가 없어서 하나의 장애가 전체 서비스를 마비시킵니다.</p>
+        <p class="text-gray-400 text-sm en hidden">DuckDuckGo blocks you? Game over. No failover means one outage kills everything.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal">
+        <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4">
+          <i class="fas fa-sort-amount-down text-orange-400 text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold mb-2 ko">랭킹 부재</h3><h3 class="text-lg font-bold mb-2 en hidden">No Ranking</h3>
+        <p class="text-gray-400 text-sm ko">검색엔진이 뱉은 순서 그대로 전달합니다. BM25, 권위도, 신선도 기반 재랭킹이 전혀 없습니다.</p>
+        <p class="text-gray-400 text-sm en hidden">Raw engine order. No BM25, no authority scoring, no freshness filtering.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal">
+        <div class="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center mb-4">
+          <i class="fas fa-quote-right text-yellow-400 text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold mb-2 ko">인용 환각</h3><h3 class="text-lg font-bold mb-2 en hidden">Citation Hallucination</h3>
+        <p class="text-gray-400 text-sm ko">출처를 지어내거나 아예 무시합니다. `[1]`, `[2]` 네이티브 인용 아키텍처가 없어서 검증이 불가능합니다.</p>
+        <p class="text-gray-400 text-sm en hidden">Makes up sources or ignores them. No native citation IDs means zero traceability.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal">
+        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-4">
+          <i class="fas fa-water text-blue-400 text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold mb-2 ko">얕은 콘텐츠</h3><h3 class="text-lg font-bold mb-2 en hidden">Shallow Fetch</h3>
+        <p class="text-gray-400 text-sm ko">스니펫만 긁어 끝냅니다. API 문서, 버전 표, 코드 예시를 놓치고 얕은 블로그 글에 의존합니다.</p>
+        <p class="text-gray-400 text-sm en hidden">Grabs a snippet and stops. Misses API docs, version tables, code examples entirely.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal">
+        <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4">
+          <i class="fas fa-shield-halved text-purple-400 text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold mb-2 ko">방어 없음</h3><h3 class="text-lg font-bold mb-2 en hidden">Zero Defense</h3>
+        <p class="text-gray-400 text-sm ko">임의의 웹 페이지를 필터 없이 가져옵니다. 프롬프트 인젝션, 제로폭 문자, 악성 콘텐츠에 무방비입니다.</p>
+        <p class="text-gray-400 text-sm en hidden">Fetches arbitrary pages with no sanitization. Prompt injection, zero-width chars, malicious content all pass through.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal">
+        <div class="w-12 h-12 rounded-xl bg-gray-500/10 flex items-center justify-center mb-4">
+          <i class="fas fa-user-slash text-gray-400 text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold mb-2 ko">강제 불가</h3><h3 class="text-lg font-bold mb-2 en hidden">Not Enforced</h3>
+        <p class="text-gray-400 text-sm ko">"검색할 수 있다"일 뿐, 아무것도 강제하지 않습니다. 에이전트는 여전히 낡은 학습 데이터를 기본으로 사용합니다.</p>
+        <p class="text-gray-400 text-sm en hidden">The agent *can* search, but nothing forces it. It still defaults to stale training data every single time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Solution -->
+<section id="solution" class="py-24 relative">
+  <div class="absolute inset-0 bg-gradient-to-b from-maru-950/20 to-transparent"></div>
+  <div class="relative max-w-6xl mx-auto px-4">
+    <div class="text-center mb-16 scroll-reveal">
+      <h2 class="text-3xl md:text-5xl font-bold mb-4">
+        <span class="ko"><span class="gradient-text">킹갓슈프림</span> 리서치 플랫폼</span>
+        <span class="en hidden"><span class="gradient-text">Supreme</span> Research Platform</span>
+      </h2>
+      <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+        <span class="ko">검색 도구가 아닙니다. 리서치를 강제 실행하는 플랫폼입니다.</span>
+        <span class="en hidden">Not a search tool. A research enforcement platform.</span>
+      </p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-maru-500">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg bg-maru-500/20 flex items-center justify-center"><i class="fas fa-network-wired text-maru-400"></i></div>
+          <h3 class="text-lg font-bold ko">7엔진 자동 폴오버</h3><h3 class="text-lg font-bold en hidden">7-Engine Failover</h3>
+        </div>
+        <p class="text-gray-400 text-sm ko">DuckDuckGo · Bing · Google · Naver · Qwant · Startpage · SearXNG. 하나가 망가지면 다음이 즉시 이어받습니다. 장애에 강인합니다.</p>
+        <p class="text-gray-400 text-sm en hidden">Seven engines with automatic failover. One goes down, the next picks up instantly. Resilient by design.</p>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">DuckDuckGo</span>
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">Bing</span>
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">Google</span>
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">Naver</span>
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">Qwant</span>
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">Startpage</span>
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">SearXNG</span>
+        </div>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-blue-500">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center"><i class="fas fa-chart-line text-blue-400"></i></div>
+          <h3 class="text-lg font-bold ko">Perplexity급 랭킹</h3><h3 class="text-lg font-bold en hidden">Perplexity-Grade Ranking</h3>
+        </div>
+        <p class="text-gray-400 text-sm ko">BM25 관련성 + 밀집 시맨틱 유사도 + 권위도/신선도/코드밀도 점수. 최고의 소스가 정상에 오릅니다.</p>
+        <p class="text-gray-400 text-sm en hidden">BM25 relevance + dense semantic similarity + authority/freshness/code-density scoring. Best sources rise to the top.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-purple-500">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center"><i class="fas fa-link text-purple-400"></i></div>
+          <h3 class="text-lg font-bold ko">네이티브 인용</h3><h3 class="text-lg font-bold en hidden">Native Citations</h3>
+        </div>
+        <p class="text-gray-400 text-sm ko">모든 주장에 `[1]`, `[2]`, `[3]`이 붙습니다. 출처는 실재하며 추적 가능하고 응답에 직접 포함됩니다.</p>
+        <p class="text-gray-400 text-sm en hidden">Every claim gets `[1]`, `[2]`, `[3]`. Sources are real, traceable, and embedded directly in responses.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-emerald-500">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center"><i class="fas fa-microscope text-emerald-400"></i></div>
+          <h3 class="text-lg font-bold ko">딥 리서치 파이프라인</h3><h3 class="text-lg font-bold en hidden">Deep Research Pipeline</h3>
+        </div>
+        <p class="text-gray-400 text-sm ko">쿼리 자동 확장 → 다각도 검색 → 안티봇 에스컬레이션 스마트 페치 → 갭 탐지 → 인용된 종합 답변.</p>
+        <p class="text-gray-400 text-sm en hidden">Auto query expansion → multi-angle search → anti-bot smart fetch → gap detection → synthesized cited answer.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-orange-500">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center"><i class="fas fa-shield-virus text-orange-400"></i></div>
+          <h3 class="text-lg font-bold ko">프롬프트 인젝션 방어</h3><h3 class="text-lg font-bold en hidden">Prompt Injection Defense</h3>
+        </div>
+        <p class="text-gray-400 text-sm ko">가져온 콘텐츠를 정제합니다: 제로폭 문자 제거, 채팅 토큰 중화, 의심 패턴 플래깅. 외부 콘텐츠를 신뢰할 수 없는 입력으로 처리합니다.</p>
+        <p class="text-gray-400 text-sm en hidden">Sanitizes fetched content: strips zero-width chars, neutralizes chat tokens, flags suspicious patterns. Treats all external content as untrusted.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-pink-500">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center"><i class="fas fa-gavel text-pink-400"></i></div>
+          <h3 class="text-lg font-bold ko">리서치 우선 강제</h3><h3 class="text-lg font-bold en hidden">Research-First Enforcement</h3>
+        </div>
+        <p class="text-gray-400 text-sm ko">설정 CLI가 에이전트에 강제 규칙을 주입합니다: "어떤 코드를 작성하기 전에 반드시 deep_research를 호출하라." 예외 없음.</p>
+        <p class="text-gray-400 text-sm en hidden">Setup CLI injects mandatory rules: "You MUST call deep_research before writing ANY code." No exceptions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Comparison Table -->
+<section id="compare" class="py-24 relative">
+  <div class="max-w-5xl mx-auto px-4">
+    <div class="text-center mb-16 scroll-reveal">
+      <h2 class="text-3xl md:text-5xl font-bold mb-4">
+        <span class="ko">직접 <span class="gradient-text">비교</span>해 보세요</span>
+        <span class="en hidden">See the <span class="gradient-text">Difference</span></span>
+      </h2>
+    </div>
+    <div class="glass rounded-2xl overflow-hidden scroll-reveal">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/10">
+              <th class="text-left px-6 py-4 text-gray-400 font-medium ko">기능</th>
+              <th class="text-left px-6 py-4 text-gray-400 font-medium en hidden">Feature</th>
+              <th class="text-center px-6 py-4 text-gray-500 font-medium ko">내장 검색</th>
+              <th class="text-center px-6 py-4 text-gray-500 font-medium en hidden">Built-in</th>
+              <th class="text-center px-6 py-4 text-maru-300 font-medium">maru-deep-pro-search</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="comparison-row border-b border-white/5">
+              <td class="px-6 py-4 font-medium ko">검색 엔진 수</td><td class="px-6 py-4 font-medium en hidden">Search Engines</td>
+              <td class="text-center px-6 py-4 text-gray-500">1</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold">7 + 폴오버</td>
+            </tr>
+            <tr class="comparison-row border-b border-white/5">
+              <td class="px-6 py-4 font-medium ko">결과 랭킹</td><td class="px-6 py-4 font-medium en hidden">Result Ranking</td>
+              <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">BM25 + 시맨틱</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">BM25 + Semantic</td>
+            </tr>
+            <tr class="comparison-row border-b border-white/5">
+              <td class="px-6 py-4 font-medium ko">인용 지원</td><td class="px-6 py-4 font-medium en hidden">Citations</td>
+              <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold">[1], [2], [3] 네이티브</td>
+            </tr>
+            <tr class="comparison-row border-b border-white/5">
+              <td class="px-6 py-4 font-medium ko">딥 리서치</td><td class="px-6 py-4 font-medium en hidden">Deep Research</td>
+              <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">7단계 파이프라인</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">7-Phase Pipeline</td>
+            </tr>
+            <tr class="comparison-row border-b border-white/5">
+              <td class="px-6 py-4 font-medium ko">안티봇/스텔스</td><td class="px-6 py-4 font-medium en hidden">Anti-Bot</td>
+              <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">3단계 에스컬레이션</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">3-Step Escalation</td>
+            </tr>
+            <tr class="comparison-row border-b border-white/5">
+              <td class="px-6 py-4 font-medium ko">프롬프트 인젝션 방어</td><td class="px-6 py-4 font-medium en hidden">Injection Defense</td>
+              <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold">✓ Sanitize + Tag</td>
+            </tr>
+            <tr class="comparison-row border-b border-white/5">
+              <td class="px-6 py-4 font-medium ko">강제 실행</td><td class="px-6 py-4 font-medium en hidden">Enforcement</td>
+              <td class="text-center px-6 py-4 text-gray-500 ko">수동</td><td class="text-center px-6 py-4 text-gray-500 en hidden">Manual</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">규칙 주입 강제</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">Rule Injection</td>
+            </tr>
+            <tr class="comparison-row">
+              <td class="px-6 py-4 font-medium ko">비용</td><td class="px-6 py-4 font-medium en hidden">Cost</td>
+              <td class="text-center px-6 py-4 text-gray-500">$0</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold">$0 (0 API Key)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section id="architecture" class="py-24 relative">
+  <div class="max-w-5xl mx-auto px-4">
+    <div class="text-center mb-16 scroll-reveal">
+      <h2 class="text-3xl md:text-5xl font-bold mb-4">
+        <span class="ko">내부 <span class="gradient-text">아키텍처</span></span>
+        <span class="en hidden">Internal <span class="gradient-text">Architecture</span></span>
+      </h2>
+    </div>
+    <div class="glass rounded-2xl p-8 font-mono text-sm scroll-reveal overflow-x-auto">
+      <div class="text-center text-gray-500 mb-4 ko">MCP 클라이언트 계층</div>
+      <div class="text-center text-gray-500 mb-4 en hidden">MCP Client Layer</div>
+      <div class="flex justify-center gap-3 mb-4 flex-wrap">
+        <span class="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">Claude Code</span>
+        <span class="px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs">Cursor</span>
+        <span class="px-3 py-1 rounded-lg bg-pink-500/10 border border-pink-500/20 text-pink-300 text-xs">Kimi</span>
+        <span class="px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs">Windsurf</span>
+      </div>
+      <div class="text-center text-gray-600 mb-4">JSON-RPC 2.0 / stdio</div>
+      <div class="text-center text-maru-300 mb-4 font-bold">▼</div>
+      <div class="border border-maru-500/30 rounded-xl p-4 bg-maru-950/30 mb-4">
+        <div class="text-center text-maru-300 font-bold mb-2 ko">maru-deep-pro-search MCP 서버</div>
+        <div class="text-center text-maru-300 font-bold mb-2 en hidden">maru-deep-pro-search MCP Server</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">deep_research</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">answer</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">web_search</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">fetch_page</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">fetch_bulk</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">stealthy_fetch</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">parallel_search</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">search_with_citations</div>
+        </div>
+      </div>
+      <div class="text-center text-maru-300 mb-4 font-bold">▼</div>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="border border-blue-500/20 rounded-xl p-3 bg-blue-950/20">
+          <div class="text-blue-300 font-bold text-xs mb-2 ko">7엔진 스크래퍼</div>
+          <div class="text-blue-300 font-bold text-xs mb-2 en hidden">7-Engine Scraper</div>
+          <div class="flex flex-wrap gap-1">
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">DDG</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Bing</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Google</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Naver</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Qwant</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Startpage</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">SearXNG</span>
+          </div>
+        </div>
+        <div class="border border-emerald-500/20 rounded-xl p-3 bg-emerald-950/20">
+          <div class="text-emerald-300 font-bold text-xs mb-2 ko">랭킹 엔진</div>
+          <div class="text-emerald-300 font-bold text-xs mb-2 en hidden">Ranking Engine</div>
+          <div class="text-[10px] text-gray-400 space-y-1">
+            <div>BM25Okapi</div>
+            <div>Semantic Similarity</div>
+            <div>Authority/Freshness</div>
+            <div>Code-Density</div>
+          </div>
+        </div>
+        <div class="border border-orange-500/20 rounded-xl p-3 bg-orange-950/20">
+          <div class="text-orange-300 font-bold text-xs mb-2 ko">콘텐츠 추출</div>
+          <div class="text-orange-300 font-bold text-xs mb-2 en hidden">Extraction</div>
+          <div class="text-[10px] text-gray-400 space-y-1">
+            <div>trafilatura</div>
+            <div>Code Detection</div>
+            <div>API Signature</div>
+            <div>Freshness Score</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Install -->
+<section id="install" class="py-24 relative">
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent to-maru-950/20"></div>
+  <div class="relative max-w-4xl mx-auto px-4">
+    <div class="text-center mb-16 scroll-reveal">
+      <h2 class="text-3xl md:text-5xl font-bold mb-4">
+        <span class="ko"><span class="gradient-text">1줄</span>로 설치</span>
+        <span class="en hidden"><span class="gradient-text">One-Liner</span> Install</span>
+      </h2>
+      <p class="text-gray-400 ko">Python 3.10+ 필요. 스크립트가 자동으로 처리합니다.</p>
+      <p class="text-gray-400 en hidden">Python 3.10+ required. The script handles everything.</p>
+    </div>
+    <div class="space-y-6 scroll-reveal">
+      <div class="code-block">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <span class="text-xs text-gray-500 font-mono">macOS / Linux</span>
+          <button onclick="copyCode(this)" class="text-xs text-gray-500 hover:text-white transition"><i class="far fa-copy mr-1"></i> Copy</button>
+        </div>
+        <pre class="p-4 text-sm font-mono text-gray-300 overflow-x-auto">curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.sh | bash</pre>
+      </div>
+      <div class="code-block">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <span class="text-xs text-gray-500 font-mono">Windows (PowerShell)</span>
+          <button onclick="copyCode(this)" class="text-xs text-gray-500 hover:text-white transition"><i class="far fa-copy mr-1"></i> Copy</button>
+        </div>
+        <pre class="p-4 text-sm font-mono text-gray-300 overflow-x-auto">irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex</pre>
+      </div>
+      <div class="code-block">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <span class="text-xs text-gray-500 font-mono">uv (직접 설치)</span>
+          <button onclick="copyCode(this)" class="text-xs text-gray-500 hover:text-white transition"><i class="far fa-copy mr-1"></i> Copy</button>
+        </div>
+        <pre class="p-4 text-sm font-mono text-gray-300 overflow-x-auto">uv tool install --python 3.12 git+https://github.com/claudianus/maru-deep-pro-search.git</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="py-12 border-t border-white/5">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-maru-400 to-blue-500 flex items-center justify-center">
+          <i class="fas fa-search text-white text-sm"></i>
+        </div>
+        <span class="font-bold">maru-deep-pro-search</span>
+        <span class="text-gray-600 text-sm">v0.9.1</span>
+      </div>
+      <div class="flex items-center gap-6 text-sm text-gray-500">
+        <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" class="hover:text-white transition"><i class="fab fa-github mr-1"></i> GitHub</a>
+        <a href="https://pypi.org/project/maru-deep-pro-search/" target="_blank" class="hover:text-white transition"><i class="fas fa-box mr-1"></i> PyPI</a>
+      </div>
+    </div>
+    <div class="mt-6 text-center text-xs text-gray-600">
+      MIT License · 100% Free · No API Keys Ever
+    </div>
+  </div>
+</footer>
+
+<!-- Scripts -->
+<script>
+// Particle System
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let mouse = { x: null, y: null };
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+window.addEventListener('mousemove', e => {
+  mouse.x = e.x;
+  mouse.y = e.y;
+});
+
+class Particle {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 2 + 0.5;
+    this.speedX = (Math.random() - 0.5) * 0.5;
+    this.speedY = (Math.random() - 0.5) * 0.5;
+    this.opacity = Math.random() * 0.5 + 0.1;
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    if (this.x > canvas.width) this.x = 0;
+    if (this.x < 0) this.x = canvas.width;
+    if (this.y > canvas.height) this.y = 0;
+    if (this.y < 0) this.y = canvas.height;
+  }
+  draw() {
+    ctx.fillStyle = `rgba(20, 184, 166, ${this.opacity})`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function initParticles() {
+  particles = [];
+  const count = Math.min(window.innerWidth / 10, 100);
+  for (let i = 0; i < count; i++) {
+    particles.push(new Particle());
+  }
+}
+initParticles();
+
+function connect() {
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 100) {
+        ctx.strokeStyle = `rgba(20, 184, 166, ${0.1 * (1 - dist / 100)})`;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.stroke();
+      }
+    }
+    if (mouse.x) {
+      const dx = particles[i].x - mouse.x;
+      const dy = particles[i].y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 150) {
+        ctx.strokeStyle = `rgba(20, 184, 166, ${0.15 * (1 - dist / 150)})`;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(mouse.x, mouse.y);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  connect();
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// Typing Effect
+const koTexts = [
+  "7엔진 폴오버로 장애 없는 검색...",
+  "BM25 + 시맨틱으로 최고의 소스만 선별...",
+  "[1], [2] 네이티브 인용으로 환각 차단...",
+  "리서치 우선 규칙으로 에이전트 강제...",
+  "0 API 키. 100% 무료. 영원히."
+];
+const enTexts = [
+  "7-engine failover for resilient search...",
+  "BM25 + semantic ranking filters only the best...",
+  "Native [1], [2] citations block hallucinations...",
+  "Research-first rules force agent compliance...",
+  "Zero API keys. 100% free. Forever."
+];
+let textIdx = 0, charIdx = 0, isDeleting = false;
+const typingEl = document.getElementById('typing');
+const isKo = !document.documentElement.classList.contains('en-mode');
+
+function type() {
+  const texts = isKo ? koTexts : enTexts;
+  const current = texts[textIdx];
+  if (isDeleting) {
+    typingEl.textContent = current.substring(0, charIdx - 1);
+    charIdx--;
+  } else {
+    typingEl.textContent = current.substring(0, charIdx + 1);
+    charIdx++;
+  }
+  let speed = isDeleting ? 30 : 60;
+  if (!isDeleting && charIdx === current.length) {
+    speed = 2000;
+    isDeleting = true;
+  } else if (isDeleting && charIdx === 0) {
+    isDeleting = false;
+    textIdx = (textIdx + 1) % texts.length;
+    speed = 500;
+  }
+  setTimeout(type, speed);
+}
+type();
+
+// Scroll Reveal
+const reveals = document.querySelectorAll('.scroll-reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+// Language Toggle
+function toggleLang() {
+  const koEls = document.querySelectorAll('.ko');
+  const enEls = document.querySelectorAll('.en');
+  koEls.forEach(el => el.classList.toggle('hidden'));
+  enEls.forEach(el => el.classList.toggle('hidden'));
+}
+
+// Copy Code
+function copyCode(btn) {
+  const code = btn.closest('.code-block').querySelector('pre').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check mr-1"></i> Copied';
+    setTimeout(() => btn.innerHTML = original, 2000);
+  });
+}
+</script>
+</body>
+</html>

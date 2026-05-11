@@ -52,6 +52,7 @@
 - [Tech Stack](#tech-stack)
 - [Testing](#testing)
 - [Contributing](#contributing)
+- [Related Projects](#related-projects)
 - [Citation](#citation)
 - [Star History](#star-history)
 
@@ -900,6 +901,18 @@ make lint
 # Format code
 make format
 ```
+
+---
+
+## Related Projects
+
+| Project | What it does | How it complements |
+|---------|-------------|-------------------|
+| [Perplexity](https://www.perplexity.ai/) | AI search with citations | Cloud-based alternative; maru is self-hosted and free |
+| [SearXNG](https://docs.searxng.org/) | Self-hosted meta search | One of our 10 engines; maru adds ranking, citations, MCP |
+| [trafilatura](https://trafilatura.readthedocs.io/) | Web content extraction | Core dependency; maru adds MCP integration and research pipeline |
+| [scrapeghost](https://github.com/jamesturk/scrapeghost) | LLM-powered scraping | Alternative approach; maru uses deterministic scraping + ranking |
+| [browser-use](https://github.com/browser-use/browser-use) | Browser automation for AI | Complementary: maru for search, browser-use for complex interactions |
 
 ---
 

@@ -286,7 +286,7 @@ The server contains **zero generative LLMs**. Synthesis is rule-based; your agen
 
 | Agent | Hook Type | Mechanism | Block Action |
 |-------|-----------|-----------|-------------|
-| **Claude Code** | `PreToolUse` | Shell script checks `~/.maru/session_research.json` | Exit code 2 blocks Write/Edit |
+| **Claude Code** | `PreToolUse` + `PostToolUse` + `SessionStart` | Pre blocks Bash; Post detects Write/Edit bypass and reverts | Exit 2 blocks Bash; PostToolUse reverts un-researched edits |
 | **Aider** | `lint-cmd` | Python gate script in `~/.maru/aider_research_gate.py` | Lint failure aborts edit |
 | **Cursor** | `.cursorrules` + commands | Custom `/research` and `/verify` slash commands | Rules + MCP auto-enable |
 | **Hermes** | `pre_tool_call` plugin | Python plugin via `hermes_agent.plugins` entry point | Hook returns block action |

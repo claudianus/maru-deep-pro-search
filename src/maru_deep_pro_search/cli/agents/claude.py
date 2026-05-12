@@ -110,41 +110,93 @@ class ClaudeAdapter(AgentAdapter):
 
     # ── helpers ─────────────────────────────────────────────────
     def _write_hooks(self, scope: str) -> None:
-        """Install the research-gate hook script that PreToolUse calls."""
+        """Install the research-gate hook scripts that PreToolUse/PostToolUse call."""
         hooks_dir = Path.home() / ".claude" / "hooks"
         hooks_dir.mkdir(parents=True, exist_ok=True)
 
+        # ── PreToolUse gate ──
         gate_script = hooks_dir / "maru_research_gate.py"
         if not gate_script.exists():
             gate_script.write_text(
                 '#!/usr/bin/env python3\n'
-                '"""Claude Code PreToolUse hook — blocks Edit/Write without research."""\n'
+                '"""Claude Code PreToolUse hook — blocks Bash without research."""\n'
                 'import json, os, sys, time\n\n'
                 'def main() -> None:\n'
                 '    data = json.load(sys.stdin)\n'
                 '    tool_name = data.get("tool_name", "")\n'
-                '    if tool_name not in ("Edit", "Write"):\n'
+                '    # PreToolUse exit 2 blocks Bash reliably; Write/Edit have a known\n'
+                '    # bug where exit 2 is ignored (github.com/anthropics/claude-code/issues/13744).\n'
+                '    # We block Bash here and rely on PostToolUse to revert Write/Edit.\n'
+                '    if tool_name != "Bash":\n'
                 '        sys.exit(0)\n'
                 '    marker = os.path.expanduser("~/.maru/last_research")\n'
                 '    if not os.path.exists(marker):\n'
-                '        print(json.dumps({\n'
-                '            "decision": "deny",\n'
-                '            "reason": "[MARU] Research required. Call deep_research(query=...) before editing code."\n'
-                '        }))\n'
-                '        sys.exit(0)\n'
+                '        print("[MARU] Research required. Call deep_research(query=...) before running commands.", file=sys.stderr)\n'
+                '        sys.exit(2)\n'
                 '    elapsed = time.time() - os.path.getmtime(marker)\n'
                 '    if elapsed > 1800:\n'
-                '        print(json.dumps({\n'
-                '            "decision": "deny",\n'
-                '            "reason": f"[MARU] Research expired ({elapsed/60:.0f}min ago). Re-run deep_research."\n'
-                '        }))\n'
-                '        sys.exit(0)\n'
+                '        print(f"[MARU] Research expired ({elapsed/60:.0f}min ago). Re-run deep_research.", file=sys.stderr)\n'
+                '        sys.exit(2)\n'
                 '    sys.exit(0)\n\n'
                 'if __name__ == "__main__":\n'
                 '    main()\n',
                 encoding="utf-8",
             )
             gate_script.chmod(0o755)
+
+        # ── PostToolUse revert script ──
+        revert_script = hooks_dir / "maru_research_revert.py"
+        if not revert_script.exists():
+            revert_script.write_text(
+                '#!/usr/bin/env python3\n'
+                '"""Claude Code PostToolUse hook — reverts Write/Edit without research.\n'
+                '\n'
+                'Workaround for PreToolUse exit 2 not blocking Write/Edit:\n'
+                'https://github.com/anthropics/claude-code/issues/13744\n'
+                '"""\n'
+                'import json, os, subprocess, sys\n\n'
+                'def main() -> None:\n'
+                '    data = json.load(sys.stdin)\n'
+                '    tool_name = data.get("tool_name", "")\n'
+                '    if tool_name not in ("Write", "Edit"):\n'
+                '        sys.exit(0)\n'
+                '    marker = os.path.expanduser("~/.maru/last_research")\n'
+                '    ok = False\n'
+                '    if os.path.exists(marker):\n'
+                '        import time\n'
+                '        if time.time() - os.path.getmtime(marker) <= 1800:\n'
+                '            ok = True\n'
+                '    if ok:\n'
+                '        sys.exit(0)\n'
+                '    # Revert the file change using git checkout\n'
+                '    file_path = data.get("tool_input", {}).get("file_path", "")\n'
+                '    if file_path:\n'
+                '        subprocess.run(["git", "checkout", "--", file_path], capture_output=True)\n'
+                '    print("[MARU-POST-GATE] Reverted un-researched edit. Run /research first.", file=sys.stderr)\n'
+                '    sys.exit(0)\n\n'
+                'if __name__ == "__main__":\n'
+                '    main()\n',
+                encoding="utf-8",
+            )
+            revert_script.chmod(0o755)
+
+        # ── SessionStart inject script ──
+        session_script = hooks_dir / "maru_session_start.py"
+        if not session_script.exists():
+            session_script.write_text(
+                '#!/usr/bin/env python3\n'
+                '"""Claude Code SessionStart hook — inject research reminder."""\n'
+                'import json, sys\n\n'
+                'def main() -> None:\n'
+                '    print(json.dumps({\n'
+                '        "additionalContext": "[MARU-RESEARCH-GATE] New session. You MUST run deep_research before any code changes."\n'
+                '    }))\n'
+                '    sys.exit(0)\n\n'
+                'if __name__ == "__main__":\n'
+                '    main()\n',
+                encoding="utf-8",
+            )
+            session_script.chmod(0o755)
 
     def _write_settings(self, scope: str) -> None:
         path = self._settings_path(scope)
@@ -168,7 +220,9 @@ class ClaudeAdapter(AgentAdapter):
                 ],
             })
 
-        # 2. PostToolUse — verify citations after edit/write
+        # 2. PostToolUse — REVERT un-researched Write/Edit
+        #    Workaround for PreToolUse exit 2 not blocking Write/Edit
+        #    (github.com/anthropics/claude-code/issues/13744)
         if "PostToolUse" not in settings["hooks"]:
             settings["hooks"]["PostToolUse"] = []
         post_matchers = [h.get("matcher", "") for h in settings["hooks"]["PostToolUse"]]
@@ -177,13 +231,23 @@ class ClaudeAdapter(AgentAdapter):
                 "matcher": "Write|Edit",
                 "hooks": [
                     {
-                        "type": "prompt",
-                        "prompt": (
-                            "You just wrote or edited code. "
-                            "Verify that all API references and library versions "
-                            "are backed by research citations [1], [2]. "
-                            "If not, STOP and call deep_research before continuing."
-                        ),
+                        "type": "command",
+                        "command": str(Path.home() / ".claude" / "hooks" / "maru_research_revert.py"),
+                    }
+                ],
+            })
+
+        # 3. SessionStart — inject research reminder
+        if "SessionStart" not in settings["hooks"]:
+            settings["hooks"]["SessionStart"] = []
+        session_matchers = [h.get("matcher", "") for h in settings["hooks"]["SessionStart"]]
+        if "*" not in session_matchers:
+            settings["hooks"]["SessionStart"].append({
+                "matcher": "*",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": str(Path.home() / ".claude" / "hooks" / "maru_session_start.py"),
                     }
                 ],
             })

@@ -66,7 +66,7 @@
 These principles guide every design decision in the project:
 
 1. **Zero API keys, forever** — No OpenAI, no Anthropic, no SerpAPI, no Bing API. Direct scraping and local computation only.
-2. **Failover by default** — Single points of failure are unacceptable. 10 engines, automatic escalation, graceful degradation.
+2. **Failover by default** — Single points of failure are unacceptable. 9 engines, automatic escalation, graceful degradation.
 3. **Citation-native** — Every claim must be traceable. Sources are first-class citizens, not afterthoughts.
 4. **Research-first enforcement** — The agent MUST search before coding. Rules are injected, not suggested.
 5. **Defense in depth** — Prompt injection defense isn't a checkbox. 72 signatures, multi-language, MCP-specific attacks.
@@ -77,7 +77,7 @@ These principles guide every design decision in the project:
 
 ## One-liner Install
 
-> **Prerequisite:** Python **≥3.9** (the install script handles this automatically)
+> **Prerequisite:** Python **≥3.10** (the install script handles this automatically)
 
 **macOS / Linux — recommended (auto-installs uv if needed):**
 ```bash
@@ -91,7 +91,7 @@ irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scrip
 
 **Manual install (pip):**
 ```bash
-# Make sure Python 3.9+ is already on your PATH
+# Make sure Python 3.10+ is already on your PATH
 pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 ```
 
@@ -105,11 +105,11 @@ Your AI coding agent has a critical flaw: it answers from stale training data. `
 
 | Capability | How |
 |-----------|-----|
-| **Search** | Scrapes 10 engines directly via async HTTP. No API keys. |
+| **Search** | Scrapes 9 engines directly via async HTTP. No API keys. |
 | **Rank** | BM25 + dense semantic similarity + authority/freshness/code-density scoring |
 | **Research** | 7-phase deep research pipeline with auto query expansion, smart fetch, and gap detection |
 | **Cite** | Every result gets `[1]`, `[2]` IDs — native citation architecture |
-| **Enforce** | 3-layer real enforcement: server-side session gating + client-side hooks (PreToolUse, lint-cmd, onPreEdit) + protocol injection for 20 agents |
+| **Enforce** | 3-layer real enforcement: server-side session gating + client-side hooks (PreToolUse, lint-cmd, onPreEdit) + protocol injection for 21 agents |
 | **Persist** | Harness platform stores project knowledge in SQLite with optional semantic embeddings |
 | **Audit** | SQLite-backed MCP tool call logging with anomaly detection |
 | **Sandbox** | Docker sandbox for isolated execution |
@@ -122,7 +122,7 @@ Your AI coding agent has a critical flaw: it answers from stale training data. `
 |---|:---:|:---:|:---:|:---:|
 | **Price** | Free | $5/1K calls | Free (limited) | $50+/mo |
 | **API keys** | None required | Required | Varies | Required |
-| **Engines** | 10 + failover | 1 (internal) | 1-2 | 1 at a time |
+| **Engines** | 9 + failover | 1 (internal) | 1-2 | 1 at a time |
 | **Citations** | Native `[1]` IDs | Yes | Rare | No |
 | **Ranking** | BM25 + semantic + metadata | Proprietary | None | None |
 | **Prompt injection defense** | 72 signatures | Unknown | None | None |
@@ -151,7 +151,7 @@ Modern AI coding agents ship with "web search" tools. They sound convenient — 
 
 This isn't a standalone search tool. It's a **search MCP server with harness setup tools** — it provides the search/fetch tools and injects the research-first rules into your agent.
 
-- **10-engine failover** — DuckDuckGo, Bing, Google, Naver, Qwant, Startpage, SearXNG, **Academic (ArXiv + Semantic Scholar)**, **Brave**, + lite variants. One fails? The next one picks up instantly.
+- **9-engine failover** — DuckDuckGo (HTML + Lite), Bing, Google, Yahoo, Ecosia, Baidu, Startpage, Naver. One fails? The next one picks up instantly.
 - **Perplexity-grade ranking** — BM25 relevance + semantic similarity + authority / freshness / code-density scoring. The best sources float to the top.
 - **Native citations** — Every claim gets `[1]`, `[2]`, `[3]`. Sources are real, traceable, and injected into the response.
 - **Deep research pipeline** — Auto query expansion → multi-angle search → smart fetch with anti-bot escalation → gap detection → synthesized cited answer.
@@ -414,7 +414,7 @@ When your agent calls `deep_research`, here's what happens under the hood:
 - "Express.js CVE vulnerabilities"
 - "express helmet middleware configuration"
 
-**Phase 3: Parallel Search** — Dispatches subqueries to up to 10 engines concurrently. First 3 results returned abort the rest.
+**Phase 3: Parallel Search** — Dispatches subqueries to up to 9 engines concurrently, capped at 3 simultaneous connections via Semaphore. First 3 results returned abort the rest.
 
 **Phase 4: Hybrid Ranking** — BM25 relevance × semantic similarity × authority × freshness × code-density. Best sources float to the top.
 
@@ -441,22 +441,26 @@ Before hitting any search engine, the original query is expanded using a templat
 
 ### Multi-Engine Search Layer
 
-Ten search engines are supported, all via direct scraping or open APIs:
+Nine search engines are supported, all via direct scraping or open APIs:
 
-| Engine | Method | Failover |
-|--------|--------|----------|
-| DuckDuckGo (lite) | HTML scrape | Primary |
-| DuckDuckGo (html) | HTML scrape | Fallback |
-| SearXNG | JSON API | 6-instance round-robin |
-| Bing | HTML scrape | — |
-| Google | HTML scrape + CAPTCHA detection | — |
-| Naver | Korean-specific HTML scrape | — |
-| Qwant | European privacy-focused | — |
-| Startpage | Google via privacy proxy | — |
-| **Academic** | ArXiv API + Semantic Scholar API | No API key required |
-| **Brave** | Brave Search API | Optional `BRAVE_API_KEY` |
+| Engine | Method | Notes |
+|--------|--------|-------|
+| DuckDuckGo (lite) | HTML scrape | Default, fastest |
+| DuckDuckGo (html) | HTML scrape | Fallback with JS support |
+| Bing | HTML scrape | Locale-pinned (`en-US`) |
+| Google | Stealth session reuse | Anti-bot evasion, lowest rate limit risk |
+| Yahoo | HTML scrape | Redirect decoding |
+| Ecosia | HTML scrape | Organic-only filtering |
+| Baidu | HTML scrape | Noise-filtered (`result-op` exclusion) |
+| Startpage | JS-rendered proxy | Google via privacy proxy |
+| Naver | HTML scrape (SSR) | Obfuscated DOM recovery |
 
-**Registry pattern**: `SearchEngineRegistry` uses a factory with `_instances` dict for singleton reuse. All engines share the same `AsyncDynamicSession` instance, eliminating ~2s browser startup overhead per fetch.
+**Registry pattern**: `SearchEngineRegistry` uses a factory with `_instances` dict for singleton reuse. Engines requiring stealth use `AsyncStealthySession` for browser reuse, dramatically reducing rate limit hits vs. spawning a new browser per request.
+
+**Rate limiting**: Three-layer defense prevents 429 storms:
+1. `asyncio.Semaphore(3)` caps concurrent searches in `deep_research`
+2. `EngineRateLimiter` enforces per-engine cooldowns (Google/Startpage: 3s, Baidu: 2s, others: 1–1.5s), auto-wrapped via `__init_subclass__`
+3. `TokenBucket` provides optional global QPS throttling
 
 **Parallel execution**: `asyncio.gather()` across all configured engines. Results are merged and deduplicated before ranking.
 
@@ -698,27 +702,20 @@ Reference: Implements recommendations from Huang et al. (2026) *"Are AI-assisted
 
 ## For Researchers
 
-The **Academic engine** (`academic`) is purpose-built for research workflows. It queries both **ArXiv** and **Semantic Scholar** in parallel, then merges and deduplicates results using the same hybrid ranking pipeline as general web search.
+Research queries (papers, arxiv, citations, DOI) are handled by the general web search engines with optimized ranking. The hybrid ranking engine naturally prioritizes authoritative academic sources:
+
+- **Authority scoring** gives `.edu`, `.ac.kr`, `arxiv.org`, `semanticscholar.org` a significant boost
+- **Freshness scoring** prioritizes recent publications
+- **Code density** detection surfaces papers with implementation details
 
 ```bash
-# Use the academic engine explicitly
-MARU_SEARCH_ENGINE=academic maru-deep-pro-search
+# For research-heavy queries, increase source count
+MARU_SEARCH_MAX_RESULTS=20 MARU_SEARCH_ENGINE=duckduckgo_lite
 
-# Or let the registry auto-detect research queries
-# (queries containing "paper", "arxiv", "citation", "doi" trigger academic preference)
+# Or use search_with_citations for academic-style pre-numbered sources
 ```
 
-**What makes it different from general web search:**
-
-| | Academic Engine | General Web Search |
-|---|---|---|
-| **Sources** | ArXiv + Semantic Scholar | DuckDuckGo, Bing, Google, etc. |
-| **PDF access** | Direct ArXiv PDF links | Landing pages only |
-| **Citations** | Citation counts from Semantic Scholar | None |
-| **Ranking** | Same BM25 + semantic hybrid | Same BM25 + semantic hybrid |
-| **Fallback** | Falls back to web search if <3 results | Falls back to next engine |
-
-**Example queries that benefit:**
+**Example queries that work well:**
 - "Latest transformer architecture papers 2024"
 - "ArXiv 2401.12345 citation count"
 - "Semantic Scholar attention mechanism survey"
@@ -768,7 +765,7 @@ docker run --rm -i maru-search
 | Metric | Target | Implementation |
 |--------|--------|----------------|
 | Cache hit (KnowledgeStore) | <100ms | SQLite FTS5 + indexed domain_stats |
-| Full `deep_research` | <10s | 10 engines, 5 concurrent, early abort at 3 HIGH results |
+| Full `deep_research` | <10s | 9 engines, Semaphore(3) concurrent cap, early abort at 3 HIGH results |
 | Scrapling session startup | ~0ms (amortized) | Single session reused per engine instance |
 | Semantic model load | ~2s (first call only) | Lazy init, CPU-only |
 | Memory footprint | ~150MB base, +120MB with semantic | No GPU required |
@@ -816,8 +813,8 @@ maru-deep-pro-search
 | **Aider** | `setup --agents aider` | `lint-cmd` + `test-cmd` gate (14 languages) | `~/.maru/aider_research_gate.py`, `.aider.conf.yml` |
 | **Cursor** | `setup --agents cursor` | `onPreEdit` hook + `/research` command | `.cursor/hooks/onPreEdit`, `.cursorrules`, `.cursor/settings.json` |
 | **Hermes** | `setup --agents hermes` | `pre_tool_call` plugin | `~/.hermes/plugins/maru-research/`, `~/.hermes/config.yaml` |
-| **Windsurf** | `setup --agents windsurf` | `defaultInstructions` + `autoEnableTools` | `~/.windsurf/settings.json` |
-| **Zed** | `setup --agents zed` | `default_instructions` | `~/.config/zed/settings.json` |
+| **Windsurf** | `setup --agents windsurf` | `defaultInstructions` + `autoEnableTools` + MCP | `~/.codeium/windsurf/mcp_config.json`, `~/.windsurf/settings.json` |
+| **Zed** | `setup --agents zed` | `context_servers` (MCP) + `assistant.md` + tool_permissions | `~/.config/zed/settings.json`, `~/.config/zed/assistant.md` |
 | **Continue** | `setup --agents continue` | Custom `/research` + `/verify` commands | `~/.continue/config.json` |
 | **JetBrains** | `setup --agents jetbrains` | `mcp.autoEnableTools` | `.idea/mcp.json` |
 | **Copilot** | `setup --agents copilot` | `defaultInstructions` | VS Code `settings.json` |
@@ -826,6 +823,7 @@ maru-deep-pro-search
 | **Amazon Q** | `setup --agents amazonq` | Config injection | `~/.amazonq/amazonq.json` |
 | **Cody** | `setup --agents cody` | Config injection | `~/.cody/cody.json` |
 | **Codeium** | `setup --agents codeium` | Config injection | `~/.codeium/codeium.json` |
+| **Codex** | `setup --agents codex` | TOML `mcp_servers` + `developer_instructions` + `AGENTS.md` | `~/.codex/config.toml`, `AGENTS.md` |
 | **Supermaven** | `setup --agents supermaven` | Config injection | `~/.supermaven/supermaven.json` |
 | **Tabnine** | `setup --agents tabnine` | Config injection | `~/.tabnine/tabnine.json` |
 | **OpenCode** | `setup --agents opencode` | Config injection | `~/.opencode/opencode.json` |
@@ -873,11 +871,11 @@ All environment variables are optional. Runtime config is loaded via `pydantic-s
 |---|---|---|
 | **Agent answers** | From stale 2023 training data | From live web search with freshness scoring |
 | **Sources** | None, hallucinated | `[1]`, `[2]` with real URLs and publish dates |
-| **Setup** | Manual MCP config per agent | One-liner auto-detects all 20 agents |
+| **Setup** | Manual MCP config per agent | One-liner auto-detects all 21 agents |
 | **Enforcement** | Prompt-only (ignored by LLM) | 3-layer: server gate + client hooks + protocol injection |
 | **Cost** | $5–50/mo API fees | **$0 forever** |
 | **Ranking** | Raw engine ordering | BM25 + semantic + metadata hybrid |
-| **Resilience** | Single point of failure | 10-engine failover + smart fallback |
+| **Resilience** | Single point of failure | 9-engine failover + smart fallback |
 | **Persistence** | Stateless | Project-level SQLite knowledge store |
 
 ---
@@ -886,11 +884,11 @@ All environment variables are optional. Runtime config is loaded via `pydantic-s
 
 | Limitation | Why | Workaround |
 |------------|-----|------------|
-| **Search engines may block scrapers** | Google, Bing aggressively rate-limit scrapers | 10-engine failover handles this automatically |
+| **Search engines may block scrapers** | Google, Bing aggressively rate-limit scrapers | 9-engine failover + 3-layer rate limiting handles this automatically |
 | **Semantic model loads slowly on first use** | `sentence-transformers` initializes on demand | ~2s one-time cost; stays warm afterwards |
 | **No JavaScript rendering by default** | Most engines use static HTTP fetch | Use `stealthy_fetch` tool for JS-heavy sites |
 | **KnowledgeStore is local-only** | SQLite per project, no cloud sync | Mount `.maru/` directory in Docker for persistence |
-| **Academic engine requires aiohttp** | ArXiv/Semantic Scholar use async HTTP | `pip install aiohttp` or use `[semantic]` extra |
+| **Rate limits on stealth engines** | Google/Startpage have aggressive rate limits | 3-layer rate limiting (Semaphore + cooldowns + session reuse) mitigates this |
 | **Some sites block all scrapers** | Cloudflare, captcha, bot detection | Stealth fetcher helps but can't guarantee access |
 | **Korean content quality varies** | Naver blocks non-browser requests | Fallback to DuckDuckGo Korean results |
 
@@ -972,7 +970,7 @@ A: See [CONTRIBUTING.md](./CONTRIBUTING.md). You need to implement 3 methods: `d
 **Q: Is the knowledge store shared between projects?**  
 A: No. Each project gets its own `.maru/knowledge.db` in the project root.
 
-**Q: What happens when all 10 engines fail?**  
+**Q: What happens when all 9 engines fail?**  
 A: The system returns an error with a suggested fallback engine. In practice, this is extremely rare due to the geographic diversity of the engine endpoints.
 
 ---
@@ -1009,7 +1007,7 @@ pytest tests/test_engines.py -v         # Search engines
 pytest tests/test_harness.py -v         # Harness persistence
 ```
 
-193 tests, all passing. Coverage includes unit tests for all engines, ranking algorithms, content extraction, sanitization, harness persistence, and integration tests for the full research pipeline.
+202 tests, all passing. Coverage includes unit tests for all 9 engines, ranking algorithms, content extraction, sanitization, harness persistence, rate limiting, and integration tests for the full research pipeline.
 
 ---
 
@@ -1058,7 +1056,7 @@ make format
 | Project | What it does | How it complements |
 |---------|-------------|-------------------|
 | [Perplexity](https://www.perplexity.ai/) | AI search with citations | Cloud-based alternative; maru is self-hosted and free |
-| [SearXNG](https://docs.searxng.org/) | Self-hosted meta search | One of our 10 engines; maru adds ranking, citations, MCP |
+| [SearXNG](https://docs.searxng.org/) | Self-hosted meta search | Inspiration for multi-engine design; maru adds ranking, citations, MCP |
 | [trafilatura](https://trafilatura.readthedocs.io/) | Web content extraction | Core dependency; maru adds MCP integration and research pipeline |
 | [scrapeghost](https://github.com/jamesturk/scrapeghost) | LLM-powered scraping | Alternative approach; maru uses deterministic scraping + ranking |
 | [browser-use](https://github.com/browser-use/browser-use) | Browser automation for AI | Complementary: maru for search, browser-use for complex interactions |

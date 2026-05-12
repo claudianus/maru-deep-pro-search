@@ -28,7 +28,7 @@ class TestScoreMetadata:
 
     def test_cross_engine_boost(self):
         r = SearchResult(title="Test", url="https://example.com", engine="ddg")
-        r.engines_found = ["ddg", "brave"]
+        r.engines_found = ["ddg", "google"]
         r.cross_engine_score = 1.0
         score_multi = _score_metadata(r)
 
@@ -55,9 +55,9 @@ class TestMergeResults:
             SearchResult(title="A", url="https://a.com", engine="ddg"),
         ]
         results2 = [
-            SearchResult(title="A", url="https://a.com/", engine="brave"),
+            SearchResult(title="A", url="https://a.com/", engine="google"),
         ]
-        ranked = merge_results({"ddg": results1, "brave": results2}, "test")
+        ranked = merge_results({"ddg": results1, "google": results2}, "test")
         assert len(ranked) == 1
         assert len(ranked[0].result.engines_found) == 2
 

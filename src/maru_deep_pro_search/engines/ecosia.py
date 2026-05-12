@@ -1,4 +1,4 @@
-"""Bing search engine implementation."""
+"""Ecosia search engine implementation with direct HTML scraping."""
 
 from __future__ import annotations
 
@@ -9,16 +9,16 @@ from scrapling import AsyncFetcher
 
 from ..exceptions import NetworkError, ParseError
 from ..utils.retry import with_retry
-from ..utils.url import get_domain, resolve_redirect, should_skip_url
+from ..utils.url import get_domain, should_skip_url
 from .base import ContentType, PageContent, SearchEngine, SearchResult, _first, _guess_content_type
 
 logger = logging.getLogger(__name__)
 
 _SERP_SELECTORS = {
-    "containers": ["li.b_algo", ".b_algo"],
-    "title": ["h2 a", "h2", ".b_title"],
-    "url": ["h2 a", "a[href]", ".b_attribution"],
-    "snippet": [".b_caption p", ".b_snippet", ".b_paractl p", "p"],
+    "containers": ["article.result"],
+    "title": [".result-title__heading", ".result__title", "h2"],
+    "url": ["a.result__link", "a[href^='http']"],
+    "snippet": [".web-result__description", ".result__description", ".result__columns"],
 }
 
 _DOCS_DOMAINS = {
@@ -34,21 +34,21 @@ _DOCS_DOMAINS = {
 }
 
 
-class BingEngine(SearchEngine):
-    """Bing search engine with direct HTML scraping."""
+class EcosiaEngine(SearchEngine):
+    """Ecosia Search engine with direct HTML scraping."""
 
-    name = "bing"
-    supports_stealth = True
+    name = "ecosia"
+    supports_stealth = False
     quality_tier = 2
-    typical_latency_ms = 1200
-    reliability_score = 0.90
+    typical_latency_ms = 1100
+    reliability_score = 0.85
 
     def __init__(self):
         self._fetcher = AsyncFetcher()
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
-        """Search Bing with retry and fallback selectors."""
-        search_url = f"https://www.bing.com/search?q={quote_plus(query)}&count={max_results}&setmkt=en-US&setlang=en"
+        """Search Ecosia with retry and fallback selectors."""
+        search_url = f"https://www.ecosia.org/search?q={quote_plus(query)}"
 
         try:
             page = await with_retry(
@@ -58,8 +58,8 @@ class BingEngine(SearchEngine):
                 retryable_exceptions=(Exception,),
             )
         except Exception as exc:
-            logger.error("Bing SERP scrape failed: %s", exc)
-            raise NetworkError(f"Failed to fetch Bing SERP: {exc}", retryable=True) from exc
+            logger.error("Ecosia SERP scrape failed: %s", exc)
+            raise NetworkError(f"Failed to fetch Ecosia SERP: {exc}", retryable=True) from exc
 
         results: list[SearchResult] = []
         seen: set[str] = set()
@@ -75,12 +75,17 @@ class BingEngine(SearchEngine):
             url_el = _first(el, _SERP_SELECTORS["url"])
             snippet_el = _first(el, _SERP_SELECTORS["snippet"])
 
-            # get_all_text() handles nested tags (<strong> inside <a> etc.)
-            title = title_el.get_all_text().replace("\n", " ").strip() if title_el else ""
+            # Ecosia provides title in aria-label or inner heading
+            title = ""
+            if title_el:
+                title = title_el.get_all_text().replace("\n", " ").strip()
+            # Fallback to aria-label on the article container
+            if not title:
+                title = el.attrib.get("aria-label", "").strip()
+
             href = url_el.attrib.get("href", "") if url_el else ""
             snippet = snippet_el.get_all_text().replace("\n", " ").strip() if snippet_el else ""
 
-            href = resolve_redirect(href, search_url)
             if not href or not title:
                 continue
             if should_skip_url(href):
@@ -108,7 +113,11 @@ class BingEngine(SearchEngine):
                 break
 
         if not results:
-            raise ParseError("No results found on Bing", retryable=True, suggested_engine="duckduckgo_lite")
+            raise ParseError(
+                "No results found on Ecosia",
+                retryable=True,
+                suggested_engine="duckduckgo_lite",
+            )
 
         return results
 

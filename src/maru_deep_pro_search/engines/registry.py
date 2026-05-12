@@ -83,60 +83,28 @@ class SearchEngineRegistry:
 
 # Auto-register built-in engines
 def _register_builtins() -> None:
-    try:
-        from .duckduckgo import DuckDuckGoEngine
-        SearchEngineRegistry.register("duckduckgo", DuckDuckGoEngine)
-        SearchEngineRegistry.register("duckduckgo_lite", DuckDuckGoEngine)
-    except ImportError as exc:
-        logger.warning("Could not register DuckDuckGo engine: %s", exc)
+    engines_to_register = [
+        ("duckduckgo", ".duckduckgo", "DuckDuckGoEngine"),
+        ("duckduckgo_lite", ".duckduckgo", "DuckDuckGoEngine"),
+        ("bing", ".bing", "BingEngine"),
+        ("naver", ".naver", "NaverEngine"),
+        ("google", ".google", "GoogleEngine"),
+        ("startpage", ".startpage", "StartpageEngine"),
+        ("yahoo", ".yahoo", "YahooEngine"),
+        ("ecosia", ".ecosia", "EcosiaEngine"),
+        ("baidu", ".baidu", "BaiduEngine"),
+    ]
 
-    try:
-        from .searxng import SearXNGEngine
-        SearchEngineRegistry.register("searxng", SearXNGEngine)
-    except ImportError as exc:
-        logger.warning("Could not register SearXNG engine: %s", exc)
-
-    try:
-        from .bing import BingEngine
-        SearchEngineRegistry.register("bing", BingEngine)
-    except ImportError as exc:
-        logger.warning("Could not register Bing engine: %s", exc)
-
-    try:
-        from .naver import NaverEngine
-        SearchEngineRegistry.register("naver", NaverEngine)
-    except ImportError as exc:
-        logger.warning("Could not register Naver engine: %s", exc)
-
-    try:
-        from .qwant import QwantEngine
-        SearchEngineRegistry.register("qwant", QwantEngine)
-    except ImportError as exc:
-        logger.warning("Could not register Qwant engine: %s", exc)
-
-    try:
-        from .google import GoogleEngine
-        SearchEngineRegistry.register("google", GoogleEngine)
-    except ImportError as exc:
-        logger.warning("Could not register Google engine: %s", exc)
-
-    try:
-        from .startpage import StartpageEngine
-        SearchEngineRegistry.register("startpage", StartpageEngine)
-    except ImportError as exc:
-        logger.warning("Could not register Startpage engine: %s", exc)
-
-    try:
-        from .academic import AcademicEngine
-        SearchEngineRegistry.register("academic", AcademicEngine)
-    except ImportError as exc:
-        logger.warning("Could not register Academic engine: %s", exc)
-
-    try:
-        from .brave import BraveEngine
-        SearchEngineRegistry.register("brave", BraveEngine)
-    except ImportError as exc:
-        logger.warning("Could not register Brave engine: %s", exc)
+    for name, module_path, class_name in engines_to_register:
+        try:
+            module = __import__(
+                f"maru_deep_pro_search.engines{module_path}",
+                fromlist=[class_name],
+            )
+            engine_class = getattr(module, class_name)
+            SearchEngineRegistry.register(name, engine_class)
+        except ImportError as exc:
+            logger.warning("Could not register %s engine: %s", name, exc)
 
 
 _register_builtins()

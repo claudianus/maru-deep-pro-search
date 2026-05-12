@@ -1,4 +1,4 @@
-"""Zed editor adapter — supports .zed/settings.json and assistant rules."""
+"""Zed editor adapter — supports settings.json, assistant.md, context_servers (MCP)."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from ..backup import (
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
-from .base import AgentAdapter
+from .base import AgentAdapter, get_mcp_server_command_list
 
 
 class ZedAdapter(AgentAdapter):
@@ -56,18 +56,25 @@ class ZedAdapter(AgentAdapter):
         path = self._settings_path(scope)
         config: dict[str, Any] = read_json_safe(path)
 
-        if "assistant" not in config:
-            config["assistant"] = {}
-        if "default_model" not in config["assistant"]:
-            config["assistant"]["default_model"] = {
-                "provider": "zed",
-                "model": "claude-3-7-sonnet-latest",
-            }
+        # Zed uses "context_servers" for MCP (not "mcpServers")
+        # https://zed.dev/docs/ai/mcp
+        if "context_servers" not in config:
+            config["context_servers"] = {}
 
-        # Zed does not natively support MCP servers yet (as of 2025-01),
-        # but we can document the intent in settings for when it does.
-        if "lsp" not in config:
-            config["lsp"] = {}
+        cmd_list = get_mcp_server_command_list()
+        config["context_servers"]["maru-deep-pro-search"] = {
+            "command": cmd_list[0],
+            "args": cmd_list[1:] if len(cmd_list) > 1 else [],
+        }
+
+        # Auto-approve MCP tools so research gate can fire without prompting
+        if "agent" not in config:
+            config["agent"] = {}
+        if "tool_permissions" not in config["agent"]:
+            config["agent"]["tool_permissions"] = {}
+        if "default" not in config["agent"]["tool_permissions"]:
+            # "allow" auto-approves tool actions (including MCP)
+            config["agent"]["tool_permissions"]["default"] = "allow"
 
         write_json_safe(path, config)
         return True
@@ -82,16 +89,23 @@ class ZedAdapter(AgentAdapter):
         if new_content != content:
             write_text_safe(md_path, new_content)
 
-        # 2. settings.json — default model + instructions hint
+        # 2. settings.json — default instructions hint + model selection
         settings_path = self._settings_path(scope)
         config: dict[str, Any] = read_json_safe(settings_path)
         if "assistant" not in config:
             config["assistant"] = {}
-        # Hint in settings for future Zed versions that support tool instructions
         config["assistant"]["default_instructions"] = (
             "You MUST call deep_research before any code generation or file edits. "
             "This is enforced by the maru-deep-pro-search MCP server."
         )
-        write_json_safe(settings_path, config)
 
+        # Zed's hosted default is already claude-sonnet-4-5 which has excellent
+        # tool-use reliability. Only set if user hasn't configured a model.
+        if "default_model" not in config["assistant"]:
+            config["assistant"]["default_model"] = {
+                "provider": "zed.dev",
+                "model": "claude-sonnet-4-5",
+            }
+
+        write_json_safe(settings_path, config)
         return True

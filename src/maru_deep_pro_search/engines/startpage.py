@@ -1,28 +1,24 @@
-"""Startpage search engine implementation.
-
-Startpage proxies Google results with privacy protection.
-No API key required — direct HTML scraping only.
-"""
+"""Startpage search engine implementation with session-based stealth."""
 
 from __future__ import annotations
 
 import logging
 from urllib.parse import quote_plus
 
-from scrapling import AsyncFetcher
+from scrapling.fetchers import AsyncStealthySession
 
 from ..exceptions import NetworkError, ParseError
 from ..utils.retry import with_retry
 from ..utils.url import get_domain, resolve_redirect, should_skip_url
-from .base import ContentType, PageContent, SearchEngine, SearchResult
+from .base import ContentType, PageContent, SearchEngine, SearchResult, _first, _guess_content_type
 
 logger = logging.getLogger(__name__)
 
 _SERP_SELECTORS = {
-    "containers": [".w-gl__result", ".result"],
-    "title": [".w-gl__result-title", "h3", ".result-title"],
-    "url": [".w-gl__result-url", ".result-url", "a[href]"],
-    "snippet": [".w-gl__result-description", ".result-description", "p"],
+    "containers": [".result"],
+    "title": [".result-title h2", ".wgl-title", ".result-title", "h2"],
+    "url": [".result-title", ".result-link", "a[href]"],
+    "snippet": [".description", "p.description", "p"],
 }
 
 _DOCS_DOMAINS = {
@@ -39,34 +35,52 @@ _DOCS_DOMAINS = {
 
 
 class StartpageEngine(SearchEngine):
-    """Startpage search engine with direct HTML scraping.
+    """Startpage search engine with session-based stealth.
 
     Startpage returns Google-quality results through a privacy proxy.
-    No API key, no account, no rate limits beyond polite scraping.
+    Requires JavaScript rendering. We use AsyncStealthySession to
+    reuse the browser across requests, reducing overhead and
+    maintaining cookie continuity.
     """
 
     name = "startpage"
     supports_stealth = True
     quality_tier = 2
-    typical_latency_ms = 1400
+    typical_latency_ms = 3000
     reliability_score = 0.85
 
     def __init__(self):
-        self._fetcher = AsyncFetcher()
+        self._session: AsyncStealthySession | None = None
+        self._session_started = False
+
+    async def _get_session(self) -> AsyncStealthySession:
+        """Lazy-start a persistent stealth session."""
+        if self._session is None:
+            self._session = AsyncStealthySession(
+                headless=True,
+                network_idle=True,
+            )
+        if not self._session_started:
+            await self._session.start()
+            self._session_started = True
+        return self._session
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
         """Search Startpage with retry and fallback selectors."""
         search_url = f"https://www.startpage.com/sp/search?query={quote_plus(query)}"
 
+        session = await self._get_session()
+
         try:
             page = await with_retry(
-                self._fetcher.async_fetch,
+                session.fetch,
                 search_url,
-                max_attempts=3,
+                max_attempts=2,
                 retryable_exceptions=(Exception,),
             )
         except Exception as exc:
             logger.error("Startpage SERP scrape failed: %s", exc)
+            await self._reset_session()
             raise NetworkError(
                 f"Failed to fetch Startpage SERP: {exc}",
                 retryable=True,
@@ -87,9 +101,9 @@ class StartpageEngine(SearchEngine):
             url_el = _first(el, _SERP_SELECTORS["url"])
             snippet_el = _first(el, _SERP_SELECTORS["snippet"])
 
-            title = title_el.text.strip() if title_el else ""
+            title = title_el.get_all_text().replace("\n", " ").strip() if title_el else ""
             href = url_el.attrib.get("href", "") if url_el else ""
-            snippet = snippet_el.text.strip() if snippet_el else ""
+            snippet = snippet_el.get_all_text().replace("\n", " ").strip() if snippet_el else ""
 
             href = resolve_redirect(href, search_url)
             if not href or not title:
@@ -134,23 +148,12 @@ class StartpageEngine(SearchEngine):
         engine = SearchEngineRegistry.create("duckduckgo")
         return await engine.fetch(url, stealth=stealth, timeout=timeout)
 
-
-def _first(el, selectors: list[str]):
-    for sel in selectors:
-        results = el.css(sel)
-        if results:
-            return results[0]
-    return None
-
-
-def _guess_content_type(url: str, snippet: str = "") -> ContentType:
-    lower = (url + " " + snippet).lower()
-    if any(k in lower for k in ["github.com", "gitlab.com", "bitbucket.org"]):
-        return ContentType.CODE
-    if any(k in lower for k in ["stackoverflow.com", "stackexchange.com", "discourse", "forum"]):
-        return ContentType.FORUM
-    if any(k in lower for k in ["docs.", "/docs/", "documentation", "reference", "api.", "/api/"]):
-        return ContentType.DOCUMENTATION
-    if any(k in lower for k in ["medium.com", "dev.to", "blog.", "/blog/"]):
-        return ContentType.ARTICLE
-    return ContentType.UNKNOWN
+    async def _reset_session(self):
+        """Reset the browser session if it becomes corrupted."""
+        if self._session is not None and self._session_started:
+            try:
+                await self._session.stop()
+            except Exception as exc:
+                logger.warning("Error stopping Startpage session: %s", exc)
+        self._session = None
+        self._session_started = False

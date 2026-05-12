@@ -1,26 +1,24 @@
-"""Google search engine implementation (best-effort scraping)."""
+"""Google search engine implementation with session-based stealth."""
 
 from __future__ import annotations
 
 import logging
 from urllib.parse import quote_plus
 
-from scrapling import AsyncFetcher, StealthyFetcher
+from scrapling.fetchers import AsyncStealthySession
+from scrapling import StealthyFetcher
 
 from ..exceptions import BlockedError, NetworkError, ParseError
 from ..utils.retry import with_retry
 from ..utils.url import get_domain, resolve_redirect, should_skip_url
-from .base import ContentType, PageContent, SearchEngine, SearchResult
+from .base import ContentType, PageContent, SearchEngine, SearchResult, _first, _guess_content_type
 
 logger = logging.getLogger(__name__)
 
-# NOTE: Google aggressively blocks scrapers. These selectors are
-# best-effort and may break at any time. Stealth mode is strongly
-# recommended. SearXNG provides more reliable Google results.
 _SERP_SELECTORS = {
-    "containers": ["div.g", "div[data-hveid]", "div[data-ved]"],
+    "containers": ["div.tF2Cxc", "div.g", "div[data-hveid]", "div[data-ved]"],
     "title": ["h3"],
-    "url": ["div.yuRUbf > a", "a[href^='http']"],
+    "url": ["a[href^='/url?']", "a[href^='http']", "div.yuRUbf a", "a.zReHs"],
     "snippet": ["div.VwiC3b", "span.aCOpRe", "div.s"],
 }
 
@@ -38,90 +36,80 @@ _DOCS_DOMAINS = {
 }
 
 
-def _first(el, selectors: list[str]):
-    for sel in selectors:
-        results = el.css(sel)
-        if results:
-            return results[0]
-    return None
 
 
-def _guess_content_type(url: str, snippet: str = "") -> ContentType:
-    lower = (url + " " + snippet).lower()
-    if any(k in lower for k in ["github.com", "gitlab.com", "bitbucket.org"]):
-        return ContentType.CODE
-    if any(k in lower for k in ["stackoverflow.com", "stackexchange.com", "discourse", "forum"]):
-        return ContentType.FORUM
-    if any(k in lower for k in ["docs.", "/docs/", "documentation", "reference", "api.", "/api/"]):
-        return ContentType.DOCUMENTATION
-    if any(k in lower for k in ["medium.com", "dev.to", "blog.", "/blog/"]):
-        return ContentType.ARTICLE
-    return ContentType.UNKNOWN
 
 
 class GoogleEngine(SearchEngine):
-    """Google search engine — best-effort direct scraping.
+    """Google search engine with session-based stealth.
 
-    .. warning::
-        Google employs aggressive anti-bot measures (reCAPTCHA,
-        JavaScript challenges, rate limiting). This engine uses
-        StealthyFetcher by default and falls back to SearXNG when
-        blocked. For reliable Google results, use ``searxng`` instead.
+    Uses AsyncStealthySession to reuse a single browser instance
+    across requests. This preserves cookies and browsing context,
+    which significantly reduces the chance of hitting Google's
+    rate limits compared to launching a fresh browser every time.
     """
 
     name = "google"
     supports_stealth = True
     quality_tier = 3
-    typical_latency_ms = 2000
-    reliability_score = 0.60
+    typical_latency_ms = 3000
+    reliability_score = 0.75
 
     def __init__(self):
-        self._fetcher = AsyncFetcher()
-        self._stealth_fetcher = StealthyFetcher()
+        self._session: AsyncStealthySession | None = None
+        self._session_started = False
+        StealthyFetcher.configure(adaptive=True, adaptive_domain="google.com")
+
+    async def _get_session(self) -> AsyncStealthySession:
+        """Lazy-start a persistent stealth session."""
+        if self._session is None:
+            self._session = AsyncStealthySession(
+                headless=True,
+                real_chrome=True,
+                network_idle=True,
+                block_webrtc=True,
+                hide_canvas=True,
+                locale="en-US",
+                timezone_id="America/New_York",
+            )
+        if not self._session_started:
+            await self._session.start()
+            self._session_started = True
+        return self._session
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
-        """Search Google with stealth fallback and anti-bot detection."""
+        """Search Google with session-based stealth."""
         search_url = (
             f"https://www.google.com/search?q={quote_plus(query)}"
             f"&num={max_results * 2}&hl=en"
         )
 
-        page = None
-        last_error: Exception | None = None
+        session = await self._get_session()
 
-        # Try stealth fetch first, then normal fetch
-        for use_stealth in [True, False]:
-            fetcher = self._stealth_fetcher if use_stealth else self._fetcher
-            try:
-                page = await with_retry(
-                    fetcher.async_fetch,
-                    search_url,
-                    max_attempts=2,
-                    retryable_exceptions=(Exception,),
-                )
-                break
-            except Exception as exc:
-                last_error = exc
-                logger.warning("Google %s fetch failed: %s", "stealth" if use_stealth else "normal", exc)
-                continue
-
-        if page is None:
-            raise NetworkError(
-                f"Google blocked all requests. Last: {last_error}",
-                retryable=True,
-                suggested_engine="searxng",
+        try:
+            page = await with_retry(
+                session.fetch,
+                search_url,
+                max_attempts=2,
+                retryable_exceptions=(Exception,),
             )
+        except Exception as exc:
+            logger.error("Google SERP scrape failed: %s", exc)
+            await self._reset_session()
+            raise NetworkError(
+                f"Google blocked all requests: {exc}",
+                retryable=True,
+                suggested_engine="duckduckgo_lite",
+            ) from exc
 
-        # Anti-bot detection
-        html_content = page.html_content if hasattr(page, "html_content") else ""
+        html_content = str(page.html_content) if hasattr(page, "html_content") else ""
         if any(indicator in html_content for indicator in [
             "unusual traffic", "captcha", "recaptcha",
             "Before you continue", "I'm not a robot",
         ]):
             raise BlockedError(
                 "Google returned CAPTCHA/anti-bot page.",
-                retryable=True,
-                suggested_engine="searxng",
+                suggested_engine="duckduckgo_lite",
             )
 
         results: list[SearchResult] = []
@@ -129,17 +117,20 @@ class GoogleEngine(SearchEngine):
 
         containers = []
         for sel in _SERP_SELECTORS["containers"]:
-            containers = page.css(sel)
+            try:
+                containers = page.css(sel, auto_save=True, adaptive=True)
+            except Exception:
+                containers = page.css(sel)
             if containers:
                 logger.debug("Found %d Google containers with: %s", len(containers), sel)
                 break
 
         if not containers:
-            logger.warning("No Google result containers found — page structure may have changed.")
+            logger.warning("No Google result containers found.")
             raise ParseError(
-                "No Google results found. DOM structure may have changed or Google blocked the request.",
+                "No Google results found. DOM may have changed or request was blocked.",
                 retryable=True,
-                suggested_engine="searxng",
+                suggested_engine="duckduckgo_lite",
             )
 
         for el in containers[:max_results * 2]:
@@ -147,9 +138,9 @@ class GoogleEngine(SearchEngine):
             url_el = _first(el, _SERP_SELECTORS["url"])
             snippet_el = _first(el, _SERP_SELECTORS["snippet"])
 
-            title = title_el.text.strip() if title_el else ""
+            title = title_el.get_all_text().replace("\n", " ").strip() if title_el else ""
             href = url_el.attrib.get("href", "") if url_el else ""
-            snippet = snippet_el.text.strip() if snippet_el else ""
+            snippet = snippet_el.get_all_text().replace("\n", " ").strip() if snippet_el else ""
 
             href = resolve_redirect(href, search_url)
             if not href or not title:
@@ -180,9 +171,9 @@ class GoogleEngine(SearchEngine):
 
         if not results:
             raise ParseError(
-                "No results extracted from Google. Likely blocked or DOM changed.",
+                "No results extracted from Google.",
                 retryable=True,
-                suggested_engine="searxng",
+                suggested_engine="duckduckgo_lite",
             )
 
         return results
@@ -193,3 +184,13 @@ class GoogleEngine(SearchEngine):
 
         engine = SearchEngineRegistry.create("duckduckgo")
         return await engine.fetch(url, stealth=stealth, timeout=timeout)
+
+    async def _reset_session(self):
+        """Reset the browser session if it becomes corrupted."""
+        if self._session is not None and self._session_started:
+            try:
+                await self._session.stop()
+            except Exception as exc:
+                logger.warning("Error stopping Google session: %s", exc)
+        self._session = None
+        self._session_started = False

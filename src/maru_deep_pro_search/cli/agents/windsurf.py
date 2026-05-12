@@ -29,9 +29,10 @@ class WindsurfAdapter(AgentAdapter):
         )
 
     def _mcp_path(self, scope: str) -> Path:
+        # Official Windsurf MCP config path (per docs.windsurf.com)
         if scope == "project":
-            return Path(".windsurf") / "mcp_config.json"
-        return Path.home() / ".windsurf" / "mcp_config.json"
+            return Path(".codeium") / "windsurf" / "mcp_config.json"
+        return Path.home() / ".codeium" / "windsurf" / "mcp_config.json"
 
     def _rules_path(self, scope: str) -> Path:
         if scope == "project":

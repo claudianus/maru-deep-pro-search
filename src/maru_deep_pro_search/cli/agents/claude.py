@@ -248,6 +248,21 @@ class ClaudeAdapter(AgentAdapter):
                 ],
             })
 
+        # 4. UserPromptSubmit — block prompts that try to bypass research
+        if "UserPromptSubmit" not in settings["hooks"]:
+            settings["hooks"]["UserPromptSubmit"] = []
+        ups_matchers = [h.get("matcher", "") for h in settings["hooks"]["UserPromptSubmit"]]
+        if "*" not in ups_matchers:
+            settings["hooks"]["UserPromptSubmit"].append({
+                "matcher": "*",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": str(Path.home() / ".claude" / "hooks" / "maru_research_gate.py"),
+                    }
+                ],
+            })
+
         # 3. Permissions — restrict dangerous operations
         if "permissions" not in settings:
             settings["permissions"] = {}

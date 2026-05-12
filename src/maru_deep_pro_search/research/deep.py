@@ -181,34 +181,37 @@ async def deep_research(
     # Phase 2: Search across engines — ALL CONCURRENT
     # Primary engine subqueries + secondary engines run in parallel
     engine_results: dict[str, list[SearchResult]] = {e: [] for e in engines}
+    _search_semaphore = asyncio.Semaphore(4)  # Limit concurrent searches
 
     async def _search_subquery(sq: str) -> list[SearchResult]:
-        try:
-            return await with_retry(
-                primary_engine.search,
-                sq,
-                max_results=max_sources * 2,
-                max_attempts=2,
-                retryable_exceptions=(NetworkError, ParseError),
-            )
-        except Exception as exc:
-            logger.warning("Subquery '%s' on %s failed: %s", sq, engines[0], exc)
-            return []
+        async with _search_semaphore:
+            try:
+                return await with_retry(
+                    primary_engine.search,
+                    sq,
+                    max_results=max_sources * 2,
+                    max_attempts=2,
+                    retryable_exceptions=(NetworkError, ParseError),
+                )
+            except Exception as exc:
+                logger.warning("Subquery '%s' on %s failed: %s", sq, engines[0], exc)
+                return []
 
     async def _search_secondary(eng_name: str) -> tuple[str, list[SearchResult]]:
-        try:
-            secondary = SearchEngineRegistry.create(eng_name)
-            results = await with_retry(
-                secondary.search,
-                query,
-                max_results=max_sources * 2,
-                max_attempts=2,
-                retryable_exceptions=(NetworkError, ParseError),
-            )
-            return (eng_name, results)
-        except Exception as exc:
-            logger.warning("Engine %s failed for original query: %s", eng_name, exc)
-            return (eng_name, [])
+        async with _search_semaphore:
+            try:
+                secondary = SearchEngineRegistry.create(eng_name)
+                results = await with_retry(
+                    secondary.search,
+                    query,
+                    max_results=max_sources * 2,
+                    max_attempts=2,
+                    retryable_exceptions=(NetworkError, ParseError),
+                )
+                return (eng_name, results)
+            except Exception as exc:
+                logger.warning("Engine %s failed for original query: %s", eng_name, exc)
+                return (eng_name, [])
 
     search_tasks: list[asyncio.Task] = []
     for sq in subqueries:

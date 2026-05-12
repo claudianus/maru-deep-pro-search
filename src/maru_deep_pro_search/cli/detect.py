@@ -210,6 +210,14 @@ def _detect_hermes() -> bool:
     )
 
 
+# ── OpenAI Codex ─────────────────────────────────────────────
+def _detect_codex() -> bool:
+    return (
+        shutil.which("codex") is not None
+        or Path.home().joinpath(".codex").exists()
+    )
+
+
 # ── Registry ─────────────────────────────────────────────────
 AGENT_DETECTORS: dict[str, AgentDetector] = {
     "claude": _detect_claude_code,
@@ -232,6 +240,7 @@ AGENT_DETECTORS: dict[str, AgentDetector] = {
     "devin": _detect_devin,
     "tabnine": _detect_tabnine,
     "hermes": _detect_hermes,
+    "codex": _detect_codex,
 }
 
 

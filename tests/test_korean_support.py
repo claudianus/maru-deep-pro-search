@@ -2,7 +2,7 @@
 
 
 from maru_deep_pro_search.engines.base import ContentType
-from maru_deep_pro_search.engines.duckduckgo import _guess_content_type
+from maru_deep_pro_search.engines.base import _guess_content_type
 from maru_deep_pro_search.research.expander import _select_angles, expand_query
 from maru_deep_pro_search.utils.url import is_authority_domain
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import re
 from urllib.parse import unquote, urljoin, urlparse
 
@@ -10,6 +11,7 @@ _SKIP_DOMAINS = {
     "youtube.com", "youtu.be", "instagram.com", "facebook.com",
     "twitter.com", "x.com", "tiktok.com", "pinterest.com",
     "reddit.com", "linkedin.com", "snapchat.com", "twitch.tv",
+    "ubs.baidu.com", "recommend_list.baidu.com",
 }
 
 # URL path patterns to skip
@@ -17,6 +19,7 @@ _SKIP_PATH_PATTERNS = [
     "/login", "/signup", "/register", "/auth",
     "/search", "/cart", "/checkout",
     "google.com/sorry", "google.com/recaptcha",
+    "baidu.php", "nourl.",
 ]
 
 # Tracking parameters to strip
@@ -116,6 +119,33 @@ def resolve_redirect(url: str, base_url: str) -> str:
         m = re.search(r"uddg=([^&]+)", url)
         if m:
             return unquote(m.group(1))
+
+    # Bing redirect (/ck/a?...&u=BASE64URL)
+    if "/ck/a?" in url and "u=" in url:
+        m = re.search(r"[?&]u=([^&]+)", url)
+        if m:
+            encoded = m.group(1)
+            # Bing prefixes the payload with "a1" — strip it
+            if encoded.startswith("a1"):
+                encoded = encoded[2:]
+            # Add base64 padding
+            pad = 4 - len(encoded) % 4
+            if pad != 4:
+                encoded += "=" * pad
+            try:
+                decoded = base64.urlsafe_b64decode(encoded).decode("utf-8")
+                if decoded.startswith("http"):
+                    return decoded
+            except Exception:
+                pass
+
+    # Yahoo redirect (r.search.yahoo.com/.../RU=URLENCODED)
+    if "/r.search.yahoo.com/" in url and "/RU=" in url:
+        m = re.search(r"/RU=([^/]+)", url)
+        if m:
+            decoded = unquote(m.group(1))
+            if decoded.startswith("http"):
+                return decoded
 
     # Relative URL
     if not url.startswith("http"):

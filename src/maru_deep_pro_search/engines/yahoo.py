@@ -1,4 +1,4 @@
-"""Bing search engine implementation."""
+"""Yahoo Search engine implementation with direct HTML scraping."""
 
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from .base import ContentType, PageContent, SearchEngine, SearchResult, _first, 
 logger = logging.getLogger(__name__)
 
 _SERP_SELECTORS = {
-    "containers": ["li.b_algo", ".b_algo"],
-    "title": ["h2 a", "h2", ".b_title"],
-    "url": ["h2 a", "a[href]", ".b_attribution"],
-    "snippet": [".b_caption p", ".b_snippet", ".b_paractl p", "p"],
+    "containers": [".algo"],
+    "title": ["h3 span", "h3", ".title"],
+    "url": [".compTitle a", "a[href]"],
+    "snippet": [".compText p", ".compText span", ".compText"],
 }
 
 _DOCS_DOMAINS = {
@@ -34,21 +34,21 @@ _DOCS_DOMAINS = {
 }
 
 
-class BingEngine(SearchEngine):
-    """Bing search engine with direct HTML scraping."""
+class YahooEngine(SearchEngine):
+    """Yahoo Search engine with direct HTML scraping."""
 
-    name = "bing"
-    supports_stealth = True
+    name = "yahoo"
+    supports_stealth = False
     quality_tier = 2
     typical_latency_ms = 1200
-    reliability_score = 0.90
+    reliability_score = 0.85
 
     def __init__(self):
         self._fetcher = AsyncFetcher()
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
-        """Search Bing with retry and fallback selectors."""
-        search_url = f"https://www.bing.com/search?q={quote_plus(query)}&count={max_results}&setmkt=en-US&setlang=en"
+        """Search Yahoo with retry and fallback selectors."""
+        search_url = f"https://search.yahoo.com/search?p={quote_plus(query)}&n={max_results}"
 
         try:
             page = await with_retry(
@@ -58,8 +58,8 @@ class BingEngine(SearchEngine):
                 retryable_exceptions=(Exception,),
             )
         except Exception as exc:
-            logger.error("Bing SERP scrape failed: %s", exc)
-            raise NetworkError(f"Failed to fetch Bing SERP: {exc}", retryable=True) from exc
+            logger.error("Yahoo SERP scrape failed: %s", exc)
+            raise NetworkError(f"Failed to fetch Yahoo SERP: {exc}", retryable=True) from exc
 
         results: list[SearchResult] = []
         seen: set[str] = set()
@@ -75,7 +75,7 @@ class BingEngine(SearchEngine):
             url_el = _first(el, _SERP_SELECTORS["url"])
             snippet_el = _first(el, _SERP_SELECTORS["snippet"])
 
-            # get_all_text() handles nested tags (<strong> inside <a> etc.)
+            # Yahoo h3 span contains the actual title text
             title = title_el.get_all_text().replace("\n", " ").strip() if title_el else ""
             href = url_el.attrib.get("href", "") if url_el else ""
             snippet = snippet_el.get_all_text().replace("\n", " ").strip() if snippet_el else ""
@@ -108,7 +108,11 @@ class BingEngine(SearchEngine):
                 break
 
         if not results:
-            raise ParseError("No results found on Bing", retryable=True, suggested_engine="duckduckgo_lite")
+            raise ParseError(
+                "No results found on Yahoo",
+                retryable=True,
+                suggested_engine="duckduckgo_lite",
+            )
 
         return results
 

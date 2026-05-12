@@ -14,6 +14,7 @@ from .exceptions import MaruSearchError
 from .extraction.content import truncate_for_llm
 from .research.deep import deep_research, format_for_llm
 from .utils.cache import cache_key, get_fetch_cache, get_search_cache
+from .utils.locale_harness import optimize_for_engine
 from .utils.query_sanitize import sanitize_query
 from .utils.retry import with_retry
 from .utils.sanitize import analyze_content, wrap_external_content
@@ -65,10 +66,12 @@ async def tool_web_search(
 
     try:
         search_engine = SearchEngineRegistry.create(engine)
+        # Locale-aware query optimization for region-specific engines
+        optimized_query = optimize_for_engine(query, engine)
         results = await asyncio.wait_for(
             with_retry(
                 search_engine.search,
-                query,
+                optimized_query,
                 max_results=max_results,
                 max_attempts=3,
             ),
@@ -162,9 +165,25 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
         )
 
     if page.quality.value == "blocked":
+        err = page.error_message or ""
+        # Give precise guidance based on error classification
+        if "timeout" in err.lower():
+            guidance = "_Server timed out. The site may be slow or overloaded. Try again later or increase timeout._"
+        elif "ssl" in err.lower() or "certificate" in err.lower():
+            guidance = "_SSL/TLS error. The site's certificate may be invalid or your network is intercepting TLS._"
+        elif "dns" in err.lower() or "name resolution" in err.lower():
+            guidance = "_DNS resolution failed. The domain may not exist or DNS is unreachable._"
+        elif "connection" in err.lower() or "refused" in err.lower():
+            guidance = "_Connection refused. The server may be down or blocking your IP._"
+        elif "import" in err.lower() or "cannot import" in err.lower():
+            guidance = "_Internal fetcher error (dependency mismatch). This is a bug, not a blocked site._"
+        elif "403" in err or "forbidden" in err.lower() or "access denied" in err.lower():
+            guidance = "_Access denied (HTTP 403). Anti-bot wall hit — try stealthy_fetch or fetch_page with stealth=True._"
+        else:
+            guidance = "_Fetch blocked or failed. Try stealthy_fetch or fetch_page with stealth=True._"
         return (
             f"## [BLOCKED] {url}\n"
-            f"_anti-bot wall hit, try stealthy_fetch_\n"
+            f"{guidance}\n"
             f"Error: {page.error_message}"
         )
 
@@ -280,8 +299,12 @@ async def tool_fetch_bulk(
             badge = " _[empty]_"
 
         status = page.quality.value if page.content_length < 100 else "ok"
+        error_line = ""
+        if page.quality.value == "blocked" and page.error_message:
+            error_line = f"\n_Error: {page.error_message}_"
+
         lines.append(f"### [{i}] {page.title}{badge}")
-        lines.append(f"URL: {page.final_url or page.url} _({page.content_length} chars, {status}, {page.content_type.value})_")
+        lines.append(f"URL: {page.final_url or page.url} _({page.content_length} chars, {status}, {page.content_type.value})_{error_line}")
         lines.append(f"\n{content}\n")
 
     result_text = "\n".join(lines) if lines else "No content fetched."
@@ -558,8 +581,11 @@ async def tool_parallel_search(
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
+    _search_sem = asyncio.Semaphore(4)
+
     async def _search_one(q: str) -> str:
-        return await tool_web_search(q, engine=engine, max_results=max_results)
+        async with _search_sem:
+            return await tool_web_search(q, engine=engine, max_results=max_results)
 
     results = await asyncio.gather(*(_search_one(q) for q in queries))
     return "\n\n---\n\n".join(results)

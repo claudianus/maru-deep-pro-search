@@ -10,12 +10,14 @@ class TestSearchEngineRegistry:
         engines = SearchEngineRegistry.list_engines()
         assert "duckduckgo" in engines
         assert "duckduckgo_lite" in engines
-        assert "searxng" in engines
         assert "bing" in engines
         assert "naver" in engines
-        assert "qwant" in engines
+        assert "google" in engines
         assert "startpage" in engines
-        assert len(engines) >= 7
+        assert "yahoo" in engines
+        assert "ecosia" in engines
+        assert "bing" in engines
+        assert len(engines) >= 8
 
     def test_create_duckduckgo(self):
         engine = SearchEngineRegistry.create("duckduckgo")
@@ -25,11 +27,6 @@ class TestSearchEngineRegistry:
         engine = SearchEngineRegistry.create("duckduckgo_lite")
         assert engine.name == "duckduckgo"
 
-    def test_create_searxng(self):
-        engine = SearchEngineRegistry.create("searxng")
-        assert engine.name == "searxng"
-        assert hasattr(engine, "instances")
-
     def test_create_bing(self):
         engine = SearchEngineRegistry.create("bing")
         assert engine.name == "bing"
@@ -37,14 +34,6 @@ class TestSearchEngineRegistry:
     def test_create_naver(self):
         engine = SearchEngineRegistry.create("naver")
         assert engine.name == "naver"
-
-    def test_create_qwant(self):
-        engine = SearchEngineRegistry.create("qwant")
-        assert engine.name == "qwant"
-
-    def test_unknown_engine_raises(self):
-        with pytest.raises(ValueError, match="Unknown engine"):
-            SearchEngineRegistry.create("nonexistent")
 
     def test_create_google(self):
         engine = SearchEngineRegistry.create("google")
@@ -54,9 +43,27 @@ class TestSearchEngineRegistry:
         engine = SearchEngineRegistry.create("startpage")
         assert engine.name == "startpage"
 
+    def test_create_yahoo(self):
+        engine = SearchEngineRegistry.create("yahoo")
+        assert engine.name == "yahoo"
+
+    def test_create_ecosia(self):
+        engine = SearchEngineRegistry.create("ecosia")
+        assert engine.name == "ecosia"
+
+    def test_unknown_engine_raises(self):
+        with pytest.raises(ValueError, match="Unknown engine"):
+            SearchEngineRegistry.create("nonexistent")
+
+    def test_create_baidu(self):
+        engine = SearchEngineRegistry.create("baidu")
+        assert engine.name == "baidu"
+
     def test_is_registered(self):
-        assert SearchEngineRegistry.is_registered("searxng")
         assert SearchEngineRegistry.is_registered("bing")
         assert SearchEngineRegistry.is_registered("google")
         assert SearchEngineRegistry.is_registered("startpage")
-        assert not SearchEngineRegistry.is_registered("yahoo")
+        assert SearchEngineRegistry.is_registered("yahoo")
+        assert SearchEngineRegistry.is_registered("ecosia")
+        assert SearchEngineRegistry.is_registered("baidu")
+        assert not SearchEngineRegistry.is_registered("nonexistent")

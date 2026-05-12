@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>maru-deep-pro-search — Perplexity급 웹 리서치, 0 API 키</title>
-<meta name="description" content="AI 코딩 에이전트를 위한 Perplexity급 웹 리서치 MCP 서버. 10엔진 폴오버, BM25+시맨틱 랭킹, 네이티브 인용, 프롬프트 인젝션 방어. 100% 물방아.">
+<meta name="description" content="AI 코딩 에이전트를 위한 Perplexity급 웹 리서치 MCP 서버. 9엔진 폴오버, BM25+시맨틱 랭킹, 네이티브 인용, 프롬프트 인젝션 방어. 100% 물방아.">
 <meta property="og:title" content="maru-deep-pro-search — Perplexity-grade AI research, zero API keys">
 <meta property="og:description" content="10-engine failover search MCP server with BM25+semantic ranking, native citations, and 72-layer prompt injection defense. Supports 20 AI agents.">
 <meta property="og:type" content="website">
@@ -22,7 +22,7 @@
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Any",
   "programmingLanguage": "Python",
-  "softwareVersion": "0.9.2",
+  "softwareVersion": "0.9.3",
   "license": "https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE",
   "codeRepository": "https://github.com/claudianus/maru-deep-pro-search",
   "downloadUrl": "https://pypi.org/project/maru-deep-pro-search/",
@@ -161,7 +161,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <span class="en hidden">Force Your AI Agent<br>to <span class="gradient-text">Research First</span></span>
     </h1>
     <p class="text-xl md:text-2xl text-gray-400 mb-4 max-w-3xl mx-auto leading-relaxed">
-      <span class="ko">내장 웹 검색이 아닌, <span class="text-white font-semibold">10엔진 폴오버 · BM25+시맨틱 랭킹 · 네이티브 인용</span>을 탑재한 검색 MCP 서버</span>
+      <span class="ko">내장 웹 검색이 아닌, <span class="text-white font-semibold">9엔진 폴오버 · BM25+시맨틱 랭킹 · 네이티브 인용</span>을 탑재한 검색 MCP 서버</span>
       <span class="en hidden">Not a toy search tool. A <span class="text-white font-semibold">10-engine failover · BM25+semantic ranking · citation-native</span> search MCP server with harness setup tools.</span>
     </p>
     <div class="h-8 mb-6">
@@ -170,7 +170,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
     <div class="mb-10">
       <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-maru-500/10 border border-maru-500/20 text-maru-300 text-sm font-mono">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        v0.9.2 — 10 engines · 20 adapters · 72 security signatures · 3-layer enforcement
+        v0.9.3 — 9 engines · 21 adapters · 72 security signatures · 3-layer enforcement
       </span>
     </div>
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -184,7 +184,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
     </div>
     <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
       <div class="glass-card rounded-xl p-4 text-center">
-        <div class="text-2xl font-bold text-maru-300">10</div>
+        <div class="text-2xl font-bold text-maru-300">9</div>
         <div class="text-xs text-gray-500 mt-1 ko">검색 엔진</div><div class="text-xs text-gray-500 mt-1 en hidden">Engines</div>
       </div>
       <div class="glass-card rounded-xl p-4 text-center">
@@ -192,7 +192,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
         <div class="text-xs text-gray-500 mt-1 ko">API 키</div><div class="text-xs text-gray-500 mt-1 en hidden">API Keys</div>
       </div>
       <div class="glass-card rounded-xl p-4 text-center">
-        <div class="text-2xl font-bold text-purple-400">193</div>
+        <div class="text-2xl font-bold text-purple-400">202</div>
         <div class="text-xs text-gray-500 mt-1 ko">테스트 통과</div><div class="text-xs text-gray-500 mt-1 en hidden">Tests Passing</div>
       </div>
       <div class="glass-card rounded-xl p-4 text-center">
@@ -287,20 +287,19 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-maru-500">
         <div class="flex items-center gap-3 mb-3">
           <div class="w-10 h-10 rounded-lg bg-maru-500/20 flex items-center justify-center"><i class="fas fa-network-wired text-maru-400"></i></div>
-          <h3 class="text-lg font-bold ko">10엔진 자동 폴오버</h3><h3 class="text-lg font-bold en hidden">10-Engine Failover</h3>
+          <h3 class="text-lg font-bold ko">9엔진 자동 폴오버</h3><h3 class="text-lg font-bold en hidden">9-Engine Failover</h3>
         </div>
-        <p class="text-gray-400 text-sm ko">DuckDuckGo · Bing · Google · Naver · Qwant · Startpage · SearXNG · Academic · Brave. 하나가 망가지면 다음이 즉시 이어받습니다. 장애에 강인합니다.</p>
+        <p class="text-gray-400 text-sm ko">DuckDuckGo · Bing · Google · Yahoo · Ecosia · Baidu · Startpage · Naver. 하나가 망가지면 다음이 즉시 이어받습니다. 장애에 강인합니다.</p>
         <p class="text-gray-400 text-sm en hidden">Ten engines with automatic failover. One goes down, the next picks up instantly. Resilient by design.</p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span class="engine-badge text-xs px-2 py-1 rounded-md">DuckDuckGo</span>
           <span class="engine-badge text-xs px-2 py-1 rounded-md">Bing</span>
           <span class="engine-badge text-xs px-2 py-1 rounded-md">Google</span>
-          <span class="engine-badge text-xs px-2 py-1 rounded-md">Naver</span>
-          <span class="engine-badge text-xs px-2 py-1 rounded-md">Qwant</span>
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">Yahoo</span>
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">Ecosia</span>
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">Baidu</span>
           <span class="engine-badge text-xs px-2 py-1 rounded-md">Startpage</span>
-          <span class="engine-badge text-xs px-2 py-1 rounded-md">SearXNG</span>
-          <span class="engine-badge text-xs px-2 py-1 rounded-md">Academic</span>
-          <span class="engine-badge text-xs px-2 py-1 rounded-md">Brave</span>
+          <span class="engine-badge text-xs px-2 py-1 rounded-md">Naver</span>
         </div>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-blue-500">
@@ -419,7 +418,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
             <tr class="comparison-row border-b border-white/5">
               <td class="px-6 py-4 font-medium ko">검색 엔진 수</td><td class="px-6 py-4 font-medium en hidden">Search Engines</td>
               <td class="text-center px-6 py-4 text-gray-500">1</td>
-              <td class="text-center px-6 py-4 text-maru-300 font-bold">10 + 폴오버</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold">9 + 폴오버</td>
             </tr>
             <tr class="comparison-row border-b border-white/5">
               <td class="px-6 py-4 font-medium ko">결과 랭킹</td><td class="px-6 py-4 font-medium en hidden">Result Ranking</td>
@@ -514,18 +513,17 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="text-center text-maru-300 mb-4 font-bold">▼</div>
       <div class="grid md:grid-cols-3 gap-4">
         <div class="border border-blue-500/20 rounded-xl p-3 bg-blue-950/20">
-          <div class="text-blue-300 font-bold text-xs mb-2 ko">10엔진 스크래퍼</div>
-          <div class="text-blue-300 font-bold text-xs mb-2 en hidden">10-Engine Scraper</div>
+          <div class="text-blue-300 font-bold text-xs mb-2 ko">9엔진 스크래퍼</div>
+          <div class="text-blue-300 font-bold text-xs mb-2 en hidden">9-Engine Scraper</div>
           <div class="flex flex-wrap gap-1">
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">DDG</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Bing</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Google</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Naver</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Qwant</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Yahoo</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Ecosia</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Baidu</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Startpage</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">SearXNG</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Academic</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Brave</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">Naver</span>
           </div>
         </div>
         <div class="border border-emerald-500/20 rounded-xl p-3 bg-emerald-950/20">
@@ -558,8 +556,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
   <div class="max-w-6xl mx-auto px-4">
     <div class="text-center mb-16 scroll-reveal">
       <h2 class="text-3xl md:text-5xl font-bold mb-4">
-        <span class="ko"><span class="gradient-text">20개</span> AI 에이전트</span>
-        <span class="en hidden"><span class="gradient-text">20</span> AI Agents</span>
+        <span class="ko"><span class="gradient-text">21개</span> AI 에이전트</span>
+        <span class="en hidden"><span class="gradient-text">21</span> AI Agents</span>
       </h2>
       <p class="text-gray-400 text-lg max-w-2xl mx-auto">
         <span class="ko">한 번의 설정으로 모든 에이전트에 리서치 강제 규칙 주입</span>
@@ -576,6 +574,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="glass-card rounded-xl p-3 text-center"><i class="fab fa-aws text-yellow-400 mb-2"></i><div class="text-xs font-medium">Amazon Q</div></div>
       <div class="glass-card rounded-xl p-3 text-center"><i class="fas fa-shield-halved text-teal-400 mb-2"></i><div class="text-xs font-medium">Tabnine</div></div>
       <div class="glass-card rounded-xl p-3 text-center"><i class="fas fa-bolt text-cyan-400 mb-2"></i><div class="text-xs font-medium">Codeium</div></div>
+      <div class="glass-card rounded-xl p-3 text-center"><i class="fas fa-microchip text-green-400 mb-2"></i><div class="text-xs font-medium">Codex</div></div>
       <div class="glass-card rounded-xl p-3 text-center"><i class="fas fa-wind text-rose-400 mb-2"></i><div class="text-xs font-medium">Windsurf</div></div>
       <div class="glass-card rounded-xl p-3 text-center"><i class="fas fa-code-branch text-lime-400 mb-2"></i><div class="text-xs font-medium">Aider</div></div>
       <div class="glass-card rounded-xl p-3 text-center"><i class="fab fa-github text-gray-400 mb-2"></i><div class="text-xs font-medium">Copilot</div></div>
@@ -596,52 +595,63 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
   <div class="max-w-5xl mx-auto px-4">
     <div class="glass rounded-2xl p-6 md:p-8 border border-maru-500/20 scroll-reveal">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider ko">v0.9.2 신규 기능</span>
-        <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider en hidden">WHAT'S NEW IN v0.9.2</span>
+        <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider ko">v0.9.3 신규 기능</span>
+        <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider en hidden">WHAT'S NEW IN v0.9.3</span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="flex items-start gap-3">
           <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <i class="fas fa-shield-alt text-emerald-400 text-sm"></i>
+            <i class="fas fa-gauge-high text-emerald-400 text-sm"></i>
           </div>
           <div>
-            <h4 class="text-white font-semibold text-sm ko">72개 보안 시그니처</h4>
-            <h4 class="text-white font-semibold text-sm en hidden">72 Security Signatures</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">Tool poisoning, rug pull, shadowing, MPMA 방어 — 10+ 언어 지원</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">Tool poisoning, rug pull, shadowing, MPMA defense across 10+ languages</p>
+            <h4 class="text-white font-semibold text-sm ko">3계층 레이트 리밋</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">3-Layer Rate Limiting</h4>
+            <p class="text-gray-400 text-xs mt-1 ko">Semaphore(3) + 엔진별 쿨다운 + TokenBucket. Google 429 방어</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">Semaphore(3) + per-engine cooldowns + TokenBucket. Defends against Google 429</p>
           </div>
         </div>
         <div class="flex items-start gap-3">
           <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <i class="fas fa-graduation-cap text-blue-400 text-sm"></i>
+            <i class="fas fa-fingerprint text-blue-400 text-sm"></i>
           </div>
           <div>
-            <h4 class="text-white font-semibold text-sm ko">학술 엔진</h4>
-            <h4 class="text-white font-semibold text-sm en hidden">Academic Engine</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">ArXiv + Semantic Scholar 연구 쿼리 전용, 인용 수 포함</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">ArXiv + Semantic Scholar for research queries with citation counts</p>
+            <h4 class="text-white font-semibold text-sm ko">안티봇 세션 재사용</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">Anti-Bot Session Reuse</h4>
+            <p class="text-gray-400 text-xs mt-1 ko">AsyncStealthySession으로 브라우저 재사용. Google/Startpage 안정성 대폭 향상</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">AsyncStealthySession browser reuse. Dramatically improves Google/Startpage reliability</p>
           </div>
         </div>
         <div class="flex items-start gap-3">
           <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <i class="fas fa-clipboard-check text-purple-400 text-sm"></i>
+            <i class="fas fa-wrench text-purple-400 text-sm"></i>
           </div>
           <div>
-            <h4 class="text-white font-semibold text-sm ko">감사 로깅</h4>
-            <h4 class="text-white font-semibold text-sm en hidden">Audit Logging</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">MCP 툴 호출 행동 이상 징후 자동 탐지</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">Behavioral anomaly detection for MCP tool invocations</p>
+            <h4 class="text-white font-semibold text-sm ko">엔진 안정성 개선</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">Engine Reliability Overhaul</h4>
+            <p class="text-gray-400 text-xs mt-1 ko">Naver 난독화 DOM 우회, Baidu 노이즈 필터링, Bing 로케일 고정</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">Naver obfuscated DOM bypass, Baidu noise filtering, Bing locale pinning</p>
           </div>
         </div>
         <div class="flex items-start gap-3">
           <div class="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <i class="fas fa-lock text-red-400 text-sm"></i>
+            <i class="fas fa-code-branch text-red-400 text-sm"></i>
           </div>
           <div>
-            <h4 class="text-white font-semibold text-sm ko">3계층 실제 강제</h4>
-            <h4 class="text-white font-semibold text-sm en hidden">3-Layer Real Enforcement</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">서버 게이트 + 클라이언트 훅 + 도구 의존성. 프롬프트 주입이 아닌 기술적 차단</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">Server gate + client hooks + tool dependency. Technical blocking, not prompt injection</p>
+            <h4 class="text-white font-semibold text-sm ko">코드 중복 제거</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">Code Deduplication</h4>
+            <p class="text-gray-400 text-xs mt-1 ko">8개 엔진의 공통 헬퍼를 base.py로 이동. 유지보수성 향상</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">Moved shared helpers from 8 engines into base.py. Improved maintainability</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <i class="fas fa-check-double text-orange-400 text-sm"></i>
+          </div>
+          <div>
+            <h4 class="text-white font-semibold text-sm ko">202개 테스트 통과</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">202 Tests Passing</h4>
+            <p class="text-gray-400 text-xs mt-1 ko">레이트 리밋, 엔진 스크래핑, 랭킹 알고리즘 전체 커버리지</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">Full coverage for rate limiting, engine scraping, and ranking algorithms</p>
           </div>
         </div>
       </div>
@@ -718,7 +728,7 @@ docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search</pre>
           <i class="fas fa-search text-white text-sm"></i>
         </div>
         <span class="font-bold">maru-deep-pro-search</span>
-        <span class="text-gray-600 text-sm">v0.9.2</span>
+        <span class="text-gray-600 text-sm">v0.9.3</span>
       </div>
       <div class="flex items-center gap-6 text-sm text-gray-500">
         <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" class="hover:text-white transition"><i class="fab fa-github mr-1"></i> GitHub</a>
@@ -828,14 +838,14 @@ animateParticles();
 
 // Typing Effect
 const koTexts = [
-  "10엔진 폴오버로 장애 없는 검색...",
+  "9엔진 폴오버로 장애 없는 검색...",
   "BM25 + 시맨틱으로 최고의 소스만 선별...",
   "[1], [2] 네이티브 인용으로 환각 차단...",
   "리서치 우선 규칙으로 에이전트 강제...",
   "0 API 키. 100% 무료. 영원히."
 ];
 const enTexts = [
-  "10-engine failover for resilient search...",
+  "9-engine failover for resilient search...",
   "BM25 + semantic ranking filters only the best...",
   "Native [1], [2] citations block hallucinations...",
   "Research-first rules force agent compliance...",

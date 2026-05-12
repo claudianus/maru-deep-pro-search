@@ -1,4 +1,4 @@
-"""Qwant search engine implementation."""
+"""Baidu search engine implementation with direct HTML scraping."""
 
 from __future__ import annotations
 
@@ -9,16 +9,16 @@ from scrapling import AsyncFetcher
 
 from ..exceptions import NetworkError, ParseError
 from ..utils.retry import with_retry
-from ..utils.url import get_domain, resolve_redirect, should_skip_url
-from .base import ContentType, PageContent, SearchEngine, SearchResult
+from ..utils.url import get_domain, should_skip_url
+from .base import ContentType, PageContent, SearchEngine, SearchResult, _first, _guess_content_type
 
 logger = logging.getLogger(__name__)
 
 _SERP_SELECTORS = {
-    "containers": [".result"],
-    "title": [".result__title", "h2 a", "a[href]"],
-    "url": [".result__url", "a[href]"],
-    "snippet": [".result__desc", ".result__snippet", "p"],
+    "containers": [".c-container"],
+    "title": ["h3"],
+    "url": ["h3 a"],
+    "snippet": [".c-abstract", ".content-right_8Zs40", ".c-span9"],
 }
 
 _DOCS_DOMAINS = {
@@ -34,32 +34,43 @@ _DOCS_DOMAINS = {
 }
 
 
-class QwantEngine(SearchEngine):
-    """Qwant search engine with direct HTML scraping."""
+class BaiduEngine(SearchEngine):
+    """Baidu Search engine with direct HTML scraping.
 
-    name = "qwant"
-    supports_stealth = True
+    Baidu places the real destination URL in the ``mu`` attribute of
+    each ``.c-container`` result element, while the visible ``<a>``
+    href is an internal redirect (``baidu.com/link?url=…``).
+
+    We filter out ``result-op`` containers (AI answers, ads, and
+    recommendation widgets) and only keep organic ``result``
+    containers with a valid external ``mu`` URL.
+    """
+
+    name = "baidu"
+    supports_stealth = False
     quality_tier = 2
-    typical_latency_ms = 1300
-    reliability_score = 0.85
+    typical_latency_ms = 1500
+    reliability_score = 0.75
 
     def __init__(self):
         self._fetcher = AsyncFetcher()
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
-        """Search Qwant with retry and fallback selectors."""
-        search_url = f"https://www.qwant.com/?q={quote_plus(query)}"
+        """Search Baidu with retry and fallback selectors."""
+        search_url = f"https://www.baidu.com/s?wd={quote_plus(query)}&rn=10"
 
         try:
             page = await with_retry(
-                self._fetcher.async_fetch,
+                self._fetcher.get,
                 search_url,
                 max_attempts=3,
                 retryable_exceptions=(Exception,),
             )
         except Exception as exc:
-            logger.error("Qwant SERP scrape failed: %s", exc)
-            raise NetworkError(f"Failed to fetch Qwant SERP: {exc}", retryable=True) from exc
+            logger.error("Baidu SERP scrape failed: %s", exc)
+            raise NetworkError(
+                f"Failed to fetch Baidu SERP: {exc}", retryable=True
+            ) from exc
 
         results: list[SearchResult] = []
         seen: set[str] = set()
@@ -70,18 +81,32 @@ class QwantEngine(SearchEngine):
             if containers:
                 break
 
-        for el in containers[:max_results * 2]:
+        for el in containers[:max_results * 3]:
+            cls = el.attrib.get("class", "")
+
+            # Skip Baidu-operated containers (AI answers, ads, recommendations)
+            if "result-op" in cls:
+                continue
+
             title_el = _first(el, _SERP_SELECTORS["title"])
             url_el = _first(el, _SERP_SELECTORS["url"])
             snippet_el = _first(el, _SERP_SELECTORS["snippet"])
 
-            title = title_el.text.strip() if title_el else ""
-            href = url_el.attrib.get("href", "") if url_el else ""
-            snippet = snippet_el.text.strip() if snippet_el else ""
+            title = _extract_text(title_el)
+            snippet = _extract_text(snippet_el)
 
-            href = resolve_redirect(href, search_url)
+            # Baidu stores the real URL in the "mu" attribute
+            href = el.attrib.get("mu", "")
+            if not href and url_el is not None:
+                href = url_el.attrib.get("href", "")
+
             if not href or not title:
                 continue
+
+            # Skip internal Baidu URLs even if they leaked through
+            if _is_baidu_noise(href):
+                continue
+
             if should_skip_url(href):
                 continue
 
@@ -107,7 +132,11 @@ class QwantEngine(SearchEngine):
                 break
 
         if not results:
-            raise ParseError("No results found on Qwant", retryable=True, suggested_engine="duckduckgo_lite")
+            raise ParseError(
+                "No results found on Baidu",
+                retryable=True,
+                suggested_engine="duckduckgo_lite",
+            )
 
         return results
 
@@ -119,22 +148,30 @@ class QwantEngine(SearchEngine):
         return await engine.fetch(url, stealth=stealth, timeout=timeout)
 
 
-def _first(el, selectors: list[str]):
-    for sel in selectors:
-        results = el.css(sel)
-        if results:
-            return results[0]
-    return None
 
 
-def _guess_content_type(url: str, snippet: str = "") -> ContentType:
-    lower = (url + " " + snippet).lower()
-    if any(k in lower for k in ["github.com", "gitlab.com", "bitbucket.org"]):
-        return ContentType.CODE
-    if any(k in lower for k in ["stackoverflow.com", "stackexchange.com", "discourse", "forum"]):
-        return ContentType.FORUM
-    if any(k in lower for k in ["docs.", "/docs/", "documentation", "reference", "api.", "/api/"]):
-        return ContentType.DOCUMENTATION
-    if any(k in lower for k in ["medium.com", "dev.to", "blog.", "/blog/"]):
-        return ContentType.ARTICLE
-    return ContentType.UNKNOWN
+def _extract_text(el) -> str:
+    """Safely extract cleaned text from a scrapling element."""
+    if el is None:
+        return ""
+    txt = el.get_all_text().replace("\n", " ").strip()
+    # Baidu often inserts extra spaces around highlighted terms
+    while "  " in txt:
+        txt = txt.replace("  ", " ")
+    return txt
+
+
+def _is_baidu_noise(url: str) -> bool:
+    """Return True for Baidu-internal or placeholder URLs."""
+    lower = url.lower()
+    return any(
+        p in lower
+        for p in [
+            "nourl.ubs.baidu.com",
+            "recommend_list.baidu.com",
+            "/baidu.php",
+            "//baike.baidu.com",
+        ]
+    )
+
+

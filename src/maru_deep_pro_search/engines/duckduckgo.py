@@ -10,7 +10,7 @@ from urllib.parse import quote_plus, urljoin, urlparse
 
 from ..exceptions import NetworkError, ParseError
 from ..utils.url import get_domain, resolve_redirect, should_skip_url
-from .base import ContentType, ExtractionQuality, PageContent, SearchEngine, SearchResult
+from .base import ContentType, ExtractionQuality, PageContent, SearchEngine, SearchResult, _first, _guess_content_type
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ logging.getLogger("scrapling").addFilter(_SuppressScraplingNoise())
 # Multiple selector sets for fault tolerance
 _SERP_SELECTORS = {
     "duckduckgo": {
-        "search_url": "https://html.duckduckgo.com/html/?q={query}",
+        "search_url": "https://html.duckduckgo.com/html/?q={query}&kl=us-en",
         "containers": [
             "article[data-testid='result']",
             ".result",
@@ -37,7 +37,7 @@ _SERP_SELECTORS = {
         "snippet": [".result__snippet", ".result__body", "p", ".snippet"],
     },
     "duckduckgo_lite": {
-        "search_url": "https://lite.duckduckgo.com/lite/?q={query}",
+        "search_url": "https://lite.duckduckgo.com/lite/?q={query}&kl=us-en",
         "containers": [
             "table.result__snippet",
             "table tr",
@@ -80,40 +80,8 @@ _CONTENT_SELECTORS = [
 ]
 
 
-def _guess_content_type(url: str, snippet: str = "") -> ContentType:
-    """Guess content type from URL and snippet."""
-    lower = (url + " " + snippet).lower()
-    domain = urlparse(url).netloc.lower()
-
-    # Korean-specific detection
-    korean_indicators = ["velog.io", "tistory.com", "naver.com/blog", "brunch.co.kr", "okky.kr"]
-    if any(ind in domain for ind in korean_indicators):
-        if domain.endswith("github.com"):
-            return ContentType.CODE
-        return ContentType.ARTICLE
-
-    for d in _DOCS_DOMAINS:
-        if d in domain:
-            return ContentType.DOCUMENTATION
-
-    if any(k in lower for k in ["github.com", "gitlab.com", "bitbucket.org"]):
-        return ContentType.CODE
-    if any(k in lower for k in ["stackoverflow.com", "stackexchange.com", "discourse", "forum"]):
-        return ContentType.FORUM
-    if any(k in lower for k in ["docs.", "/docs/", "documentation", "reference", "api.", "/api/"]):
-        return ContentType.DOCUMENTATION
-    if any(k in lower for k in ["medium.com", "dev.to", "blog.", "/blog/"]):
-        return ContentType.ARTICLE
-    return ContentType.UNKNOWN
 
 
-def _first(el, selectors: list[str]):
-    """Try multiple selectors and return first match."""
-    for sel in selectors:
-        results = el.css(sel)
-        if results:
-            return results[0]
-    return None
 
 
 class DuckDuckGoEngine(SearchEngine):
@@ -131,38 +99,29 @@ class DuckDuckGoEngine(SearchEngine):
         self._stealth_session = None
 
     async def close(self) -> None:
-        """Close any open sessions to free resources."""
-        if self._session is not None:
-            with contextlib.suppress(Exception):
-                await self._session.close()
-            self._session = None
-        if self._stealth_session is not None:
-            with contextlib.suppress(Exception):
-                await self._stealth_session.close()
-            self._stealth_session = None
+        """Close any open sessions to free resources.
+
+        Note: scrapling >= 0.2.99 uses stateless fetchers (AsyncFetcher /
+        StealthyFetcher) that do not require explicit close().  We simply
+        drop the reference so the GC can reclaim them.
+        """
+        self._session = None
+        self._stealth_session = None
 
     async def _get_session(self, stealth: bool = False):
-        """Lazy-init and reuse AsyncDynamicSession to avoid browser startup overhead."""
+        """Lazy-init and reuse fetcher instances.
+
+        scrapling >= 0.2.99 replaced AsyncDynamicSession / AsyncStealthySession
+        with public AsyncFetcher / StealthyFetcher classes.
+        """
+        import scrapling
+
         if stealth:
             if self._stealth_session is None:
-                from scrapling.engines._browsers._controllers import AsyncStealthySession
-                self._stealth_session = AsyncStealthySession(
-                    disable_resources=True,
-                    block_ads=True,
-                    retries=2,
-                    retry_delay=1,
-                )
-                await self._stealth_session.start()
+                self._stealth_session = scrapling.StealthyFetcher()
             return self._stealth_session
         if self._session is None:
-            from scrapling.engines._browsers._controllers import AsyncDynamicSession
-            self._session = AsyncDynamicSession(
-                disable_resources=True,
-                block_ads=True,
-                retries=1,
-                retry_delay=1,
-            )
-            await self._session.start()
+            self._session = scrapling.AsyncFetcher()
         return self._session
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
@@ -172,7 +131,7 @@ class DuckDuckGoEngine(SearchEngine):
 
         try:
             session = await self._get_session()
-            page = await session.fetch(search_url, timeout=30000)
+            page = await session.get(search_url, timeout=30)
         except Exception as exc:
             logger.error("SERP scrape failed [%s]: %s", self.variant, exc)
             raise NetworkError(f"Failed to fetch SERP: {exc}", retryable=True) from exc
@@ -247,8 +206,13 @@ class DuckDuckGoEngine(SearchEngine):
 
         try:
             session = await self._get_session(stealth)
-            # Scrapling timeout is in milliseconds
-            page = await session.fetch(url, timeout=int(timeout * 1000))
+            # scrapling >= 0.2.99 API differences:
+            # - AsyncFetcher.get()  → timeout in SECONDS
+            # - StealthyFetcher.async_fetch() → timeout in MILLISECONDS
+            if stealth:
+                page = await session.async_fetch(url, timeout=int(timeout * 1000))
+            else:
+                page = await session.get(url, timeout=int(timeout))
             final_url = page.url if hasattr(page, 'url') else url
         except Exception as exc:
             duration = (time.monotonic() - t0) * 1000
@@ -292,7 +256,7 @@ class DuckDuckGoEngine(SearchEngine):
 
         # Extract title
         title_el = _first(page, ["title", "h1"])
-        title = title_el.text.strip() if title_el else url
+        title = str(title_el.text).strip() if title_el else url
 
         # Strip noise
         for sel in _STRIP_SELECTORS:
@@ -406,7 +370,7 @@ def _extract_structured(element) -> tuple[str, str, dict]:
     # Headings
     for level in range(1, 4):
         for h in element.css(f"h{level}"):
-            text = h.text.strip()
+            text = str(h.text).strip()
             if text and len(text) > 3:
                 md_lines.append(f"\n{'#' * level} {text}")
                 plain_lines.append(text)
@@ -414,7 +378,7 @@ def _extract_structured(element) -> tuple[str, str, dict]:
 
     # Code blocks
     for pre in element.css("pre, code"):
-        text = pre.text.strip()
+        text = str(pre.text).strip()
         if text and len(text) > 10:
             lang = ""
             lang_match = re.search(r"language-(\w+)", pre.attrib.get("class", ""))
@@ -426,7 +390,7 @@ def _extract_structured(element) -> tuple[str, str, dict]:
 
     # Paragraphs & lists
     for el in element.css("p, li, td, th, blockquote, dt, dd"):
-        text = el.text.strip()
+        text = str(el.text).strip()
         if not text or len(text) < 10:
             continue
         tag = el.tag if hasattr(el, 'tag') else ""
@@ -442,7 +406,7 @@ def _extract_structured(element) -> tuple[str, str, dict]:
         plain_lines.append(text)
 
     # Remaining body text
-    remaining = element.text.strip()
+    remaining = str(element.text).strip()
     if remaining:
         md_lines.append(f"\n{remaining}")
         plain_lines.append(remaining)
@@ -481,7 +445,7 @@ def _collect_links(page, source_url: str, max_each: int = 10) -> tuple[list[dict
 
     for a in page.css("a[href]"):
         href = a.attrib.get("href", "").strip()
-        text = a.text.strip()
+        text = str(a.text).strip()
         if not href or not text or len(text) < 5:
             continue
         if href.startswith("#") or href.startswith("javascript:"):

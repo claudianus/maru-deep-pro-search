@@ -51,6 +51,8 @@ Before creating a new release tag:
 - [ ] Update version badge in `docs/index.html` (hero badge)
 - [ ] Update test count in `docs/index.html` if changed
 - [ ] Update test count in `README.md` if changed
+- [ ] Update test count in `AGENTS.md` if changed
+- [ ] Update engine list in `AGENTS.md` if engines added/removed
 - [ ] Run full test suite: `pytest tests/ -v` (all must pass)
 - [ ] Commit all changes
 - [ ] Push to `main`
@@ -67,16 +69,18 @@ src/maru_deep_pro_search/
 ├── tools.py               # 8 MCP tools + TOOL_GUIDANCE + TOOLS registry
 ├── config.py              # Runtime configuration
 ├── exceptions.py          # Structured exception hierarchy
-├── engines/               # Search engine implementations + registry
-│   ├── base.py            # SearchEngine ABC, SearchResult/PageContent
+├── engines/               # Search engine implementations + registry (9 active)
+│   ├── base.py            # SearchEngine ABC, cooldown wrapping, shared helpers
 │   ├── registry.py        # SearchEngineRegistry (factory pattern)
-│   ├── duckduckgo.py      # DuckDuckGoEngine (SERP + fetch)
-│   ├── searxng.py         # SearXNGEngine (JSON API + 6-instance failover)
-│   ├── bing.py            # BingEngine (HTML scrape)
-│   ├── google.py          # GoogleEngine (CAPTCHA detection + fallback)
-│   ├── naver.py           # NaverEngine (Korean search)
-│   ├── qwant.py           # QwantEngine (European privacy)
-│   └── startpage.py       # StartpageEngine (Google via privacy proxy)
+│   ├── duckduckgo.py      # DuckDuckGoEngine (default, SSR)
+│   ├── duckduckgo_lite.py # DuckDuckGo Lite fallback
+│   ├── bing.py            # BingEngine (locale-pinned HTML scrape)
+│   ├── google.py          # GoogleEngine (session-reuse stealth)
+│   ├── yahoo.py           # YahooEngine (redirect decoding)
+│   ├── ecosia.py          # EcosiaEngine (organic results)
+│   ├── baidu.py           # BaiduEngine (noise-filtered Chinese search)
+│   ├── startpage.py       # StartpageEngine (JS-rendered Google proxy)
+│   └── naver.py           # NaverEngine (obfuscated DOM recovery)
 ├── extraction/            # Content extraction utilities
 │   ├── code.py            # 21-language detection, API extraction
 │   └── content.py         # truncate_for_llm, headings, token estimation
@@ -104,7 +108,7 @@ source .venv/bin/activate
 pytest tests/ -v
 ```
 
-**Current requirement**: 193 tests, all passing.
+**Current requirement**: 202 tests, all passing.
 
 ## Key Architecture Decisions
 
@@ -121,6 +125,9 @@ pytest tests/ -v
 11. **Semantic hybrid ranking** — Optional `sentence-transformers` integration adds dense vector similarity on top of BM25 for significantly better relevance. Falls back gracefully when not installed.
 12. **Smart fallback engine** — Error-type-aware responses (dns/network/ssl/blocked/not_found) with per-type strategy. Stealth auto-retry, network health probe, domain history filter.
 13. **Harness platform** — Project-level knowledge persistence (`KnowledgeStore`) and structured workflow engine (`WorkflowEngine`) for research-coding loops.
+14. **Three-layer rate limiting** — `asyncio.Semaphore(3)` (concurrency cap) + `EngineRateLimiter` (per-engine cooldowns, auto-wrapped via `__init_subclass__`) + `TokenBucket` (global QPS). Prevents 429 storms on Google/Baidu.
+15. **Session-reuse stealth** — Google/Startpage use `AsyncStealthySession` (browser reuse + cookie persistence) instead of `StealthyFetcher` (new browser per call). Dramatically reduces rate limit hits.
+16. **Obfuscated DOM resilience** — Naver's hashed CSS classes (`sds-comps-*`) bypassed via SSR container detection. Baidu's AI widgets filtered via `result-op` class exclusion.
 
 ## Forcing Agents to Research Before Coding
 
@@ -145,7 +152,7 @@ The `deep_research` tool description is written to maximize the LLM's probabilit
 
 ```
 🔴 MANDATORY FIRST STEP for ALL technical requests.
-Searches 7 engines live → BM25 ranks → crawls → synthesizes cited answer.
+Searches 9 engines live → BM25 ranks → crawls → synthesizes cited answer.
 Use BEFORE writing code, proposing architecture, or making technical claims.
 Your training data is outdated. This tool searches the LIVE web.
 ```
@@ -200,6 +207,19 @@ Your training data has a cutoff date. The web does not.
 
 Then run: `kimi --agent-file ~/.kimi/agents/research-first.yaml`
 
+## Documentation
+
+Operational knowledge is split across two companion documents:
+
+| Document | Purpose |
+|----------|---------|
+| [`docs/engine_insights.md`](docs/engine_insights.md) | 10 focused scraping insights (selectors, DOM quirks, API traps) |
+| [`docs/lessons_learned.md`](docs/lessons_learned.md) | **Comprehensive session log** — rate limit architecture, anti-bot strategies, obfuscated DOM recovery, session vs fetcher decision matrix |
+
+**When modifying engines:** Read `lessons_learned.md` first. It contains the rationale for every cooldown value, why `AsyncStealthySession` beats `StealthyFetcher`, and which selectors are proven to work.
+
+---
+
 ## SKILL.md vs AGENTS.md: Effectiveness Evaluation
 
 This project uses **AGENTS.md** as its primary instruction layer for AI coding agents. Here is an honest assessment of its effectiveness compared to the SKILL.md pattern.
@@ -217,7 +237,7 @@ This project uses **AGENTS.md** as its primary instruction layer for AI coding a
 ### Strengths observed
 
 1. **Deployment guardrails work**: The `CRITICAL REMINDER` at the top has prevented multiple accidental manual PyPI uploads during development sessions.
-2. **Test gatekeeping**: The explicit "174 tests, all passing" requirement acts as a commit barrier — agents consistently run tests before committing because the number is stated.
+2. **Test gatekeeping**: The explicit "202 tests, all passing" requirement acts as a commit barrier — agents consistently run tests before committing because the number is stated.
 3. **Architecture alignment**: New features (e.g., gap detector, query sanitizer) naturally follow the existing architectural patterns documented here because the decisions are co-located with the codebase.
 4. **No MCP dependency**: Works even when the MCP server is not running or the client does not support skills.
 

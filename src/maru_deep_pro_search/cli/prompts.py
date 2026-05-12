@@ -156,5 +156,6 @@ def get_protocol_for_agent(agent: str) -> str:
         "amazon_q": RESEARCH_PROTOCOL,
         "devin": RESEARCH_PROTOCOL,
         "tabnine": RESEARCH_PROTOCOL,
+        "codex": RESEARCH_PROTOCOL,
     }
     return mapping.get(agent, RESEARCH_PROTOCOL)

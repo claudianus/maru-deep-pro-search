@@ -1272,7 +1272,7 @@ wheels = [
 
 [[package]]
 name = "maru-deep-pro-search"
-version = "0.9.2"
+version = "0.9.3"
 source = { editable = "." }
 dependencies = [
     { name = "htmldate" },
@@ -1303,7 +1303,7 @@ requires-dist = [
     { name = "mcp", specifier = ">=1.0.0" },
     { name = "pygments", specifier = ">=2.20.0" },
     { name = "rank-bm25", specifier = ">=0.2.2" },
-    { name = "scrapling", extras = ["fetchers"], specifier = ">=0.2.0" },
+    { name = "scrapling", extras = ["fetchers"], specifier = ">=0.2.99" },
     { name = "sentence-transformers", marker = "extra == 'semantic'", specifier = ">=3.0.0" },
     { name = "trafilatura", specifier = ">=2.0.0" },
 ]

@@ -20,8 +20,13 @@ class MaruSearchError(Exception):
 class NetworkError(MaruSearchError):
     """Network-level failure (timeout, DNS, connection reset)."""
 
-    def __init__(self, message: str, retryable: bool = True):
-        super().__init__(message, retryable=True)
+    def __init__(
+        self,
+        message: str,
+        retryable: bool = True,
+        suggested_engine: str | None = None,
+    ):
+        super().__init__(message, retryable=retryable, suggested_engine=suggested_engine)
 
 
 class RateLimitError(MaruSearchError):
@@ -45,10 +50,15 @@ class BlockedError(MaruSearchError):
 class ParseError(MaruSearchError):
     """Failed to parse SERP or page content."""
 
-    def __init__(self, message: str, suggested_engine: str | None = None):
+    def __init__(
+        self,
+        message: str,
+        retryable: bool = True,
+        suggested_engine: str | None = None,
+    ):
         super().__init__(
             message,
-            retryable=True,
+            retryable=retryable,
             suggested_engine=suggested_engine,
         )
 

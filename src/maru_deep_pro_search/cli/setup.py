@@ -12,6 +12,7 @@ from .agents.antigravity import AntiGravityAdapter
 from .agents.claude import ClaudeAdapter
 from .agents.cline import ClineAdapter
 from .agents.codeium import CodeiumAdapter
+from .agents.codex import CodexAdapter
 from .agents.cody import CodyAdapter
 from .agents.continue_ import ContinueAdapter
 from .agents.copilot import CopilotAdapter
@@ -56,6 +57,7 @@ ADAPTER_REGISTRY = {
     "devin": DevinAdapter,
     "tabnine": TabnineAdapter,
     "hermes": HermesAdapter,
+    "codex": CodexAdapter,
 }
 
 
@@ -205,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         prog="maru-deep-pro-search",
         description=(
             "Setup tool for maru-deep-pro-search — installs MCP config and "
-            "injects research-first rules into 19 supported AI agents."
+            "injects research-first rules into 20 supported AI agents."
         ),
         epilog=(
             "Examples:\n"

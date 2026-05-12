@@ -77,7 +77,7 @@ These principles guide every design decision in the project:
 
 ## One-liner Install
 
-> **Prerequisite:** Python **≥3.10** (the install script handles this automatically)
+> **Prerequisite:** Python **≥3.9** (the install script handles this automatically)
 
 **macOS / Linux — recommended (auto-installs uv if needed):**
 ```bash
@@ -91,7 +91,7 @@ irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scrip
 
 **Manual install (pip):**
 ```bash
-# Make sure Python 3.10+ is already on your PATH
+# Make sure Python 3.9+ is already on your PATH
 pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 ```
 
@@ -109,7 +109,7 @@ Your AI coding agent has a critical flaw: it answers from stale training data. `
 | **Rank** | BM25 + dense semantic similarity + authority/freshness/code-density scoring |
 | **Research** | 7-phase deep research pipeline with auto query expansion, smart fetch, and gap detection |
 | **Cite** | Every result gets `[1]`, `[2]` IDs — native citation architecture |
-| **Enforce** | Setup CLI injects mandatory research-first rules into your agent |
+| **Enforce** | 3-layer real enforcement: server-side session gating + client-side hooks (PreToolUse, lint-cmd, onPreEdit) + protocol injection for 20 agents |
 | **Persist** | Harness platform stores project knowledge in SQLite with optional semantic embeddings |
 | **Audit** | SQLite-backed MCP tool call logging with anomaly detection |
 | **Sandbox** | Docker sandbox for isolated execution |
@@ -286,9 +286,9 @@ The server contains **zero generative LLMs**. Synthesis is rule-based; your agen
 
 | Agent | Hook Type | Mechanism | Block Action |
 |-------|-----------|-----------|-------------|
-| **Claude Code** | `PreToolUse` + `PostToolUse` + `SessionStart` | Pre blocks Bash; Post detects Write/Edit bypass and reverts | Exit 2 blocks Bash; PostToolUse reverts un-researched edits |
-| **Aider** | `lint-cmd` | Python gate script in `~/.maru/aider_research_gate.py` | Lint failure aborts edit |
-| **Cursor** | `.cursorrules` + commands | Custom `/research` and `/verify` slash commands | Rules + MCP auto-enable |
+| **Claude Code** | `PreToolUse` + `PostToolUse` + `SessionStart` | Pre blocks Bash; Post detects Write/Edit bypass (GH#13744 workaround); SessionStart injects protocol | Exit 2 blocks Bash; PostToolUse reverts un-researched edits |
+| **Aider** | `lint-cmd` + `test-cmd` | Python gate script in `~/.maru/aider_research_gate.py` inserted as **first** lint/test command | Lint/test failure aborts edit + `auto-test: true` enforces test pass |
+| **Cursor** | `.cursorrules` + commands + **hooks** | Custom `/research` and `/verify` slash commands + `.cursor/hooks/onPreEdit` gate script (2026+) | Rules + MCP auto-enable + onPreEdit veto |
 | **Hermes** | `pre_tool_call` plugin | Python plugin via `hermes_agent.plugins` entry point | Hook returns block action |
 | **Others** | Protocol injection | `RESEARCH_PROTOCOL` injected into agent config | Best-effort (Layer 1 enforces) |
 
@@ -807,6 +807,33 @@ maru-deep-pro-search workflow
 maru-deep-pro-search
 ```
 
+### Per-Agent Setup Summary
+
+| Agent | Command | Enforcement | Key Files |
+|-------|---------|-------------|-----------|
+| **Claude Code** | `setup --agents claude` | `PreToolUse` + `PostToolUse` + `SessionStart` | `~/.claude/hooks/maru_research_gate.py`, `~/.claude/settings.json` |
+| **Aider** | `setup --agents aider` | `lint-cmd` + `test-cmd` gate (14 languages) | `~/.maru/aider_research_gate.py`, `.aider.conf.yml` |
+| **Cursor** | `setup --agents cursor` | `onPreEdit` hook + `/research` command | `.cursor/hooks/onPreEdit`, `.cursorrules`, `.cursor/settings.json` |
+| **Hermes** | `setup --agents hermes` | `pre_tool_call` plugin | `~/.hermes/plugins/maru-research/`, `~/.hermes/config.yaml` |
+| **Windsurf** | `setup --agents windsurf` | `defaultInstructions` + `autoEnableTools` | `~/.windsurf/settings.json` |
+| **Zed** | `setup --agents zed` | `default_instructions` | `~/.config/zed/settings.json` |
+| **Continue** | `setup --agents continue` | Custom `/research` + `/verify` commands | `~/.continue/config.json` |
+| **JetBrains** | `setup --agents jetbrains` | `mcp.autoEnableTools` | `.idea/mcp.json` |
+| **Copilot** | `setup --agents copilot` | `defaultInstructions` | VS Code `settings.json` |
+| **Cline** | `setup --agents cline` | `defaultInstructions` | VS Code `settings.json` |
+| **Devin** | `setup --agents devin` | Config injection | `~/.devin/devin.json` |
+| **Amazon Q** | `setup --agents amazonq` | Config injection | `~/.amazonq/amazonq.json` |
+| **Cody** | `setup --agents cody` | Config injection | `~/.cody/cody.json` |
+| **Codeium** | `setup --agents codeium` | Config injection | `~/.codeium/codeium.json` |
+| **Supermaven** | `setup --agents supermaven` | Config injection | `~/.supermaven/supermaven.json` |
+| **Tabnine** | `setup --agents tabnine` | Config injection | `~/.tabnine/tabnine.json` |
+| **OpenCode** | `setup --agents opencode` | Config injection | `~/.opencode/opencode.json` |
+| **Kimi** | `setup --agents kimi` | Config injection | `~/.kimi/config` |
+| **Kilo** | `setup --agents kilo` | Config injection | `~/.kilo/kilo.json` |
+| **AntiGravity** | `setup --agents antigravity` | Config injection | `~/.antigravity/antigravity.json` |
+
+> **Physical blocking** (Claude, Aider, Cursor, Hermes) prevents edits even if the agent ignores prompts. **Protocol injection** (others) relies on Layer 1 server enforcement as the hard backstop.
+
 ### Environment Variables
 
 ```bash
@@ -845,7 +872,8 @@ All environment variables are optional. Runtime config is loaded via `pydantic-s
 |---|---|---|
 | **Agent answers** | From stale 2023 training data | From live web search with freshness scoring |
 | **Sources** | None, hallucinated | `[1]`, `[2]` with real URLs and publish dates |
-| **Setup** | Manual MCP config per agent | One-liner auto-detects all agents |
+| **Setup** | Manual MCP config per agent | One-liner auto-detects all 20 agents |
+| **Enforcement** | Prompt-only (ignored by LLM) | 3-layer: server gate + client hooks + protocol injection |
 | **Cost** | $5–50/mo API fees | **$0 forever** |
 | **Ranking** | Raw engine ordering | BM25 + semantic + metadata hybrid |
 | **Resilience** | Single point of failure | 10-engine failover + smart fallback |

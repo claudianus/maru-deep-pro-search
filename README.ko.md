@@ -10,7 +10,7 @@
 </p>
 
 > ⚠️ **이 문서는 최신 정보를 반영하지 않을 수 있습니다.**  
-> v0.9.2 이후의 새로운 기능(10엔진, Academic 엔진, 72개 보안 시그니처, Audit Logging, Docker, 19개 에이전트 어댑터 등)은 [영문 README](./README.md)를 참조하세요.
+> v0.9.2 이후의 새로운 기능(10엔진, Academic 엔진, 72개 보안 시그니처, Audit Logging, Docker, 20개 에이전트 어댑터, 3계층 실제 강제 아키텍처 등)은 [영문 README](./README.md)를 참조하세요.
 
 <p align="center">
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/v/maru-deep-pro-search?style=flat-square&color=blue" alt="PyPI"></a>
@@ -30,7 +30,7 @@
 
 ## 한 줄 설치
 
-> **요구사항:** Python **≥3.10** (설치 스크립트가 자동으로 맞춰줍니다)
+> **요구사항:** Python **≥3.9** (설치 스크립트가 자동으로 맞춰줍니다)
 
 **macOS / Linux — 권장 (uv 자동 설치):**
 ```bash
@@ -44,7 +44,7 @@ irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scrip
 
 **수동 설치 (pip):**
 ```bash
-# Python 3.10 이상이 이미 설치되어 있어야 합니다
+# Python 3.9 이상이 이미 설치되어 있어야 합니다
 pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 ```
 

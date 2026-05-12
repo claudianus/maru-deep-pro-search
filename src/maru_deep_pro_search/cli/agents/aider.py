@@ -262,11 +262,12 @@ class AiderAdapter(AgentAdapter):
         gate_script.parent.mkdir(parents=True, exist_ok=True)
         gate_script.write_text(_RESEARCH_GATE_SCRIPT)
 
-        # Insert research gate as FIRST lint-cmd (must pass before real lint)
+        # Insert research gate as FIRST lint-cmd AND test-cmd
         gate_cmd = f"python: python {gate_script}"
         existing = "\n".join(lines)
         if gate_cmd not in existing:
             lines.append(f"lint-cmd: {gate_cmd}")
+            lines.append(f"test-cmd: {gate_cmd}")
 
         # Auto-detect and inject lint/test commands
         tools = _detect_quality_tools(root)
@@ -288,6 +289,11 @@ class AiderAdapter(AgentAdapter):
         for tc in test_cmds:
             if tc not in existing:
                 lines.append(f"test-cmd: {tc}")
+
+        # Enable auto-test so the test gate (with research check) runs after edits
+        has_auto_test = any(line.strip().startswith("auto-test:") for line in lines)
+        if not has_auto_test:
+            lines.append("auto-test: true")
 
         # Ensure gitignore behavior
         has_gitignore = any("gitignore" in line for line in lines)

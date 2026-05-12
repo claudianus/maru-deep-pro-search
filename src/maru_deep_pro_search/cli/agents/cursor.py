@@ -48,6 +48,11 @@ class CursorAdapter(AgentAdapter):
             return Path(".cursor") / "commands"
         return Path.home() / ".cursor" / "commands"
 
+    def _hooks_dir(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".cursor") / "hooks"
+        return Path.home() / ".cursor" / "hooks"
+
     def backup(self) -> list[Path]:
         paths = [self._mcp_path("user"), self._rules_path("user"), self._settings_path("user")]
         backups = [backup_file(p) for p in paths]
@@ -128,6 +133,37 @@ class CursorAdapter(AgentAdapter):
             "or architecture decision. This is enforced by the MCP server."
         )
         write_json_safe(settings_path, settings)
+
+        # 5. Cursor Hooks (2026+) — onPreEdit blocks un-researched edits
+        hooks_dir = self._hooks_dir(scope)
+        hooks_dir.mkdir(parents=True, exist_ok=True)
+
+        pre_edit_script = hooks_dir / "onPreEdit"
+        if not pre_edit_script.exists():
+            pre_edit_script.write_text(
+                '#!/usr/bin/env python3\n'
+                '"""Cursor onPreEdit hook — vetoes edits without research."""\n'
+                'import json, os, sys, time\n\n'
+                'def main() -> None:\n'
+                '    # Cursor hooks receive JSON via stdin (tool_name, file_path, etc.)\n'
+                '    try:\n'
+                '        data = json.load(sys.stdin)\n'
+                '    except Exception:\n'
+                '        sys.exit(0)\n'
+                '    marker = os.path.expanduser("~/.maru/last_research")\n'
+                '    if not os.path.exists(marker):\n'
+                '        print("[MARU] Research required before editing. Run /research first.", file=sys.stderr)\n'
+                '        sys.exit(2)\n'
+                '    elapsed = time.time() - os.path.getmtime(marker)\n'
+                '    if elapsed > 1800:\n'
+                '        print(f"[MARU] Research expired ({elapsed/60:.0f}min). Re-run /research.", file=sys.stderr)\n'
+                '        sys.exit(2)\n'
+                '    sys.exit(0)\n\n'
+                'if __name__ == "__main__":\n'
+                '    main()\n',
+                encoding="utf-8",
+            )
+            pre_edit_script.chmod(0o755)
 
         return True
 

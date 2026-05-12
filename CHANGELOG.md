@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Layer 2 (Client Hooks)**: Physical blocking before agent acts:
     - **Claude Code**: `PreToolUse` hook script (`~/.claude/hooks/maru-enforce-research.sh`) exits 2 to block Write/Edit
     - **Aider**: `lint-cmd` gate script (`~/.maru/aider_research_gate.py`) fails if research incomplete
-    - **Cursor**: Custom `/research` and `/verify` slash commands + `.cursorrules` + `settings.json` defaultInstructions
+    - **Cursor**: Custom `/research` and `/verify` slash commands + `.cursorrules` + `settings.json` defaultInstructions + **`.cursor/hooks/onPreEdit`** gate script (2026 Cursor hooks)
     - **Windsurf**: `settings.json` with MCP autoEnable + defaultInstructions
     - **Zed**: `settings.json` assistant.default_instructions hint
     - **Continue**: `/verify` custom command alongside existing `/research`

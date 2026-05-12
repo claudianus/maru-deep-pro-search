@@ -4,6 +4,8 @@ This document outlines planned features and improvements. For the latest shipped
 
 ## Short Term (0.9.x)
 
+- [x] **3-layer real research enforcement** — Server gate + client hooks + tool dependency (Layer 1 & 2 done)
+- [ ] **Layer 3 tool dependency** — `generate_code(research_id=...)` requiring valid research tokens
 - [ ] **Browser automation engine** — Playwright-based engine for JavaScript-heavy sites
 - [ ] **Result caching TTL** — Configurable cache expiration in KnowledgeStore
 - [ ] **Search result previews** — Inline snippet preview in CLI output
@@ -39,5 +41,6 @@ This document outlines planned features and improvements. For the latest shipped
 - [x] MCP audit logging with anomaly detection
 - [x] Docker sandbox support
 - [x] 19 agent adapters
+- [x] 3-layer real research enforcement (server + client hooks)
 - [x] KnowledgeStore SQLite caching
 - [x] BM25 + semantic hybrid ranking

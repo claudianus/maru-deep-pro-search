@@ -49,6 +49,7 @@ class SessionState:
     research_result: str = ""
     research_query: str = ""
     research_timestamp: float = 0.0
+    research_id: str = ""
     tools_called: list[str] = field(default_factory=list)
     citations_found: list[str] = field(default_factory=list)
     code_generated: bool = False
@@ -61,7 +62,13 @@ class SessionState:
         self.research_query = query
         self.research_result = result
         self.research_timestamp = time.time()
+        self.research_id = self._generate_research_id()
         self._extract_citations(result)
+
+    @staticmethod
+    def _generate_research_id() -> str:
+        import uuid
+        return f"RSCH-{uuid.uuid4().hex[:12].upper()}"
 
     def _extract_citations(self, text: str) -> None:
         import re
@@ -117,7 +124,7 @@ class SessionEnforcer:
             state.mark_research(query, result)
             # Also update filesystem markers so client-side hooks can check it
             self._touch_research_marker()
-            self._write_session_research_marker(query)
+            self._write_session_research_marker(query, state.research_id)
             return state
 
     @staticmethod
@@ -130,7 +137,7 @@ class SessionEnforcer:
         marker.touch()
 
     @staticmethod
-    def _write_session_research_marker(query: str) -> None:
+    def _write_session_research_marker(query: str, research_id: str) -> None:
         """Write a structured session research marker for client-side hooks.
 
         Aider, Cursor, and other adapters read this file to verify
@@ -144,7 +151,7 @@ class SessionEnforcer:
         marker.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "completed_at": datetime.now(timezone.utc).isoformat(),
-            "research_id": f"RSCH-{int(time.time())}",
+            "research_id": research_id,
             "query": query,
         }
         marker.write_text(json.dumps(data, indent=2))
@@ -177,7 +184,7 @@ class SessionEnforcer:
     ) -> dict[str, Any]:
         """Validate that code generation is backed by actual research.
 
-        1. research_id must match a completed session.
+        1. research_id must match the completed session's research_id.
         2. proposed_code must contain at least one citation [N] from research.
         3. Returns validation report with pass/fail and details.
         """
@@ -191,6 +198,12 @@ class SessionEnforcer:
         if not state.is_fresh:
             raise CodeGenerationBlockedError(
                 "research is stale (>30min). Re-run deep_research."
+            )
+
+        if research_id != state.research_id:
+            raise CodeGenerationBlockedError(
+                f"research_id mismatch. Expected '{state.research_id}', got '{research_id}'. "
+                "Use the research_id returned by deep_research()."
             )
 
         # Check for citations in proposed code
@@ -210,6 +223,7 @@ class SessionEnforcer:
             "unused_citations": sorted(unmatched),
             "research_query": state.research_query,
             "research_age_seconds": state.research_age_seconds,
+            "research_id": state.research_id,
         }
         return validation
 
@@ -221,6 +235,7 @@ class SessionEnforcer:
             "research_query": state.research_query,
             "research_age_seconds": state.research_age_seconds,
             "is_fresh": state.is_fresh,
+            "research_id": state.research_id,
             "tools_called": state.tools_called,
             "citations_found": state.citations_found,
             "code_generated": state.code_generated,

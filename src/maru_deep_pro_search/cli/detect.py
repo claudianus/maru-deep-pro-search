@@ -202,6 +202,14 @@ def _detect_tabnine() -> bool:
     )
 
 
+# ── Hermes (Nous Research) ───────────────────────────────────
+def _detect_hermes() -> bool:
+    return (
+        shutil.which("hermes") is not None
+        or Path.home().joinpath(".hermes").exists()
+    )
+
+
 # ── Registry ─────────────────────────────────────────────────
 AGENT_DETECTORS: dict[str, AgentDetector] = {
     "claude": _detect_claude_code,
@@ -223,6 +231,7 @@ AGENT_DETECTORS: dict[str, AgentDetector] = {
     "amazon_q": _detect_amazon_q,
     "devin": _detect_devin,
     "tabnine": _detect_tabnine,
+    "hermes": _detect_hermes,
 }
 
 

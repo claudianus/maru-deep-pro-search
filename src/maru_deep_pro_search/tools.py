@@ -326,33 +326,29 @@ async def tool_deep_research(
     query: str,
     engine: str = "duckduckgo_lite",
     max_sources: int = 8,
-    follow_links: bool = False,
     expand_queries: bool = True,
-    max_tokens_per_source: int = 2500,
-    max_total_tokens: int = 20000,
-    summarize: bool = False,
     primary_sources_only: bool = False,
 ) -> str:
-    """End-to-end deep research pipeline with query expansion and citations.
+    """Deep multi-engine search with query expansion and intelligent ranking.
 
+    Searches across multiple engines with orthogonal subqueries, then merges,
+    deduplicates, and ranks results by relevance and authority. Returns a
+    ranked URL list with rich metadata for the agent to consume.
+
+    The agent's LLM should:
+    1. Review the ranked sources and their metadata
+    2. Decide which URLs to deep-read using fetch_page or fetch_bulk
+    3. Synthesize its own answer using the fetched content
+
+    Workflow:
     1. Expand query into orthogonal subqueries for broader coverage
-    2. Search each subquery and collect results
+    2. Search original + subqueries across multiple engines
     3. Deduplicate, rank by relevance and authority (BM25 + metadata)
-    4. Concurrently crawl top pages with quality assessment
-    5. Optionally follow external links for deeper coverage
-    6. Synthesize answer with inline citations [1], [2]
-    7. Format into token-efficient markdown for LLM consumption
-
-    Token Management:
-    - max_tokens_per_source: Budget per source (default: 2500)
-    - max_total_tokens: Total output budget (default: 20000)
-    - summarize: Enable extractive summarization for over-budget (default: False)
+    4. Return ranked URLs with snippets, authority badges, and cross-engine scores
 
     Source Filtering:
     - primary_sources_only: Keep only official docs, GitHub, registries,
       academic papers, and Stack Overflow. Drops blogs and aggregators.
-
-    Smart allocation gives more tokens to high-quality sources.
     """
     query = sanitize_query(query)
 
@@ -361,7 +357,7 @@ async def tool_deep_research(
 
     # Check cache
     cache = get_search_cache()
-    key = cache_key("deep_research", engine, max_sources, follow_links, expand_queries, max_tokens_per_source, max_total_tokens, summarize, primary_sources_only, query)
+    key = cache_key("deep_research", engine, max_sources, expand_queries, primary_sources_only, query)
     cached = cache.get(key)
     if cached is not None:
         logger.debug("Cache hit for deep_research: %s", query)
@@ -373,31 +369,21 @@ async def tool_deep_research(
                 query=query,
                 engine=engine,
                 max_sources=max_sources,
-                follow_links=follow_links,
                 expand_queries=expand_queries,
-                max_tokens_per_source=max_tokens_per_source,
-                max_total_tokens=max_total_tokens,
-                summarize=summarize,
-                synthesize_answer=True,
                 primary_sources_only=primary_sources_only,
             ),
-            timeout=120.0,
+            timeout=45.0,
         )
     except asyncio.TimeoutError:
         return (
-            "## [TIMEOUT] Deep research exceeded 120 seconds.\n\n"
-            "_The query may be too broad or sources are responding slowly.\n"
+            "## [TIMEOUT] Deep research exceeded 45 seconds.\n\n"
+            "_The query may be too broad or search engines are responding slowly.\n"
             "Suggestions:\n"
             "- Reduce max_sources (e.g., 4 instead of 8)\n"
             "- Use web_search for faster results\n"
             "- Try a more specific query_"
         )
-    result_text = format_for_llm(
-        result,
-        max_tokens_per_source=max_tokens_per_source,
-        max_total_tokens=max_total_tokens,
-        summarize=summarize,
-    )
+    result_text = format_for_llm(result)
     report = analyze_content(result_text)
     result_text = wrap_external_content(result_text, source_url="deep-research:multiple-sources", report=report)
     cache.set(key, result_text)
@@ -440,15 +426,10 @@ async def tool_answer(
                 query=query,
                 engine=engine,
                 max_sources=max_sources,
-                follow_links=False,
                 expand_queries=True,
-                max_tokens_per_source=max_tokens // max_sources,
-                max_total_tokens=max_tokens,
-                summarize=True,
-                synthesize_answer=True,
                 primary_sources_only=primary_sources_only,
             ),
-            timeout=60.0,
+            timeout=30.0,
         )
     except asyncio.TimeoutError:
         return (
@@ -460,29 +441,7 @@ async def tool_answer(
     if not result.sources:
         return f"I couldn't find any sources for: **{query}**"
 
-    # Build concise answer output
-    lines = [
-        f"## {query}",
-        "",
-    ]
-
-    if result.synthesized_answer:
-        lines.append(result.synthesized_answer)
-        lines.append("")
-
-    # Citations section
-    lines.append("**Sources:**")
-    for src in result.sources:
-        freshness = ""
-        if src.freshness_days is not None:
-            freshness = f" (age: {src.freshness_days}d)"
-        elif src.published_date:
-            freshness = f" (published: {src.published_date})"
-        primary = " [PRIMARY]" if src.is_primary else ""
-        st = f" [{src.source_type.upper().replace('_', '-')}]" if src.source_type != "unknown" else ""
-        lines.append(f"[{src.citation_id}] {src.title}{st}{primary} — {src.url}{freshness}")
-
-    return "\n".join(lines)
+    return format_for_llm(result)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -609,7 +568,10 @@ async def tool_parallel_search(
 
     async def _search_one(q: str) -> str:
         async with _search_sem:
-            return await tool_web_search(q, engine=engine, max_results=max_results)
+            try:
+                return await tool_web_search(q, engine=engine, max_results=max_results)
+            except Exception as exc:
+                return f"**Search failed for '{q}':** {exc}"
 
     results = await asyncio.gather(*(_search_one(q) for q in queries))
 
@@ -641,7 +603,7 @@ async def tool_parallel_search(
 
         # Add source type badges if missing
         block_lines.append(f"### Query: {q}")
-        block_lines.append(renumbered)
+        block_lines.extend(renumbered.split("\n"))
         query_blocks.append((q, block_lines))
 
     # Build comparison summary table
@@ -650,20 +612,32 @@ async def tool_parallel_search(
     all_lines.append("| Query | Top Source | Type | Primary |")
     all_lines.append("|-------|-----------|------|---------|")
 
-    for _q, block_lines in query_blocks:
+    for q, block_lines in query_blocks:
         # Extract first source from block
         first_title = ""
+        first_url = ""
         first_type = ""
         first_primary = ""
         for line in block_lines:
-            if line.startswith("URL:"):
-                pass  # URL exists but not needed for summary
-            if line.startswith("   ") and not first_title:
-                first_title = line.strip()[:40]
+            # Skip header lines
+            if "Search:" in line:
+                continue
+            # Title: lines like '1. **Title** [1] [type]'
+            if not first_title and "**" in line:
+                m = re.search(r"\*\*(.*?)\*\*", line)
+                if m:
+                    first_title = m.group(1).strip()[:40]
+            # URL: indented lines
+            if line.startswith("   http") and not first_url:
+                first_url = line.strip()
             if "[OFFICIAL-DOCS]" in line or "[GITHUB-REPO]" in line:
                 first_type = line[line.find("["):line.find("]")+1]
             if "[PRIMARY]" in line:
                 first_primary = "✓"
+        if not first_title and first_url:
+            # Fallback to domain name
+            from urllib.parse import urlparse
+            first_title = urlparse(first_url).netloc[:40]
         if not first_title:
             first_title = "(no title)"
         all_lines.append(f"| {q[:30]} | {first_title} | {first_type} | {first_primary} |")
@@ -841,22 +815,18 @@ TOOLS = {
         "Searches 7 engines live → BM25 ranks → crawls → synthesizes cited answer. "
         "Use BEFORE writing code, proposing architecture, or making technical claims. "
         "Your training data is outdated. This tool searches the LIVE web. "
-        "Returns comprehensive report with inline citations [1], [2] and quality scores. "
-        "NOT FOR: When you already have specific URLs to read (use fetch_page instead). "
-        "Smart token management. Use summarize=True if output too large. "
-        "Use primary_sources_only=True for citation-grade official sources only.",
+        "Deep multi-engine search with query expansion and intelligent ranking. "
+        "Returns ranked URLs with rich metadata (authority, cross-engine confirmation, source type). "
+        "The agent should review sources and call fetch_page / fetch_bulk to read relevant URLs. "
+        "Use primary_sources_only=True for citation-grade official sources only. "
+        "NOT FOR: When you already have specific URLs to read (use fetch_page instead).",
         {
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Research question or topic"},
                 "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
                 "max_sources": {"type": "integer", "default": 8, "minimum": 1, "maximum": 15},
-                "follow_links": {"type": "boolean", "default": False,
-                                 "description": "Also crawl external links found on result pages"},
                 "expand_queries": {"type": "boolean", "default": True},
-                "max_tokens_per_source": {"type": "integer", "default": 2500, "minimum": 500, "maximum": 5000},
-                "max_total_tokens": {"type": "integer", "default": 20000, "minimum": 2000, "maximum": 50000},
-                "summarize": {"type": "boolean", "default": False},
                 "primary_sources_only": {"type": "boolean", "default": False,
                                          "description": "Only official docs, GitHub, registries, papers, SO"},
             },

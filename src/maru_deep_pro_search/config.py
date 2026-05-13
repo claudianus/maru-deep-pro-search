@@ -16,8 +16,6 @@ class SearchConfig:
     default_engine: str = "duckduckgo_lite"
     max_results_per_query: int = 10
     max_concurrent_fetches: int = 5
-    default_max_tokens_per_source: int = 2500
-    default_max_total_tokens: int = 20000
     fetch_timeout_seconds: float = 30.0
     retry_attempts: int = 3
     # Auto-update settings
@@ -35,8 +33,6 @@ class SearchConfig:
             default_engine=os.getenv("MARU_SEARCH_ENGINE", "duckduckgo_lite"),
             max_results_per_query=int(os.getenv("MARU_SEARCH_MAX_RESULTS", "10")),
             max_concurrent_fetches=int(os.getenv("MARU_SEARCH_MAX_CONCURRENT", "5")),
-            default_max_tokens_per_source=int(os.getenv("MARU_SEARCH_MAX_TOKENS_SOURCE", "2500")),
-            default_max_total_tokens=int(os.getenv("MARU_SEARCH_MAX_TOKENS_TOTAL", "20000")),
             fetch_timeout_seconds=float(os.getenv("MARU_SEARCH_TIMEOUT", "30.0")),
             retry_attempts=int(os.getenv("MARU_SEARCH_RETRIES", "3")),
             auto_check_updates=os.getenv("MARU_SKIP_UPDATE_CHECK", "").lower() not in ("1", "true", "yes"),

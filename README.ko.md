@@ -68,7 +68,7 @@ from maru_deep_pro_search.tools import deep_research
 result = deep_research(
     "Python pickle의 보안 위험은 무엇인가?"
 )
-print(result.synthesized_answer)   # [1], [2] 인용이 포함된 답변
+print(result)  # 메타데이터가 포함된 랭킹된 URL 목록 — 에이전트가 fetch할 URL 결정
 ```
 
 **MCP 툴 선택 가이드:**
@@ -142,8 +142,8 @@ MCP 클라이언트 (Claude, Cursor, Kimi, Windsurf, ...)
 | `ENGINE` | `duckduckgo_lite` | 기본 검색 엔진 |
 | `MAX_RESULTS` | `10` | 엔진별 쿼리 결과 수 |
 | `MAX_CONCURRENT` | `5` | 병렬 페치 제한 |
-| `MAX_TOKENS_SOURCE` | `2500` | 소스별 토큰 예산 |
-| `MAX_TOKENS_TOTAL` | `20000` | 총 출력 토큰 예산 |
+| `MAX_CONCURRENT` | `5` | 병렬 fetch 제한 |
+| `TIMEOUT` | `30.0` | Fetch 타임아웃 (초) |
 | `TIMEOUT` | `30.0` | 페치 타임아웃 (초) |
 | `RETRIES` | `3` | 재시도 횟수 |
 
@@ -180,7 +180,7 @@ maru-deep-pro-search setup --list-agents
 **메모리 사용량 높음**
 ```bash
 # 시맨틱 랭킹 비활성화
-MARU_SEARCH_SEMANTIC=false maru-deep-pro-search
+MARU_SEARCH_MAX_RESULTS=5 maru-deep-pro-search
 ```
 
 ---

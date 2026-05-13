@@ -457,19 +457,22 @@ async def deep_research(
     query: str,
     engine: str = "duckduckgo_lite",
     max_sources: int = 8,
-    follow_links: bool = False,
     expand_queries: bool = True,
-    max_tokens_per_source: int = 2500,
-    max_total_tokens: int = 20000,
-    summarize: bool = False,
     primary_sources_only: bool = False,
     ctx: Context | None = None,
 ) -> str:
-    """Full 7-phase research pipeline with query expansion and gap detection."""
+    """Deep multi-engine search with query expansion and intelligent ranking.
+
+    Searches across multiple engines with orthogonal subqueries, then merges,
+    deduplicates, and ranks results by relevance and authority. Returns a
+    ranked URL list with rich metadata for the agent to consume.
+
+    The agent should review the sources and call fetch_page / fetch_bulk
+    to read the content of URLs it finds relevant.
+    """
     from .tools import tool_deep_research
     result = await tool_deep_research(
-        query, engine, max_sources, follow_links, expand_queries,
-        max_tokens_per_source, max_total_tokens, summarize, primary_sources_only,
+        query, engine, max_sources, expand_queries, primary_sources_only,
     )
     return _inject_notice_into_response(result)
 

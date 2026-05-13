@@ -66,9 +66,10 @@ The setup wizard auto-detects your AI agent, backs up existing configs, injects 
 from maru_deep_pro_search.tools import deep_research
 
 result = deep_research(
-    "What are the security implications of using pickle in Python?"
+    "What are the security implications of using pickle in Python?",
+    max_sources=5
 )
-print(result.synthesized_answer)   # cited answer with [1], [2]...
+print(result)  # ranked URLs with metadata — agent decides which to fetch
 ```
 
 **MCP tool decision tree:**
@@ -97,7 +98,7 @@ MCP Client (Claude, Cursor, Kimi, Windsurf, ...)
 └──────────────────────────────────────┘
 ```
 
-The server contains **zero generative LLMs**. Synthesis is rule-based; your agent's LLM handles reasoning. Optional semantic scoring uses an embedding model only.
+The server contains **zero generative LLMs**. Your agent's LLM handles all reasoning and synthesis. The server focuses on search quality: multi-engine coverage, intelligent ranking, and clean content extraction.
 
 For deep technical details, see [`docs/engine_insights.md`](./docs/engine_insights.md) and [`docs/lessons_learned.md`](./docs/lessons_learned.md).
 
@@ -112,7 +113,7 @@ For deep technical details, see [`docs/engine_insights.md`](./docs/engine_insigh
 | `search_with_citations` | Pre-numbered sources for academic writing |
 | `fetch_page` | Extract clean content from a single URL |
 | `fetch_bulk` | Parallel fetch with deduplication |
-| `deep_research` | Full 7-phase pipeline with gap detection |
+| `deep_research` | Deep multi-engine search with ranked URLs + metadata |
 | `stealthy_fetch` | Anti-bot bypass for protected sites |
 | `parallel_search` | Run multiple searches simultaneously |
 
@@ -142,8 +143,8 @@ All optional. Loaded via `pydantic-settings` with prefix `MARU_SEARCH_`.
 | `ENGINE` | `duckduckgo_lite` | Default search engine |
 | `MAX_RESULTS` | `10` | Results per query per engine |
 | `MAX_CONCURRENT` | `5` | Parallel fetch limit |
-| `MAX_TOKENS_SOURCE` | `2500` | Token budget per source |
-| `MAX_TOKENS_TOTAL` | `20000` | Total output token budget |
+| `MAX_CONCURRENT` | `5` | Parallel fetch limit |
+| `TIMEOUT` | `30.0` | Fetch timeout (seconds) |
 | `TIMEOUT` | `30.0` | Fetch timeout (seconds) |
 | `RETRIES` | `3` | Retry attempts |
 
@@ -179,8 +180,8 @@ maru-deep-pro-search setup --list-agents
 
 **High memory usage**
 ```bash
-# Disable semantic ranking
-MARU_SEARCH_SEMANTIC=false maru-deep-pro-search
+# Use lighter search mode
+MARU_SEARCH_MAX_RESULTS=5 maru-deep-pro-search
 ```
 
 ---

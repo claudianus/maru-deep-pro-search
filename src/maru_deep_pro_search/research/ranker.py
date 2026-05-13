@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from ..engines.base import ContentType, PageContent, SearchResult
 from ..research.expander import extract_keywords
-from ..utils.url import is_authority_domain, normalize_url
+from ..utils.url import get_domain, is_authority_domain, normalize_url
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ _SPAM_DOMAINS_LOCAL = {
 def _score_metadata(result: SearchResult) -> float:
     """Score a result based on metadata quality signals."""
     score = 0.0
-    domain = result.url.split('/')[2] if '/' in result.url else ""
+    domain = get_domain(result.url)
 
     # Authority boost — stronger for tier-1 domains
     if any(d in domain for d in _TIER1_DOMAINS):

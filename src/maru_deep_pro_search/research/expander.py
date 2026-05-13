@@ -23,27 +23,22 @@ _CURRENT_YEAR = datetime.now().year
 _QUERY_TEMPLATES = {
     # ── Trends / Landscape (default for broad tech queries) ──
     "trends_survey": [
-        "State of {domain} {_CURRENT_YEAR} survey results developer",
-        "Stack Overflow developer survey {_CURRENT_YEAR} {domain} most popular",
-        "GitHub Octoverse {_CURRENT_YEAR} {domain} trends",
+        "{domain} {_CURRENT_YEAR} developer survey popularity",
     ],
     "trends_benchmark": [
-        "{domain} benchmark comparison {_CURRENT_YEAR} performance",
-        "{domain} vs alternative speed latency throughput {_CURRENT_YEAR}",
+        "{domain} benchmark comparison {_CURRENT_YEAR}",
+        "{domain} performance test {_CURRENT_YEAR}",
     ],
     "trends_official": [
-        "{domain} official documentation latest updates release notes",
+        "{domain} official documentation latest",
         "{domain} {_CURRENT_YEAR} new features changelog",
     ],
     "trends_authority": [
-        "ThoughtWorks technology radar {_CURRENT_YEAR} {domain}",
-        "Gartner Hype Cycle {_CURRENT_YEAR} {domain}",
-        "Martin Fowler {domain} architecture {_CURRENT_YEAR}",
+        "{domain} {_CURRENT_YEAR} architecture best practices",
     ],
     "trends_community": [
-        "{domain} Reddit discussion experiences pros cons {_CURRENT_YEAR}",
-        "Hacker News {domain} thread {_CURRENT_YEAR}",
-        "{domain} dev.to community insights",
+        "{domain} Reddit discussion experiences {_CURRENT_YEAR}",
+        "{domain} Hacker News thread {_CURRENT_YEAR}",
     ],
 
     # ── How-To / Tutorial ──
@@ -249,8 +244,10 @@ def _detect_intent(query: str) -> str:
 def _extract_domain(query: str) -> str:
     """Extract the core domain/technology terms from query.
 
-    Used for template substitution. Strips action words to get
-    the subject matter (e.g., "how to install Next.js" → "Next.js").
+    Strips action words, years, and filler to get concise subject
+    matter (e.g., "how to install Next.js" → "Next.js",
+    "Full-stack web development trends 2026" → "full stack",
+    "React 19 new features" → "react").
     """
     lower = query.lower()
 
@@ -275,13 +272,39 @@ def _extract_domain(query: str) -> str:
     for p in prefixes:
         domain = re.sub(p, "", domain, flags=re.IGNORECASE)
 
-    # Remove trailing noise
-    domain = re.sub(r"\s+(tutorial|guide|example|vs|versus|comparison).*$", "", domain)
-    domain = domain.strip()
+    # Remove years (2020–2029) to prevent duplication with template {_CURRENT_YEAR}
+    domain = re.sub(r"\b20\d{2}\b", "", domain)
 
-    # Capitalize first letter for better search results
-    if domain:
-        domain = domain[0].upper() + domain[1:]
+    # Remove trailing context words (features, practices, patterns, etc.)
+    domain = re.sub(
+        r"\s+(new features|features|best practices|practices|patterns|"
+        r"tutorial|guide|example|vs|versus|comparison|performance|"
+        r"speed|latency|throughput|memory|error|fix|solution).*$",
+        "", domain,
+    )
+
+    # Normalize hyphens to spaces before removing filler words
+    # so "full-stack" becomes "full stack" and removing "stack" leaves "full"
+    domain = domain.replace("-", " ")
+
+    # Remove common filler words that bloat queries
+    # NOTE: "stack" is intentionally kept (e.g., "full stack", "MEAN stack")
+    fillers = [
+        r"\bweb\b", r"\bdevelopment\b", r"\bdeveloper\b", r"\btechnology\b",
+        r"\btechnologies\b", r"\bframework\b", r"\bframeworks\b", r"\btool\b",
+        r"\btools\b", r"\becosystem\b", r"\blandscape\b",
+        r"\bmost\b", r"\bpopular\b", r"\bused\b", r"\badoption\b",
+    ]
+    for f in fillers:
+        domain = re.sub(f, "", domain, flags=re.IGNORECASE)
+
+    # Collapse multiple spaces
+    domain = re.sub(r"\s+", " ", domain).strip()
+
+    # Limit length — search engines handle short queries better
+    if len(domain) > 40:
+        words = domain.split()
+        domain = " ".join(words[:4])
 
     return domain or query
 

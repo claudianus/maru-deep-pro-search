@@ -170,7 +170,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
     <div class="mb-10">
       <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-maru-500/10 border border-maru-500/20 text-maru-300 text-sm font-mono">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        v0.10.0 — 9 engines · 21 adapters · 72 security signatures · 3-layer enforcement
+        v0.11.0 — 9 engines · 21 adapters · 72 security signatures · 3-layer enforcement
       </span>
     </div>
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -323,8 +323,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center"><i class="fas fa-microscope text-emerald-400"></i></div>
           <h3 class="text-lg font-bold ko">딥 리서치 파이프라인</h3><h3 class="text-lg font-bold en hidden">Deep Research Pipeline</h3>
         </div>
-        <p class="text-gray-400 text-sm ko">쿼리 자동 확장 → 다각도 검색 → 안티봇 에스컬레이션 스마트 페치 → 갭 탐지 → 인용된 종합 답변.</p>
-        <p class="text-gray-400 text-sm en hidden">Auto query expansion → multi-angle search → anti-bot smart fetch → gap detection → synthesized cited answer.</p>
+        <p class="text-gray-400 text-sm ko">쿼리 자동 확장 → 다각도 검색 → 크로스엔진 랭킹 → 에이전트가 fetch_page로 선택적 읽기.</p>
+        <p class="text-gray-400 text-sm en hidden">Auto query expansion → multi-angle search → cross-engine ranking → agent selectively fetches with fetch_page.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-orange-500">
         <div class="flex items-center gap-3 mb-3">
@@ -595,8 +595,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
   <div class="max-w-5xl mx-auto px-4">
     <div class="glass rounded-2xl p-6 md:p-8 border border-maru-500/20 scroll-reveal">
       <div class="flex items-center gap-3 mb-4">
-        <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider ko">v0.10.0</span>
-        <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider en hidden">v0.10.0</span>
+        <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider ko">v0.11.0</span>
+        <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider en hidden">v0.11.0</span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="flex items-start gap-3">
@@ -648,8 +648,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
             <i class="fas fa-check-double text-orange-400 text-sm"></i>
           </div>
           <div>
-            <h4 class="text-white font-semibold text-sm ko">202개 테스트 통과</h4>
-            <h4 class="text-white font-semibold text-sm en hidden">202 Tests Passing</h4>
+            <h4 class="text-white font-semibold text-sm ko">273개 테스트 통과</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">273 Tests Passing</h4>
             <p class="text-gray-400 text-xs mt-1 ko">레이트 리밋, 엔진 스크래핑, 랭킹 알고리즘 전체 커버리지</p>
             <p class="text-gray-400 text-xs mt-1 en hidden">Full coverage for rate limiting, engine scraping, and ranking algorithms</p>
           </div>
@@ -728,7 +728,7 @@ docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search</pre>
           <i class="fas fa-search text-white text-sm"></i>
         </div>
         <span class="font-bold">maru-deep-pro-search</span>
-        <span class="text-gray-600 text-sm">v0.10.0</span>
+        <span class="text-gray-600 text-sm">v0.11.0</span>
       </div>
       <div class="flex items-center gap-6 text-sm text-gray-500">
         <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" class="hover:text-white transition"><i class="fab fa-github mr-1"></i> GitHub</a>

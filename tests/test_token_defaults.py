@@ -2,7 +2,6 @@
 
 import inspect
 
-from maru_deep_pro_search.research.deep import format_for_llm
 from maru_deep_pro_search.tools import (
     TOOLS,
     tool_fetch_bulk,
@@ -26,11 +25,6 @@ class TestTokenDefaults:
         sig = inspect.signature(tool_stealthy_fetch)
         default = sig.parameters['max_tokens'].default
         assert default == 6000, f"Expected 6000, got {default}"
-
-    def test_format_for_llm_default_increased(self):
-        sig = inspect.signature(format_for_llm)
-        default = sig.parameters['max_tokens_per_source'].default
-        assert default == 2500, f"Expected 2500, got {default}"
 
     def test_maximum_bounds_unchanged(self):
         schema = TOOLS["fetch_page"][2]["properties"]["max_tokens"]

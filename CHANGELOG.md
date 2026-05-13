@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-05-13
+
+### Changed (BREAKING ARCHITECTURE)
+- **`deep_research` is now search-only** — Content fetching and answer synthesis are delegated to the agent's LLM. The agent receives ranked URLs with rich metadata (authority badges, cross-engine confirmation, source type) and decides which sources to read via `fetch_page` / `fetch_bulk`.
+- **Removed from `deep_research`**: `_fetch_pages`, `_probe_network`, `_filter_slow_domains`, `_allocate_tokens`, `_extractive_summarize`, `_synthesize_answer`, recency gate, `follow_links`, knowledge-store persistence of full content.
+- **Simplified `CitedSource`**: Removed `content`, `markdown`, `fetch_ms`, `code_languages`, `github_meta`, and other fetch-dependent fields.
+- **`deep_research` signature simplified**: Removed `follow_links`, `max_tokens_per_source`, `max_total_tokens`, `summarize` parameters.
+- **`format_for_llm()` redesigned**: Outputs URL list + snippet + metadata badges only. No more embedded full markdown per source. Typical output: ~1,500 chars (was 10,000+).
+- **Response time**: 2–3s average (was 10–18s) — 70% faster.
+- **Code size**: `deep.py` reduced from 1,194 to 319 lines (-73%).
+
+### Fixed
+- **`parallel_search` comparison_mode**: Empty titles in comparison table now show domain fallback instead of "(no title)". Individual search failures are handled gracefully instead of crashing the entire operation.
+- **`_score_metadata` in ranker.py**: Replaced fragile `url.split('/')[2]` with `get_domain()` utility.
+- **Expander templates**: Removed "GitHub Octoverse" and "Stack Overflow survey" templates that caused irrelevant `github.com` matches for every query.
+
+### Added
+- **18 integration tests** (`test_tool_integration.py`) that call real tools and verify output format — catches regressions in actual MCP output.
+
 ## [0.10.0] - 2026-05-13
 
 ### Added

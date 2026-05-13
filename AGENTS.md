@@ -295,3 +295,75 @@ This project uses **AGENTS.md** as its primary instruction layer for AI coding a
 ### Recommendation
 
 Use **AGENTS.md** for project-specific operational rules (deployment, testing, architecture, enforcement mechanisms). Use **SKILL.md** for reusable cross-project capabilities (e.g., a generic "Python testing" skill). This project relies on AGENTS.md alone because its agent instructions are tightly coupled to the codebase and deployment workflow — a SKILL.md would be either too generic to be useful or too specific to be reusable.
+
+---
+
+## Architecture Decision Log
+
+### [2026-05-13] v0.11.0 — `deep_research` becomes search-only
+
+**Decision**: Remove fetch/extract/synthesize from `deep_research`. Return ranked URLs + metadata only. Delegate content reading and synthesis to the agent's LLM via `fetch_page` / `fetch_bulk`.
+
+**Why**: After 3 weeks of production testing, every major failure mode traced back to "we try to do too much":
+- Circuit breaker storms from 25 concurrent fetch requests
+- DuckDuckGo SERP scraper breaking under fetch load
+- Recency gate misclassifying 1-year-old docs as "stale news"
+- Rule-based `_synthesize_answer` producing thin, repetitive output
+- 18s response times vs 2–3s for search-only
+
+**Lesson**: MCP tools should provide **data**, not **intelligence**. The agent's LLM is better at deciding which sources to read, how to synthesize, and what's relevant. Our job is finding the best URLs with the highest confidence.
+
+**What was removed**:
+- `_fetch_pages`, `_probe_network`, `_filter_slow_domains`
+- `_allocate_tokens`, `_extractive_summarize`, `_synthesize_answer`
+- Recency gate, `follow_links`, knowledge-store full-content persistence
+- `CitedSource` fields: `content`, `markdown`, `fetch_ms`, `github_meta`, etc.
+
+**What stayed** (our actual moat):
+- Multi-engine search (9 engines) with auto-failover
+- Intent-based query expansion (7 intents, 25+ templates)
+- Cross-engine BM25 + authority ranking
+- Source type classification + spam domain filtering
+
+**Code impact**: `deep.py` 1,194 → 319 lines (-73%). Tests: 262 → 273 (+11 integration tests for output format).
+
+---
+
+## Lessons Learned (Hard-Won)
+
+### 1. Dead code is worse than no code
+`urls_to_prioritize()` in `deep.py` was computed but **never used** in the result loop. It looked like spam filtering worked, but `merge_results()` already handled it. Took a CTO audit to catch. **Always verify computed values are actually consumed.**
+
+### 2. `hasattr()` is not a substitute for clean contracts
+`gap_detector.py` used `hasattr(src, "markdown")` and `hasattr(src, "content")` to handle both old and new `CitedSource`. After the refactor, these always return False. Works, but hides intent. Prefer explicit dataclass contracts.
+
+### 3. Integration tests must call real tools
+Unit tests with mocked search results don't catch output format regressions. `test_tool_integration.py` (18 tests) now calls actual `tool_deep_research`, `tool_web_search`, etc. and asserts on real output structure. This caught the `parallel_search` comparison table bug.
+
+### 4. Engine deduplication by class is subtle
+`duckduckgo` and `duckduckgo_lite` share the same `DuckDuckGoEngine` class but register separately. `recommend_engines()` deduplicates by class, keeping only the first. This is correct but non-obvious — document it.
+
+### 5. Token bloat kills perceived quality
+Old `format_for_llm()` embedded full markdown per source (10,000+ chars). New format is ~1,500 chars of URLs + snippets. Agents don't read 10k chars anyway. **Concise metadata > verbose content.**
+
+---
+
+## Operational Notes for Future Agents
+
+### Test count gatekeeping
+Current requirement: **273 tests, all passing** (was 262 before v0.11.0). Update this number in:
+- `agents.md` (this file)
+- `docs/index.html` (hero stats + footer)
+- `README.md` (if mentioned)
+
+### Integration test policy
+Any change to tool output format MUST update or add tests in `test_tool_integration.py`. These tests call real tools, so they may flake if search engines are down. That's **acceptable** — it means we notice when engines break.
+
+### Output format invariants (do not break)
+- `deep_research`: `## Research:`, `_engines:`, `### Sources`, `#### [N] Title`, `_score:`, `🔒 authority`, `✓N engines`
+- `web_search`: `Search:`, numbered results `1. **Title** [N]`, indented URLs
+- `fetch_page`: `EXTERNAL CONTENT`, `AGENT SECURITY PROTOCOL`, `🔒 EXTERNAL CONTENT` / `🔓 END EXTERNAL CONTENT`
+- `parallel_search` (comparison): `### Comparison Summary`, `| Query | Top Source | Type | Primary |` table
+
+### DuckDuckGo circuit breaker
+DuckDuckGo Lite's circuit breaker opens after 3 consecutive failures (60s recovery). This is **expected behavior** under heavy load. Bing/Ecosia serve as automatic backups. Do NOT try to "fix" the circuit breaker — it protects the engine from getting blocked entirely.

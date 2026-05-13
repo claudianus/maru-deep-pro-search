@@ -69,36 +69,75 @@ def _compute_bm25_scores(query: str, results: list[SearchResult]) -> dict[str, f
         logger.warning("BM25 scoring failed: %s", exc)
         return {normalize_url(r.url): 0.0 for r in results}
 
-    return {
-        normalize_url(r.url): scores[url_map.get(normalize_url(r.url), 0)]
-        for r in results
-    }
+    return {normalize_url(r.url): scores[url_map.get(normalize_url(r.url), 0)] for r in results}
 
 
 # Inline authority/spam lists to avoid circular imports
 _TIER1_DOMAINS = {
-    "github.com", "gitlab.com", "stackoverflow.com",
-    "docs.python.org", "developer.mozilla.org", "react.dev", "nextjs.org",
-    "nodejs.org", "go.dev", "pkg.go.dev", "doc.rust-lang.org",
-    "learn.microsoft.com", "postgresql.org", "kubernetes.io",
-    "docs.djangoproject.com", "vuejs.org", "svelte.dev", "angular.io",
-    "astro.build", "remix.run", "nuxt.com",
-    "trpc.io", "prisma.io", "orm.drizzle.team",
-    "turso.tech", "neon.tech", "planetscale.com", "vercel.com",
-    "cloudflare.com", "workers.cloudflare.com", "aws.amazon.com",
-    "openai.com", "platform.openai.com", "anthropic.com", "claude.ai",
-    "docs.anthropic.com", "ai.google.dev",
-    "arxiv.org", "semanticscholar.org", "scholar.google.com",
-    "ieee.org", "acm.org", "usenix.org",
-    "npmjs.com", "pypi.org", "crates.io",
-    "huggingface.co", "paperswithcode.com",
+    "github.com",
+    "gitlab.com",
+    "stackoverflow.com",
+    "docs.python.org",
+    "developer.mozilla.org",
+    "react.dev",
+    "nextjs.org",
+    "nodejs.org",
+    "go.dev",
+    "pkg.go.dev",
+    "doc.rust-lang.org",
+    "learn.microsoft.com",
+    "postgresql.org",
+    "kubernetes.io",
+    "docs.djangoproject.com",
+    "vuejs.org",
+    "svelte.dev",
+    "angular.io",
+    "astro.build",
+    "remix.run",
+    "nuxt.com",
+    "trpc.io",
+    "prisma.io",
+    "orm.drizzle.team",
+    "turso.tech",
+    "neon.tech",
+    "planetscale.com",
+    "vercel.com",
+    "cloudflare.com",
+    "workers.cloudflare.com",
+    "aws.amazon.com",
+    "openai.com",
+    "platform.openai.com",
+    "anthropic.com",
+    "claude.ai",
+    "docs.anthropic.com",
+    "ai.google.dev",
+    "arxiv.org",
+    "semanticscholar.org",
+    "scholar.google.com",
+    "ieee.org",
+    "acm.org",
+    "usenix.org",
+    "npmjs.com",
+    "pypi.org",
+    "crates.io",
+    "huggingface.co",
+    "paperswithcode.com",
 }
 
 _SPAM_DOMAINS_LOCAL = {
-    "nucamp.co", "pillaiinfotech.com", "indiit.com", "cloudbuzz.ai",
-    "acemindtech.com", "solutionsuggest.com", "geeksforgeeks.org",
-    "tutorialspoint.com", "javatpoint.com", "w3schools.com",
-    "simplilearn.com", "intellipaat.com", "edureka.co",
+    "nucamp.co",
+    "pillaiinfotech.com",
+    "indiit.com",
+    "cloudbuzz.ai",
+    "acemindtech.com",
+    "solutionsuggest.com",
+    "geeksforgeeks.org",
+    "tutorialspoint.com",
+    "javatpoint.com",
+    "w3schools.com",
+    "simplilearn.com",
+    "intellipaat.com",
+    "edureka.co",
 }
 
 
@@ -183,6 +222,7 @@ def _fuzzy_dedupe(results: list[SearchResult], threshold: float = 0.72) -> list[
     semantic_sims: dict[tuple[int, int], float] = {}
     try:
         from .semantic_ranker import SemanticRanker
+
         if SemanticRanker.available() and len(results) > 1:
             texts = [f"{r.title} {r.snippet[:200]}" for r in results]
             sim_matrix = SemanticRanker.sentence_similarity(texts)
@@ -261,6 +301,7 @@ def merge_results(
     for r in merged:
         if r.source_type.value == "unknown" or not r.is_primary:
             from ..engines.base import guess_source_type_and_primary
+
             st, prim = guess_source_type_and_primary(r.url, r.snippet)
             r.source_type = st
             r.is_primary = prim
@@ -272,6 +313,7 @@ def merge_results(
     semantic_scores: dict[str, float] = {}
     try:
         from .semantic_ranker import SemanticRanker
+
         if SemanticRanker.available():
             sims = SemanticRanker.score_results(query, merged)
             for r, sim in zip(merged, sims, strict=False):
@@ -291,13 +333,15 @@ def merge_results(
         # Semantic similarity is [0,1]; scale to [0,2] to match BM25 weight
         final = normalized_bm25 + meta + r.cross_engine_score + semantic * 2.0
 
-        ranked.append(RankedResult(
-            result=r,
-            bm25_score=normalized_bm25,
-            metadata_score=meta,
-            semantic_score=semantic,
-            final_score=final,
-        ))
+        ranked.append(
+            RankedResult(
+                result=r,
+                bm25_score=normalized_bm25,
+                metadata_score=meta,
+                semantic_score=semantic,
+                final_score=final,
+            )
+        )
 
     # Sort by final score descending
     ranked.sort(key=lambda x: x.final_score, reverse=True)
@@ -333,6 +377,7 @@ def rank_pages(pages: list[PageContent], query: str) -> list[PageContent]:
     semantic_scores: dict[str, float] = {}
     try:
         from .semantic_ranker import SemanticRanker
+
         if SemanticRanker.available() and pages:
             texts = [f"{p.title} {p.text[:300]}" for p in pages]
             sims = SemanticRanker.query_sentence_similarity_batch(query, texts)

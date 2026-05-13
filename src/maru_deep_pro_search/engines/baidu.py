@@ -29,15 +29,32 @@ _SERP_SELECTORS = {
 }
 
 _DOCS_DOMAINS = {
-    "docs.python.org", "python.org", "developer.mozilla.org", "mdn.io",
-    "react.dev", "nextjs.org", "nodejs.org", "deno.com",
-    "go.dev", "pkg.go.dev", "doc.rust-lang.org", "docs.rs",
-    "api.rubyonrails.org", "guides.rubyonrails.org",
-    "learn.microsoft.com", "docs.microsoft.com",
-    "postgresql.org/docs", "dev.mysql.com/doc",
-    "kubernetes.io/docs", "helm.sh/docs", "terraform.io/docs",
-    "fastapi.tiangolo.com", "flask.palletsprojects.com",
-    "docs.djangoproject.com", "vuejs.org", "svelte.dev",
+    "docs.python.org",
+    "python.org",
+    "developer.mozilla.org",
+    "mdn.io",
+    "react.dev",
+    "nextjs.org",
+    "nodejs.org",
+    "deno.com",
+    "go.dev",
+    "pkg.go.dev",
+    "doc.rust-lang.org",
+    "docs.rs",
+    "api.rubyonrails.org",
+    "guides.rubyonrails.org",
+    "learn.microsoft.com",
+    "docs.microsoft.com",
+    "postgresql.org/docs",
+    "dev.mysql.com/doc",
+    "kubernetes.io/docs",
+    "helm.sh/docs",
+    "terraform.io/docs",
+    "fastapi.tiangolo.com",
+    "flask.palletsprojects.com",
+    "docs.djangoproject.com",
+    "vuejs.org",
+    "svelte.dev",
 }
 
 
@@ -76,9 +93,7 @@ class BaiduEngine(SearchEngine):
             )
         except Exception as exc:
             logger.error("Baidu SERP scrape failed: %s", exc)
-            raise NetworkError(
-                f"Failed to fetch Baidu SERP: {exc}", retryable=True
-            ) from exc
+            raise NetworkError(f"Failed to fetch Baidu SERP: {exc}", retryable=True) from exc
 
         results: list[SearchResult] = []
         seen: set[str] = set()
@@ -89,7 +104,7 @@ class BaiduEngine(SearchEngine):
             if containers:
                 break
 
-        for el in containers[:max_results * 3]:
+        for el in containers[: max_results * 3]:
             cls = el.attrib.get("class", "")
 
             # Skip Baidu-operated containers (AI answers, ads, recommendations)
@@ -159,8 +174,6 @@ class BaiduEngine(SearchEngine):
         return await engine.fetch(url, stealth=stealth, timeout=timeout)
 
 
-
-
 def _extract_text(el) -> str:
     """Safely extract cleaned text from a scrapling element."""
     if el is None:
@@ -184,5 +197,3 @@ def _is_baidu_noise(url: str) -> bool:
             "//baike.baidu.com",
         ]
     )
-
-

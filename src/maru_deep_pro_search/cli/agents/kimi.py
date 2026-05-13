@@ -20,10 +20,7 @@ class KimiAdapter(AgentAdapter):
     display_name = "Kimi Code CLI"
 
     def detect(self) -> bool:
-        return (
-            shutil.which("kimi") is not None
-            or Path.home().joinpath(".kimi").exists()
-        )
+        return shutil.which("kimi") is not None or Path.home().joinpath(".kimi").exists()
 
     def _mcp_path(self, scope: str) -> Path:
         return Path.home() / ".kimi" / "mcp.json"

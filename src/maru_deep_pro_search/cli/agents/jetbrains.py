@@ -24,9 +24,13 @@ class JetBrainsAdapter(AgentAdapter):
     def detect(self) -> bool:
         # Look for JetBrains Toolbox or any IDE config directory
         home = Path.home()
-        jetbrains_dirs = list(home.glob(".jetbrains*")) + list(home.glob("Library/Application Support/JetBrains*"))
+        jetbrains_dirs = list(home.glob(".jetbrains*")) + list(
+            home.glob("Library/Application Support/JetBrains*")
+        )
         return bool(
-            shutil.which("idea") or shutil.which("webstorm") or shutil.which("pycharm")
+            shutil.which("idea")
+            or shutil.which("webstorm")
+            or shutil.which("pycharm")
             or jetbrains_dirs
         )
 

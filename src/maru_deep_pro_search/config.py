@@ -35,7 +35,8 @@ class SearchConfig:
             max_concurrent_fetches=int(os.getenv("MARU_SEARCH_MAX_CONCURRENT", "5")),
             fetch_timeout_seconds=float(os.getenv("MARU_SEARCH_TIMEOUT", "30.0")),
             retry_attempts=int(os.getenv("MARU_SEARCH_RETRIES", "3")),
-            auto_check_updates=os.getenv("MARU_SKIP_UPDATE_CHECK", "").lower() not in ("1", "true", "yes"),
+            auto_check_updates=os.getenv("MARU_SKIP_UPDATE_CHECK", "").lower()
+            not in ("1", "true", "yes"),
         )
 
 

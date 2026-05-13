@@ -172,10 +172,12 @@ class HarnessSpec:
         hooks_cfg: dict[str, list[dict]] = {"PostToolUse": []}
         for h in self.hooks:
             if h.event == "post_tool_use":
-                hooks_cfg["PostToolUse"].append({
-                    "matcher": h.matcher,
-                    "hooks": [{"type": h.action, "command": h.command or h.prompt}],
-                })
+                hooks_cfg["PostToolUse"].append(
+                    {
+                        "matcher": h.matcher,
+                        "hooks": [{"type": h.action, "command": h.command or h.prompt}],
+                    }
+                )
         return {
             "mcpServers": self.mcp_servers,
             "settings": {
@@ -185,10 +187,7 @@ class HarnessSpec:
                 {"name": c.name, "description": c.description, "prompt": c.prompt}
                 for c in self.commands
             ],
-            "rules": [
-                {"scope": r.scope, "content": r.content}
-                for r in self.rules
-            ],
+            "rules": [{"scope": r.scope, "content": r.content} for r in self.rules],
             "claude_md": self.research_protocol,
         }
 
@@ -196,17 +195,9 @@ class HarnessSpec:
         return {
             "read": self.conventions,
             "auto_lint": any(q.lint_cmd for q in self.quality_gates),
-            "lint_cmd": [
-                f"{q.language}: {q.lint_cmd}"
-                for q in self.quality_gates
-                if q.lint_cmd
-            ],
+            "lint_cmd": [f"{q.language}: {q.lint_cmd}" for q in self.quality_gates if q.lint_cmd],
             "auto_test": any(q.test_cmd for q in self.quality_gates),
-            "test_cmd": [
-                f"{q.language}: {q.test_cmd}"
-                for q in self.quality_gates
-                if q.test_cmd
-            ],
+            "test_cmd": [f"{q.language}: {q.test_cmd}" for q in self.quality_gates if q.test_cmd],
             "conventions_md": self.research_protocol,
         }
 

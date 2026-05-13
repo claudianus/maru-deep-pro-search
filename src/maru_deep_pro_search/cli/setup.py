@@ -83,7 +83,9 @@ def cmd_setup(args: argparse.Namespace) -> int:
 
     if not installed:
         print(yellow("  설치된 에이전트를 찾을 수 없습니다."))
-        print("  지원하는 에이전트: Claude Code, Cursor, Kimi, AntiGravity, Kilo Code, OpenCode, Windsurf")
+        print(
+            "  지원하는 에이전트: Claude Code, Cursor, Kimi, AntiGravity, Kilo Code, OpenCode, Windsurf"
+        )
         return 1
 
     # If --agents is not provided, use all detected agents
@@ -121,6 +123,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
 
     # Semantic search recommendation
     import importlib.util
+
     if importlib.util.find_spec("sentence_transformers"):
         print(f"\n  {green('✓')} semantic search (sentence-transformers) 설치됨")
     else:
@@ -148,19 +151,13 @@ def cmd_setup(args: argparse.Namespace) -> int:
                     print(f"     {green('✓')} sentence-transformers 설치 완료")
                 except subprocess.CalledProcessError as exc:
                     print(f"     {yellow('!')} 설치 실패: {exc}")
-                    print(
-                        f"     수동 설치: {bold('pip install sentence-transformers>=3.0.0')}"
-                    )
+                    print(f"     수동 설치: {bold('pip install sentence-transformers>=3.0.0')}")
             else:
                 print("     설치를 생략합니다.")
-                print(
-                    f"     나중에 설치: {bold('pip install sentence-transformers>=3.0.0')}"
-                )
+                print(f"     나중에 설치: {bold('pip install sentence-transformers>=3.0.0')}")
         else:
             print(f"     설치 시 검색 품질 ↑: {bold('pip install sentence-transformers>=3.0.0')}")
-            print(
-                f"     또는: {bold('pip install maru-deep-pro-search[semantic]')}"
-            )
+            print(f"     또는: {bold('pip install maru-deep-pro-search[semantic]')}")
 
     print(f"\n{green('✅ 완료!')} 에이전트를 재시작하면 적용됩니다.")
     print(f"   되돌리려면: {bold('maru-deep-pro-search setup --restore')}")

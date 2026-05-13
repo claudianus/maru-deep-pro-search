@@ -79,9 +79,7 @@ class NaverEngine(SearchEngine):
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
         """Search Naver with Korean query support."""
-        search_url = (
-            f"https://search.naver.com/search.naver?query={quote_plus(query)}&where=web"
-        )
+        search_url = f"https://search.naver.com/search.naver?query={quote_plus(query)}&where=web"
 
         try:
             page = await with_retry(
@@ -92,9 +90,7 @@ class NaverEngine(SearchEngine):
             )
         except Exception as exc:
             logger.error("Naver SERP scrape failed: %s", exc)
-            raise NetworkError(
-                f"Failed to fetch Naver SERP: {exc}", retryable=True
-            ) from exc
+            raise NetworkError(f"Failed to fetch Naver SERP: {exc}", retryable=True) from exc
 
         docs = page.css(_SERP_CONTAINER)
         if not docs:
@@ -251,5 +247,3 @@ def _extract_text(el) -> str:
     if el.text is not None:
         return str(el.text).strip()
     return el.get_all_text().strip() if hasattr(el, "get_all_text") else ""
-
-

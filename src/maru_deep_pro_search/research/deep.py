@@ -28,6 +28,7 @@ _PROBLEMATIC_ENGINES = {"yahoo", "startpage"}
 
 # ── Data models ───────────────────────────────────────────────────────────
 
+
 @dataclass
 class CitedSource:
     """A source with citation ID and search metadata."""
@@ -42,7 +43,6 @@ class CitedSource:
     authority_boost: bool = False
     engines_found: list[str] = field(default_factory=list)
     relevance_score: float = 0.0
-
 
 
 @dataclass
@@ -60,6 +60,7 @@ class ResearchResult:
 
 
 # ── Main pipeline ─────────────────────────────────────────────────────────
+
 
 async def deep_research(
     query: str,
@@ -237,6 +238,7 @@ async def deep_research(
 
 # ── Output formatting ─────────────────────────────────────────────────────
 
+
 def format_for_llm(result: ResearchResult) -> str:
     """Format research results into markdown for agent consumption.
 
@@ -251,8 +253,7 @@ def format_for_llm(result: ResearchResult) -> str:
 
     coverage_str = " ".join(f"{k}={v}" for k, v in result.search_coverage.items())
     lines.append(
-        f"_engines: {coverage_str} | sources: {result.total_sources} | "
-        f"{result.elapsed_ms:.0f}ms_"
+        f"_engines: {coverage_str} | sources: {result.total_sources} | {result.elapsed_ms:.0f}ms_"
     )
 
     if len(result.subqueries) > 1:
@@ -299,6 +300,7 @@ def format_for_llm(result: ResearchResult) -> str:
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────
+
 
 def _estimate_quality(result: SearchResult) -> str:
     """Estimate source quality from search metadata (no fetch required)."""

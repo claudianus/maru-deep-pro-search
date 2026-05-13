@@ -23,8 +23,7 @@ class SupermavenAdapter(AgentAdapter):
 
     def detect(self) -> bool:
         return (
-            shutil.which("supermaven") is not None
-            or Path.home().joinpath(".supermaven").exists()
+            shutil.which("supermaven") is not None or Path.home().joinpath(".supermaven").exists()
         )
 
     def _config_path(self, scope: str) -> Path:

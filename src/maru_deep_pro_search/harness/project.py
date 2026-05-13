@@ -107,16 +107,16 @@ mcp_servers:
     args: [-m, maru_deep_pro_search.server]
 
 research_protocol: |
-{chr(10).join('  ' + line for line in spec.research_protocol.splitlines())}
+{chr(10).join("  " + line for line in spec.research_protocol.splitlines())}
 
 tool_priority:
-{chr(10).join(f'  - {t}' for t in spec.tool_priority)}
+{chr(10).join(f"  - {t}" for t in spec.tool_priority)}
 
 commands:
-{chr(10).join(f'  - name: {c.name}' + chr(10) + f'    description: {c.description}' + chr(10) + f'    prompt: {c.prompt}' for c in spec.commands)}
+{chr(10).join(f"  - name: {c.name}" + chr(10) + f"    description: {c.description}" + chr(10) + f"    prompt: {c.prompt}" for c in spec.commands)}
 
 conventions:
-{chr(10).join(f'  - {c}' for c in spec.conventions)}
+{chr(10).join(f"  - {c}" for c in spec.conventions)}
 
 knowledge_db_path: {spec.knowledge_db_path}
 """

@@ -78,10 +78,8 @@ class TestSearchEngineRegistry:
         for name in SearchEngineRegistry.list_engines():
             engine = SearchEngineRegistry.create(name)
             assert hasattr(engine, "_circuit_breaker"), (
-                f"{name}: missing _circuit_breaker — "
-                f"did __init__ forget super().__init__()?"
+                f"{name}: missing _circuit_breaker — did __init__ forget super().__init__()?"
             )
             assert hasattr(engine, "_last_request_time"), (
-                f"{name}: missing _last_request_time — "
-                f"did __init__ forget super().__init__()?"
+                f"{name}: missing _last_request_time — did __init__ forget super().__init__()?"
             )

@@ -89,9 +89,10 @@ class TestClassifySourceType:
         assert classify_source_type("https://pypi.org/project/requests/") == "package_registry"
 
     def test_tutorial(self):
-        assert classify_source_type(
-            "https://example.com/guide", snippet="getting started tutorial"
-        ) == "tutorial"
+        assert (
+            classify_source_type("https://example.com/guide", snippet="getting started tutorial")
+            == "tutorial"
+        )
 
     def test_unknown_fallback(self):
         assert classify_source_type("https://random-site.com/page") == "unknown"

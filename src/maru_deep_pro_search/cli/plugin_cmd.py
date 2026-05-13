@@ -80,7 +80,9 @@ def main(argv: list[str] | None = None) -> int:
 
     subparsers.add_parser("list", help="List installed plugins")
 
-    install_parser = subparsers.add_parser("install", help="Install a plugin from Git URL or local path")
+    install_parser = subparsers.add_parser(
+        "install", help="Install a plugin from Git URL or local path"
+    )
     install_parser.add_argument("source", help="Git URL or local path to plugin")
 
     uninstall_parser = subparsers.add_parser("uninstall", help="Remove an installed plugin")

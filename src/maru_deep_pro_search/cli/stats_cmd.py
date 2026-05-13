@@ -40,9 +40,13 @@ def cmd_stats(args: argparse.Namespace) -> int:
         if domains:
             print(f"\n{bold('🌐 Domain Performance')}:")
             for row in domains:
-                rate = row["success_count"] / max(row["success_count"] + row["failure_count"], 1) * 100
+                rate = (
+                    row["success_count"] / max(row["success_count"] + row["failure_count"], 1) * 100
+                )
                 color = green if rate > 80 else yellow if rate > 50 else "\033[91m"
-                print(f"  {color}{rate:5.1f}%\033[0m  {row['domain'][:40]:40s}  avg={row['avg_duration_ms']:.0f}ms")
+                print(
+                    f"  {color}{rate:5.1f}%\033[0m  {row['domain'][:40]:40s}  avg={row['avg_duration_ms']:.0f}ms"
+                )
     except Exception:
         pass
 

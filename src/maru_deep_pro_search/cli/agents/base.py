@@ -33,11 +33,7 @@ def get_mcp_server_yaml() -> str:
     """Return the MCP server YAML block for Hermes-style configs."""
     binary = shutil.which("maru-deep-pro-search")
     if binary:
-        return (
-            f"  maru-deep-pro-search:\n"
-            f"    command: {binary}\n"
-            f"    args: []\n"
-        )
+        return f"  maru-deep-pro-search:\n    command: {binary}\n    args: []\n"
     return (
         f"  maru-deep-pro-search:\n"
         f"    command: {sys.executable}\n"

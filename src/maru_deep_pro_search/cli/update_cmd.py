@@ -15,9 +15,9 @@ def main(argv: list[str] | None = None) -> int:
         prog="maru-deep-pro-search update",
         description="Check for updates and optionally upgrade maru-deep-pro-search.",
         epilog="Examples:\n"
-               "  maru-deep-pro-search update --check   # Only check\n"
-               "  maru-deep-pro-search update           # Check and install\n"
-               "  maru-deep-pro-search update --force   # Skip cooldown",
+        "  maru-deep-pro-search update --check   # Only check\n"
+        "  maru-deep-pro-search update           # Check and install\n"
+        "  maru-deep-pro-search update --force   # Skip cooldown",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(

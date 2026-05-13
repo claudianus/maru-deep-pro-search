@@ -78,7 +78,7 @@ class TTLCache:
 
 # Global cache instances (per-tool to avoid cross-contamination)
 _search_cache = TTLCache(maxsize=200, ttl_seconds=300.0)  # 5 min TTL for search
-_fetch_cache = TTLCache(maxsize=100, ttl_seconds=600.0)   # 10 min TTL for fetch
+_fetch_cache = TTLCache(maxsize=100, ttl_seconds=600.0)  # 10 min TTL for fetch
 
 
 def get_search_cache() -> TTLCache:

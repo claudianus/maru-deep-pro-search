@@ -159,18 +159,14 @@ class SearchEngine(ABC):
         elapsed = time.monotonic() - self._last_request_time
         if elapsed < self.min_request_interval:
             delay = self.min_request_interval - elapsed
-            logger.debug(
-                "[%s] Cooling down for %.2fs", self.name, delay
-            )
+            logger.debug("[%s] Cooling down for %.2fs", self.name, delay)
             await asyncio.sleep(delay)
         self._last_request_time = time.monotonic()
 
     async def _check_circuit(self) -> bool:
         """Return True if the circuit breaker allows execution."""
         if not await self._circuit_breaker.can_execute():
-            logger.warning(
-                "[%s] Circuit breaker is OPEN; skipping request", self.name
-            )
+            logger.warning("[%s] Circuit breaker is OPEN; skipping request", self.name)
             return False
         return True
 
@@ -225,6 +221,7 @@ class SearchEngine(ABC):
 
 # ── Shared extraction utilities ─────────────────────────────────────────────
 
+
 def _first(el, selectors: list[str]):
     """Try multiple CSS selectors and return the first match."""
     for sel in selectors:
@@ -254,8 +251,11 @@ def _guess_content_type(url: str, snippet: str = "") -> ContentType:
 
     # Korean-specific detection
     korean_indicators = [
-        "velog.io", "tistory.com", "naver.com/blog",
-        "brunch.co.kr", "okky.kr",
+        "velog.io",
+        "tistory.com",
+        "naver.com/blog",
+        "brunch.co.kr",
+        "okky.kr",
     ]
     if any(ind in domain for ind in korean_indicators):
         if "github.com" in domain:
@@ -268,7 +268,18 @@ def _guess_content_type(url: str, snippet: str = "") -> ContentType:
         return ContentType.FORUM
     if any(k in lower for k in ["docs.", "/docs/", "documentation", "reference", "api.", "/api/"]):
         return ContentType.DOCUMENTATION
-    if any(k in lower for k in ["medium.com", "dev.to", "blog.", "/blog/", "tistory.com", "velog.io", "brunch.co.kr"]):
+    if any(
+        k in lower
+        for k in [
+            "medium.com",
+            "dev.to",
+            "blog.",
+            "/blog/",
+            "tistory.com",
+            "velog.io",
+            "brunch.co.kr",
+        ]
+    ):
         return ContentType.ARTICLE
     return ContentType.UNKNOWN
 

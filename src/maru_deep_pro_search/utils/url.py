@@ -8,93 +8,196 @@ from urllib.parse import unquote, urljoin, urlparse
 
 # Domains that rarely contain useful text content
 _SKIP_DOMAINS = {
-    "youtube.com", "youtu.be", "instagram.com", "facebook.com",
-    "twitter.com", "x.com", "tiktok.com", "pinterest.com",
-    "reddit.com", "linkedin.com", "snapchat.com", "twitch.tv",
-    "ubs.baidu.com", "recommend_list.baidu.com",
+    "youtube.com",
+    "youtu.be",
+    "instagram.com",
+    "facebook.com",
+    "twitter.com",
+    "x.com",
+    "tiktok.com",
+    "pinterest.com",
+    "reddit.com",
+    "linkedin.com",
+    "snapchat.com",
+    "twitch.tv",
+    "ubs.baidu.com",
+    "recommend_list.baidu.com",
 }
 
 # URL path patterns to skip
 _SKIP_PATH_PATTERNS = [
-    "/login", "/signup", "/register", "/auth",
-    "/search", "/cart", "/checkout",
-    "google.com/sorry", "google.com/recaptcha",
-    "baidu.php", "nourl.",
+    "/login",
+    "/signup",
+    "/register",
+    "/auth",
+    "/search",
+    "/cart",
+    "/checkout",
+    "google.com/sorry",
+    "google.com/recaptcha",
+    "baidu.php",
+    "nourl.",
 ]
 
 # Tracking parameters to strip
 _TRACKING_PARAMS = [
-    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
-    "fbclid", "gclid", "ref", "source",
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content",
+    "fbclid",
+    "gclid",
+    "ref",
+    "source",
 ]
 
 # High-authority domains for coding agents
 _AUTHORITY_DOMAINS = {
-    "docs.python.org", "developer.mozilla.org", "mdn.io",
-    "react.dev", "nextjs.org", "nodejs.org", "go.dev",
-    "pkg.go.dev", "doc.rust-lang.org", "docs.rs",
-    "api.rubyonrails.org", "learn.microsoft.com",
-    "postgresql.org", "dev.mysql.com",
-    "kubernetes.io", "fastapi.tiangolo.com",
-    "docs.djangoproject.com", "vuejs.org", "svelte.dev",
-    "github.com", "gitlab.com", "stackoverflow.com",
-    "arxiv.org", "pubmed.ncbi.nlm.nih.gov", "scholar.google.com",
-    "pypi.org", "npmjs.com", "crates.io", "realpython.com", "dev.to", "medium.com",
+    "docs.python.org",
+    "developer.mozilla.org",
+    "mdn.io",
+    "react.dev",
+    "nextjs.org",
+    "nodejs.org",
+    "go.dev",
+    "pkg.go.dev",
+    "doc.rust-lang.org",
+    "docs.rs",
+    "api.rubyonrails.org",
+    "learn.microsoft.com",
+    "postgresql.org",
+    "dev.mysql.com",
+    "kubernetes.io",
+    "fastapi.tiangolo.com",
+    "docs.djangoproject.com",
+    "vuejs.org",
+    "svelte.dev",
+    "github.com",
+    "gitlab.com",
+    "stackoverflow.com",
+    "arxiv.org",
+    "pubmed.ncbi.nlm.nih.gov",
+    "scholar.google.com",
+    "pypi.org",
+    "npmjs.com",
+    "crates.io",
+    "realpython.com",
+    "dev.to",
+    "medium.com",
     # Korean developer communities
-    "velog.io", "tistory.com", "naver.com", "daum.net",
-    "brunch.co.kr", "okky.kr", "hashnode.dev",
+    "velog.io",
+    "tistory.com",
+    "naver.com",
+    "daum.net",
+    "brunch.co.kr",
+    "okky.kr",
+    "hashnode.dev",
 }
 
 # Primary / official source domains
 _PRIMARY_SOURCE_DOMAINS = {
-    "docs.python.org", "developer.mozilla.org", "mdn.io",
-    "react.dev", "nextjs.org", "nodejs.org", "go.dev",
-    "pkg.go.dev", "doc.rust-lang.org", "docs.rs",
-    "api.rubyonrails.org", "guides.rubyonrails.org",
-    "learn.microsoft.com", "docs.microsoft.com",
-    "postgresql.org", "dev.mysql.com",
-    "kubernetes.io", "helm.sh", "terraform.io",
-    "fastapi.tiangolo.com", "flask.palletsprojects.com",
-    "docs.djangoproject.com", "vuejs.org", "svelte.dev",
-    "github.com", "gitlab.com", "bitbucket.org",
-    "stackoverflow.com", "stackexchange.com",
-    "arxiv.org", "pubmed.ncbi.nlm.nih.gov", "scholar.google.com",
-    "pypi.org", "npmjs.com", "crates.io", "maven.apache.org",
-    "rubygems.org", "packagist.org",
-    "openai.com", "anthropic.com", "google.com",
-    "cloud.google.com", "aws.amazon.com", "azure.microsoft.com",
+    "docs.python.org",
+    "developer.mozilla.org",
+    "mdn.io",
+    "react.dev",
+    "nextjs.org",
+    "nodejs.org",
+    "go.dev",
+    "pkg.go.dev",
+    "doc.rust-lang.org",
+    "docs.rs",
+    "api.rubyonrails.org",
+    "guides.rubyonrails.org",
+    "learn.microsoft.com",
+    "docs.microsoft.com",
+    "postgresql.org",
+    "dev.mysql.com",
+    "kubernetes.io",
+    "helm.sh",
+    "terraform.io",
+    "fastapi.tiangolo.com",
+    "flask.palletsprojects.com",
+    "docs.djangoproject.com",
+    "vuejs.org",
+    "svelte.dev",
+    "github.com",
+    "gitlab.com",
+    "bitbucket.org",
+    "stackoverflow.com",
+    "stackexchange.com",
+    "arxiv.org",
+    "pubmed.ncbi.nlm.nih.gov",
+    "scholar.google.com",
+    "pypi.org",
+    "npmjs.com",
+    "crates.io",
+    "maven.apache.org",
+    "rubygems.org",
+    "packagist.org",
+    "openai.com",
+    "anthropic.com",
+    "google.com",
+    "cloud.google.com",
+    "aws.amazon.com",
+    "azure.microsoft.com",
 }
 
 # Official docs URL patterns
 _DOCS_URL_PATTERNS = [
-    "/docs/", "/documentation/", "/api/", "/reference/",
-    "/guide/", "/manual/", "/spec/",
+    "/docs/",
+    "/documentation/",
+    "/api/",
+    "/reference/",
+    "/guide/",
+    "/manual/",
+    "/spec/",
 ]
 
 # Blog / review URL patterns
 _BLOG_URL_PATTERNS = [
-    "/blog/", "/news/", "/articles/", "/post/",
-    "medium.com", "dev.to", "tistory.com", "velog.io",
-    "brunch.co.kr", "hashnode.dev",
+    "/blog/",
+    "/news/",
+    "/articles/",
+    "/post/",
+    "medium.com",
+    "dev.to",
+    "tistory.com",
+    "velog.io",
+    "brunch.co.kr",
+    "hashnode.dev",
 ]
 
 # Forum URL patterns
 _FORUM_URL_PATTERNS = [
-    "stackoverflow.com", "stackexchange.com", "reddit.com",
-    "discourse.", "/forum/", "/community/", "/questions/",
+    "stackoverflow.com",
+    "stackexchange.com",
+    "reddit.com",
+    "discourse.",
+    "/forum/",
+    "/community/",
+    "/questions/",
     "okky.kr",
 ]
 
 # Academic URL patterns
 _ACADEMIC_URL_PATTERNS = [
-    "arxiv.org", "pubmed.ncbi.nlm.nih.gov", "scholar.google.com",
-    "doi.org", "ieee.org", "acm.org",
+    "arxiv.org",
+    "pubmed.ncbi.nlm.nih.gov",
+    "scholar.google.com",
+    "doi.org",
+    "ieee.org",
+    "acm.org",
 ]
 
 # News URL patterns
 _NEWS_URL_PATTERNS = [
-    "news.", "/news/", "techcrunch.com", "theverge.com",
-    "hackernews", "hn.algolia.com",
+    "news.",
+    "/news/",
+    "techcrunch.com",
+    "theverge.com",
+    "hackernews",
+    "hn.algolia.com",
 ]
 
 
@@ -271,12 +374,24 @@ def classify_source_type(url: str, snippet: str = "") -> str:
     if any(d in domain for d in _PRIMARY_SOURCE_DOMAINS):
         if any(p in lower_url for p in _DOCS_URL_PATTERNS):
             return SourceType.OFFICIAL_DOCS.value
-        if domain in ("docs.python.org", "developer.mozilla.org", "mdn.io",
-                      "react.dev", "nextjs.org", "nodejs.org", "go.dev",
-                      "pkg.go.dev", "doc.rust-lang.org", "docs.rs",
-                      "learn.microsoft.com", "kubernetes.io",
-                      "fastapi.tiangolo.com", "docs.djangoproject.com",
-                      "vuejs.org", "svelte.dev"):
+        if domain in (
+            "docs.python.org",
+            "developer.mozilla.org",
+            "mdn.io",
+            "react.dev",
+            "nextjs.org",
+            "nodejs.org",
+            "go.dev",
+            "pkg.go.dev",
+            "doc.rust-lang.org",
+            "docs.rs",
+            "learn.microsoft.com",
+            "kubernetes.io",
+            "fastapi.tiangolo.com",
+            "docs.djangoproject.com",
+            "vuejs.org",
+            "svelte.dev",
+        ):
             return SourceType.OFFICIAL_DOCS.value
 
     # Academic
@@ -284,8 +399,17 @@ def classify_source_type(url: str, snippet: str = "") -> str:
         return SourceType.ACADEMIC_PAPER.value
 
     # Package registry
-    if any(d in domain for d in ["pypi.org", "npmjs.com", "crates.io",
-                                  "rubygems.org", "packagist.org", "maven.apache.org"]):
+    if any(
+        d in domain
+        for d in [
+            "pypi.org",
+            "npmjs.com",
+            "crates.io",
+            "rubygems.org",
+            "packagist.org",
+            "maven.apache.org",
+        ]
+    ):
         return SourceType.PACKAGE_REGISTRY.value
 
     # Forum
@@ -293,8 +417,19 @@ def classify_source_type(url: str, snippet: str = "") -> str:
         return SourceType.FORUM.value
 
     # Tutorial
-    if any(k in combined for k in ["tutorial", "getting started", "how to", "guide",
-                                     "learn ", "lesson", "course", "walkthrough"]):
+    if any(
+        k in combined
+        for k in [
+            "tutorial",
+            "getting started",
+            "how to",
+            "guide",
+            "learn ",
+            "lesson",
+            "course",
+            "walkthrough",
+        ]
+    ):
         return SourceType.TUTORIAL.value
 
     # News

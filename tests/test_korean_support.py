@@ -1,6 +1,5 @@
 """Tests for Korean source support."""
 
-
 from maru_deep_pro_search.engines.base import ContentType, _guess_content_type
 from maru_deep_pro_search.research.expander import _detect_intent, expand_query
 from maru_deep_pro_search.utils.url import is_authority_domain

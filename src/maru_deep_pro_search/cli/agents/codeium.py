@@ -26,7 +26,11 @@ class CodeiumAdapter(AgentAdapter):
             shutil.which("codeium") is not None
             or Path.home().joinpath(".codeium").exists()
             or Path.home().joinpath(".vscode", "extensions").exists()
-            and any("codeium" in p.name.lower() for p in Path.home().joinpath(".vscode", "extensions").iterdir() if p.is_dir())
+            and any(
+                "codeium" in p.name.lower()
+                for p in Path.home().joinpath(".vscode", "extensions").iterdir()
+                if p.is_dir()
+            )
         )
 
     def _config_path(self, scope: str) -> Path:

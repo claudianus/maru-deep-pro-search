@@ -29,10 +29,7 @@ def _detect_cursor() -> bool:
 
 # ── Kimi Code CLI ────────────────────────────────────────────
 def _detect_kimi() -> bool:
-    return (
-        shutil.which("kimi") is not None
-        or Path.home().joinpath(".kimi").exists()
-    )
+    return shutil.which("kimi") is not None or Path.home().joinpath(".kimi").exists()
 
 
 # ── AntiGravity ──────────────────────────────────────────────
@@ -42,17 +39,13 @@ def _detect_antigravity() -> bool:
 
 # ── Kilo Code ────────────────────────────────────────────────
 def _detect_kilo() -> bool:
-    return (
-        Path.home().joinpath(".config", "kilo").exists()
-        or shutil.which("kilo") is not None
-    )
+    return Path.home().joinpath(".config", "kilo").exists() or shutil.which("kilo") is not None
 
 
 # ── OpenCode ─────────────────────────────────────────────────
 def _detect_opencode() -> bool:
     return (
-        shutil.which("opencode") is not None
-        or Path.home().joinpath(".config", "opencode").exists()
+        shutil.which("opencode") is not None or Path.home().joinpath(".config", "opencode").exists()
     )
 
 
@@ -107,19 +100,20 @@ def _detect_zed() -> bool:
 # ── JetBrains AI ─────────────────────────────────────────────
 def _detect_jetbrains() -> bool:
     home = Path.home()
-    jetbrains_dirs = list(home.glob(".jetbrains*")) + list(home.glob("Library/Application Support/JetBrains*"))
+    jetbrains_dirs = list(home.glob(".jetbrains*")) + list(
+        home.glob("Library/Application Support/JetBrains*")
+    )
     return bool(
-        shutil.which("idea") or shutil.which("webstorm") or shutil.which("pycharm")
+        shutil.which("idea")
+        or shutil.which("webstorm")
+        or shutil.which("pycharm")
         or jetbrains_dirs
     )
 
 
 # ── Supermaven ───────────────────────────────────────────────
 def _detect_supermaven() -> bool:
-    return (
-        shutil.which("supermaven") is not None
-        or Path.home().joinpath(".supermaven").exists()
-    )
+    return shutil.which("supermaven") is not None or Path.home().joinpath(".supermaven").exists()
 
 
 # ── Cody (Sourcegraph) ───────────────────────────────────────
@@ -129,9 +123,7 @@ def _detect_cody() -> bool:
     has_cody_ext = False
     if vscode_ext.exists():
         has_cody_ext = any(
-            "sourcegraph" in p.name.lower()
-            for p in vscode_ext.iterdir()
-            if p.is_dir()
+            "sourcegraph" in p.name.lower() for p in vscode_ext.iterdir() if p.is_dir()
         )
     return (
         shutil.which("cody") is not None
@@ -147,14 +139,10 @@ def _detect_codeium() -> bool:
     has_codeium_ext = False
     if vscode_ext.exists():
         has_codeium_ext = any(
-            "codeium" in p.name.lower()
-            for p in vscode_ext.iterdir()
-            if p.is_dir()
+            "codeium" in p.name.lower() for p in vscode_ext.iterdir() if p.is_dir()
         )
     return (
-        shutil.which("codeium") is not None
-        or home.joinpath(".codeium").exists()
-        or has_codeium_ext
+        shutil.which("codeium") is not None or home.joinpath(".codeium").exists() or has_codeium_ext
     )
 
 
@@ -164,16 +152,8 @@ def _detect_amazon_q() -> bool:
     vscode_ext = home / ".vscode" / "extensions"
     has_q_ext = False
     if vscode_ext.exists():
-        has_q_ext = any(
-            p.name.startswith("amazon-q")
-            for p in vscode_ext.iterdir()
-            if p.is_dir()
-        )
-    return (
-        shutil.which("q") is not None
-        or home.joinpath(".aws", "amazonq").exists()
-        or has_q_ext
-    )
+        has_q_ext = any(p.name.startswith("amazon-q") for p in vscode_ext.iterdir() if p.is_dir())
+    return shutil.which("q") is not None or home.joinpath(".aws", "amazonq").exists() or has_q_ext
 
 
 # ── Devin ────────────────────────────────────────────────────
@@ -192,30 +172,19 @@ def _detect_tabnine() -> bool:
     has_tabnine_ext = False
     if vscode_ext.exists():
         has_tabnine_ext = any(
-            "tabnine" in p.name.lower()
-            for p in vscode_ext.iterdir()
-            if p.is_dir()
+            "tabnine" in p.name.lower() for p in vscode_ext.iterdir() if p.is_dir()
         )
-    return (
-        home.joinpath(".tabnine").exists()
-        or has_tabnine_ext
-    )
+    return home.joinpath(".tabnine").exists() or has_tabnine_ext
 
 
 # ── Hermes (Nous Research) ───────────────────────────────────
 def _detect_hermes() -> bool:
-    return (
-        shutil.which("hermes") is not None
-        or Path.home().joinpath(".hermes").exists()
-    )
+    return shutil.which("hermes") is not None or Path.home().joinpath(".hermes").exists()
 
 
 # ── OpenAI Codex ─────────────────────────────────────────────
 def _detect_codex() -> bool:
-    return (
-        shutil.which("codex") is not None
-        or Path.home().joinpath(".codex").exists()
-    )
+    return shutil.which("codex") is not None or Path.home().joinpath(".codex").exists()
 
 
 # ── Registry ─────────────────────────────────────────────────

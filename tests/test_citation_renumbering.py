@@ -21,8 +21,20 @@ class TestCitationNumbering:
             engine="duckduckgo_lite",
             total_sources=2,
             sources=[
-                CitedSource(citation_id=1, url="http://a.com", title="A", quality="high", snippet="content A"),
-                CitedSource(citation_id=2, url="http://b.com", title="B", quality="high", snippet="content B"),
+                CitedSource(
+                    citation_id=1,
+                    url="http://a.com",
+                    title="A",
+                    quality="high",
+                    snippet="content A",
+                ),
+                CitedSource(
+                    citation_id=2,
+                    url="http://b.com",
+                    title="B",
+                    quality="high",
+                    snippet="content B",
+                ),
             ],
         )
         output = format_for_llm(result)

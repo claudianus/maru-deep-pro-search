@@ -109,7 +109,14 @@ class AuditLogger:
             INSERT INTO audit_log (timestamp, tool_name, params, result_size, duration_ms, anomaly_flags)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (now, tool_name, json.dumps(params, ensure_ascii=False), result_size, duration_ms, json.dumps(flags)),
+            (
+                now,
+                tool_name,
+                json.dumps(params, ensure_ascii=False),
+                result_size,
+                duration_ms,
+                json.dumps(flags),
+            ),
         )
 
         # Update rolling stats
@@ -199,7 +206,9 @@ class AuditLogger:
             "total_invocations": total,
             "last_hour": recent,
             "anomalies_detected": anomalies,
-            "top_tools": [{"tool": r["tool_name"], "count": r["invocation_count"]} for r in top_tools],
+            "top_tools": [
+                {"tool": r["tool_name"], "count": r["invocation_count"]} for r in top_tools
+            ],
         }
 
     @staticmethod

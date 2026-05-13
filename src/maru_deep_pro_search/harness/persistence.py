@@ -232,7 +232,13 @@ class KnowledgeStore:
                 """UPDATE domain_stats
                    SET avg_duration_ms = ?, success_count = ?, failure_count = ?, last_accessed = ?
                    WHERE domain = ?""",
-                (new_avg, old_succ + (1 if success else 0), old_fail + (0 if success else 1), now, domain),
+                (
+                    new_avg,
+                    old_succ + (1 if success else 0),
+                    old_fail + (0 if success else 1),
+                    now,
+                    domain,
+                ),
             )
         else:
             conn.execute(
@@ -303,11 +309,13 @@ class KnowledgeStore:
         if self._encoder is None:
             try:
                 from sentence_transformers import SentenceTransformer
+
                 self._encoder = SentenceTransformer("intfloat/multilingual-e5-small")
             except Exception:
                 return None
         try:
             import numpy as np
+
             emb = self._encoder.encode([text], convert_to_numpy=True)
             emb = emb / (np.linalg.norm(emb, axis=1, keepdims=True) + 1e-8)
             return emb[0].tolist()

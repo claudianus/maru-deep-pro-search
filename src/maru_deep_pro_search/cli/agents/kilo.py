@@ -15,10 +15,7 @@ class KiloAdapter(AgentAdapter):
     display_name = "Kilo Code"
 
     def detect(self) -> bool:
-        return (
-            Path.home().joinpath(".config", "kilo").exists()
-            or shutil.which("kilo") is not None
-        )
+        return Path.home().joinpath(".config", "kilo").exists() or shutil.which("kilo") is not None
 
     def _config_path(self, scope: str) -> Path:
         if scope == "project":

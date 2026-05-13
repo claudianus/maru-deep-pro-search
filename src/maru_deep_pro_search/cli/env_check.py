@@ -153,7 +153,9 @@ def ensure_compatible_python() -> int:
 
     # Incompatible interpreter – try to recover automatically with uv
     print()
-    print(red(f"❌  현재 Python {'.'.join(map(str, current_python_version()))}는 지원되지 않습니다."))
+    print(
+        red(f"❌  현재 Python {'.'.join(map(str, current_python_version()))}는 지원되지 않습니다.")
+    )
     print(red(f"   maru-deep-pro-search에는 Python ≥{MIN_PY_MAJOR}.{MIN_PY_MINOR}가 필요합니다."))
     print()
 
@@ -189,12 +191,7 @@ def ensure_compatible_python() -> int:
         return 1
 
     print()
-    print(
-        yellow(
-            "! 시스템 Python이 여전히 오래된 버전입니다. "
-            "아래 명령으로 설치를 진행하세요:\n"
-        )
-    )
+    print(yellow("! 시스템 Python이 여전히 오래된 버전입니다. 아래 명령으로 설치를 진행하세요:\n"))
     print(bold(f"   {uv} tool install --python {MIN_PY_MAJOR}.{MIN_PY_MINOR} maru-deep-pro-search"))
     print()
     return 1

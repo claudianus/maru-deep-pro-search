@@ -40,11 +40,7 @@ Rule 6: For code / library questions, verify the latest version and API
 Rule 7: Your training data is stale. The web is current.
         Always verify freshness with deep_research."""
 
-RESEARCH_PROTOCOL = (
-    f"{PROTOCOL_START_MARKER}\n"
-    f"{_RESEARCH_PROTOCOL_BODY}\n"
-    f"{PROTOCOL_END_MARKER}"
-)
+RESEARCH_PROTOCOL = f"{PROTOCOL_START_MARKER}\n{_RESEARCH_PROTOCOL_BODY}\n{PROTOCOL_END_MARKER}"
 
 # Regex that matches ANY previously injected protocol block (Korean or English,
 # old or new) so adapters can remove it before inserting the latest version.

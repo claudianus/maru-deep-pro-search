@@ -52,7 +52,6 @@ class _LazyModels:
         return cls._bi_encoder
 
 
-
 class SemanticRanker:
     """Hybrid semantic ranking utilities.
 

@@ -26,14 +26,9 @@ class TabnineAdapter(AgentAdapter):
         has_tabnine_ext = False
         if vscode_ext.exists():
             has_tabnine_ext = any(
-                "tabnine" in p.name.lower()
-                for p in vscode_ext.iterdir()
-                if p.is_dir()
+                "tabnine" in p.name.lower() for p in vscode_ext.iterdir() if p.is_dir()
             )
-        return (
-            home.joinpath(".tabnine").exists()
-            or has_tabnine_ext
-        )
+        return home.joinpath(".tabnine").exists() or has_tabnine_ext
 
     def _config_path(self, scope: str) -> Path:
         if scope == "project":

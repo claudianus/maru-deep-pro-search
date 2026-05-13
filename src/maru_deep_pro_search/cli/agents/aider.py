@@ -88,7 +88,9 @@ def _detect_quality_tools(root: Path = Path(".")) -> dict[str, str]:
         elif shutil.which("pylint"):
             tools["python_lint"] = "pylint"
 
-        if ((root / "pytest.ini").exists() or (root / "pyproject.toml").exists()) and shutil.which("pytest"):
+        if ((root / "pytest.ini").exists() or (root / "pyproject.toml").exists()) and shutil.which(
+            "pytest"
+        ):
             tools["python_test"] = "pytest"
 
     # JavaScript / TypeScript
@@ -247,7 +249,7 @@ class AiderAdapter(AgentAdapter):
         # Ensure read: CONVENTIONS.md
         has_read = any("CONVENTIONS.md" in line for line in lines)
         if not has_read:
-            lines.append('read: CONVENTIONS.md')
+            lines.append("read: CONVENTIONS.md")
 
         # Ensure auto-lint
         has_auto_lint = any(line.strip().startswith("auto-lint:") for line in lines)
@@ -277,10 +279,10 @@ class AiderAdapter(AgentAdapter):
         for key, cmd in tools.items():
             if "_lint" in key:
                 lang = key.replace("_lint", "")
-                lint_cmds.append(f'{lang}: {cmd}')
+                lint_cmds.append(f"{lang}: {cmd}")
             if "_test" in key:
                 lang = key.replace("_test", "")
-                test_cmds.append(f'{lang}: {cmd}')
+                test_cmds.append(f"{lang}: {cmd}")
 
         # Only add if not already present
         for lc in lint_cmds:
@@ -305,7 +307,9 @@ class AiderAdapter(AgentAdapter):
         # 3. .aiderignore — exclude harness artifacts
         ignore_path = self._ignore_path(scope)
         ignore_content = read_text_safe(ignore_path)
-        maru_ignore = "# maru harness\n.maru/knowledge.db\n.maru/knowledge.db-journal\n.maru/*.bak\n"
+        maru_ignore = (
+            "# maru harness\n.maru/knowledge.db\n.maru/knowledge.db-journal\n.maru/*.bak\n"
+        )
         if ".maru/" not in ignore_content:
             write_text_safe(ignore_path, ignore_content + "\n" + maru_ignore)
 

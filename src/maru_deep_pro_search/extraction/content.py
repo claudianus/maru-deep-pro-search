@@ -42,10 +42,12 @@ def extract_code_blocks(markdown: str) -> list[dict]:
     blocks = []
     pattern = re.compile(r"```(\w+)?\n(.*?)```", re.DOTALL)
     for match in pattern.finditer(markdown):
-        blocks.append({
-            "language": match.group(1) or "text",
-            "code": match.group(2).strip(),
-        })
+        blocks.append(
+            {
+                "language": match.group(1) or "text",
+                "code": match.group(2).strip(),
+            }
+        )
     return blocks
 
 
@@ -55,10 +57,12 @@ def extract_headings(markdown: str) -> list[dict]:
     for line in markdown.split("\n"):
         match = re.match(r"^(#{1,6})\s+(.+)$", line)
         if match:
-            headings.append({
-                "level": len(match.group(1)),
-                "text": match.group(2).strip(),
-            })
+            headings.append(
+                {
+                    "level": len(match.group(1)),
+                    "text": match.group(2).strip(),
+                }
+            )
     return headings
 
 

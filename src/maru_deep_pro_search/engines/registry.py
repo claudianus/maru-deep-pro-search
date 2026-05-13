@@ -26,9 +26,7 @@ class SearchEngineRegistry:
         """Get engine class by name."""
         if name not in cls._engines:
             available = ", ".join(cls._engines.keys())
-            raise ValueError(
-                f"Unknown engine '{name}'. Available: {available}"
-            )
+            raise ValueError(f"Unknown engine '{name}'. Available: {available}")
         return cls._engines[name]
 
     @classmethod

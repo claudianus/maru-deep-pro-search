@@ -8,7 +8,7 @@ from maru_deep_pro_search.cli.agents.codex import CodexAdapter
 class TestCodexAdapter:
     def test_insert_features_idempotent(self):
         """Adding [features] twice must not duplicate the section."""
-        lines = ["[mcp_servers.test]", "command = \"test\""]
+        lines = ["[mcp_servers.test]", 'command = "test"']
         lines = CodexAdapter._insert_or_update_features(lines)
         assert lines.count("[features]") == 1
         assert "codex_hooks = true" in lines

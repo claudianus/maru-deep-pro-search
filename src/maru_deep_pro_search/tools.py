@@ -41,6 +41,7 @@ def _clean_urls(raw: str) -> list[str]:
 # Tool: web_search
 # ═══════════════════════════════════════════════════════════════
 
+
 async def tool_web_search(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -101,17 +102,31 @@ async def tool_web_search(
 
     lines = [f"Search: **{query}**  _engine={engine}_\n"]
     for r in results:
-        type_badge = f" [{r.likely_content_type.value}]" if r.likely_content_type.value != "unknown" else ""
+        type_badge = (
+            f" [{r.likely_content_type.value}]" if r.likely_content_type.value != "unknown" else ""
+        )
         source_badge = ""
         if r.source_type and r.source_type.value != "unknown":
             source_badge = f" [{r.source_type.value.upper().replace('_', '-')}]"
         primary_badge = " [PRIMARY]" if r.is_primary else ""
-        auth_badge = " [AUTHORITY]" if any(d in r.domain for d in [
-            "docs.python.org", "developer.mozilla.org", "github.com",
-            "stackoverflow.com", "arxiv.org"
-        ]) else ""
+        auth_badge = (
+            " [AUTHORITY]"
+            if any(
+                d in r.domain
+                for d in [
+                    "docs.python.org",
+                    "developer.mozilla.org",
+                    "github.com",
+                    "stackoverflow.com",
+                    "arxiv.org",
+                ]
+            )
+            else ""
+        )
         cite = f" [{r.citation_id}]"
-        lines.append(f"{r.position}. **{r.title}**{cite}{type_badge}{source_badge}{primary_badge}{auth_badge}")
+        lines.append(
+            f"{r.position}. **{r.title}**{cite}{type_badge}{source_badge}{primary_badge}{auth_badge}"
+        )
         lines.append(f"   {r.url}")
         if r.snippet:
             lines.append(f"   > {r.snippet[:300]}")
@@ -126,6 +141,7 @@ async def tool_web_search(
 # ═══════════════════════════════════════════════════════════════
 # Tool: fetch_page
 # ═══════════════════════════════════════════════════════════════
+
 
 async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 6000) -> str:
     """Fetch a page via Scrapling and extract clean, LLM-optimized content.
@@ -181,16 +197,16 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
         elif "connection" in err.lower() or "refused" in err.lower():
             guidance = "_Connection refused. The server may be down or blocking your IP._"
         elif "import" in err.lower() or "cannot import" in err.lower():
-            guidance = "_Internal fetcher error (dependency mismatch). This is a bug, not a blocked site._"
+            guidance = (
+                "_Internal fetcher error (dependency mismatch). This is a bug, not a blocked site._"
+            )
         elif "403" in err or "forbidden" in err.lower() or "access denied" in err.lower():
             guidance = "_Access denied (HTTP 403). Anti-bot wall hit — try stealthy_fetch or fetch_page with stealth=True._"
         else:
-            guidance = "_Fetch blocked or failed. Try stealthy_fetch or fetch_page with stealth=True._"
-        return (
-            f"## [BLOCKED] {url}\n"
-            f"{guidance}\n"
-            f"Error: {page.error_message}"
-        )
+            guidance = (
+                "_Fetch blocked or failed. Try stealthy_fetch or fetch_page with stealth=True._"
+            )
+        return f"## [BLOCKED] {url}\n{guidance}\nError: {page.error_message}"
 
     if page.content_length == 0:
         return f"## [EMPTY] {url}\n_No extractable content found._"
@@ -206,7 +222,7 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
     if page.api_signatures:
         sigs = "; ".join(s["signature"][:80] for s in page.api_signatures[:5])
         code_meta += f"\n_API signatures: {sigs}_"
-    if getattr(page, 'package_refs', []):
+    if getattr(page, "package_refs", []):
         pkgs = ", ".join(f"{p['package']} ({p['language']})" for p in page.package_refs[:5])
         code_meta += f"\n_Packages: {pkgs}_"
     if page.code_to_text_ratio > 0.1:
@@ -224,8 +240,7 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
     link_section = ""
     if page.external_links:
         links_preview = "\n".join(
-            f"- [{link['text'][:60]}]({link['url']})"
-            for link in page.external_links[:5]
+            f"- [{link['text'][:60]}]({link['url']})" for link in page.external_links[:5]
         )
         link_section = f"\n\n**Follow-up links:**\n{links_preview}"
 
@@ -245,6 +260,7 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
 # ═══════════════════════════════════════════════════════════════
 # Tool: fetch_bulk
 # ═══════════════════════════════════════════════════════════════
+
 
 async def tool_fetch_bulk(
     urls: list[str],
@@ -268,6 +284,7 @@ async def tool_fetch_bulk(
                 )
             except asyncio.TimeoutError:
                 from .engines.base import ExtractionQuality, PageContent
+
                 return PageContent(
                     url=u,
                     error_message="Fetch timeout after 20 seconds",
@@ -281,11 +298,14 @@ async def tool_fetch_bulk(
     for p in pages:
         if isinstance(p, Exception):
             from .engines.base import ExtractionQuality, PageContent
-            safe_pages.append(PageContent(
-                url="",
-                error_message=str(p),
-                quality=ExtractionQuality.BLOCKED,
-            ))
+
+            safe_pages.append(
+                PageContent(
+                    url="",
+                    error_message=str(p),
+                    quality=ExtractionQuality.BLOCKED,
+                )
+            )
         else:
             safe_pages.append(p)
     pages = safe_pages
@@ -309,18 +329,23 @@ async def tool_fetch_bulk(
             error_line = f"\n_Error: {page.error_message}_"
 
         lines.append(f"### [{i}] {page.title}{badge}")
-        lines.append(f"URL: {page.final_url or page.url} _({page.content_length} chars, {status}, {page.content_type.value})_{error_line}")
+        lines.append(
+            f"URL: {page.final_url or page.url} _({page.content_length} chars, {status}, {page.content_type.value})_{error_line}"
+        )
         lines.append(f"\n{content}\n")
 
     result_text = "\n".join(lines) if lines else "No content fetched."
     report = analyze_content(result_text)
-    result_text = wrap_external_content(result_text, source_url=f"bulk:{len(urls)} URLs", report=report)
+    result_text = wrap_external_content(
+        result_text, source_url=f"bulk:{len(urls)} URLs", report=report
+    )
     return result_text
 
 
 # ═══════════════════════════════════════════════════════════════
 # Tool: deep_research
 # ═══════════════════════════════════════════════════════════════
+
 
 async def tool_deep_research(
     query: str,
@@ -357,7 +382,9 @@ async def tool_deep_research(
 
     # Check cache
     cache = get_search_cache()
-    key = cache_key("deep_research", engine, max_sources, expand_queries, primary_sources_only, query)
+    key = cache_key(
+        "deep_research", engine, max_sources, expand_queries, primary_sources_only, query
+    )
     cached = cache.get(key)
     if cached is not None:
         logger.debug("Cache hit for deep_research: %s", query)
@@ -385,7 +412,9 @@ async def tool_deep_research(
         )
     result_text = format_for_llm(result)
     report = analyze_content(result_text)
-    result_text = wrap_external_content(result_text, source_url="deep-research:multiple-sources", report=report)
+    result_text = wrap_external_content(
+        result_text, source_url="deep-research:multiple-sources", report=report
+    )
     cache.set(key, result_text)
     return result_text
 
@@ -393,6 +422,7 @@ async def tool_deep_research(
 # ═══════════════════════════════════════════════════════════════
 # Tool: answer (NEW — Perplexity-style direct answer)
 # ═══════════════════════════════════════════════════════════════
+
 
 async def tool_answer(
     query: str,
@@ -448,6 +478,7 @@ async def tool_answer(
 # Tool: search_with_citations
 # ═══════════════════════════════════════════════════════════════
 
+
 async def tool_search_with_citations(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -501,16 +532,30 @@ async def tool_search_with_citations(
 
     lines = [f"## Citation Search: {query}\n"]
     for r in results:
-        type_badge = f" [{r.likely_content_type.value}]" if r.likely_content_type.value != "unknown" else ""
+        type_badge = (
+            f" [{r.likely_content_type.value}]" if r.likely_content_type.value != "unknown" else ""
+        )
         source_badge = ""
         if r.source_type and r.source_type.value != "unknown":
             source_badge = f" [{r.source_type.value.upper().replace('_', '-')}]"
         primary_badge = " [PRIMARY]" if r.is_primary else ""
-        auth_badge = " [AUTHORITY]" if any(d in r.domain for d in [
-            "docs.python.org", "developer.mozilla.org", "github.com",
-            "stackoverflow.com", "arxiv.org"
-        ]) else ""
-        lines.append(f"[{r.citation_id}] **{r.title}**{type_badge}{source_badge}{primary_badge}{auth_badge}")
+        auth_badge = (
+            " [AUTHORITY]"
+            if any(
+                d in r.domain
+                for d in [
+                    "docs.python.org",
+                    "developer.mozilla.org",
+                    "github.com",
+                    "stackoverflow.com",
+                    "arxiv.org",
+                ]
+            )
+            else ""
+        )
+        lines.append(
+            f"[{r.citation_id}] **{r.title}**{type_badge}{source_badge}{primary_badge}{auth_badge}"
+        )
         lines.append(f"    URL: {r.url}")
         if r.snippet:
             lines.append(f"    > {r.snippet[:300]}")
@@ -524,6 +569,7 @@ async def tool_search_with_citations(
 # ═══════════════════════════════════════════════════════════════
 # Tool: stealthy_fetch
 # ═══════════════════════════════════════════════════════════════
+
 
 async def tool_stealthy_fetch(url: str, max_tokens: int = 6000) -> str:
     """Fetch a URL with full StealthyFetcher anti-bot bypass.
@@ -547,6 +593,7 @@ async def tool_stealthy_fetch(url: str, max_tokens: int = 6000) -> str:
 # ═══════════════════════════════════════════════════════════════
 # Tool: parallel_search
 # ═══════════════════════════════════════════════════════════════
+
 
 async def tool_parallel_search(
     queries: list[str],
@@ -599,6 +646,7 @@ async def tool_parallel_search(
         # Replace IDs — bind id_map via default arg to avoid closure issue
         def _repl_id(m, _mapping=id_map):
             return f"[{_mapping.get(m.group(1), m.group(1))}]"
+
         renumbered = re.sub(r"\[(\d+)\]", _repl_id, raw)
 
         # Add source type badges if missing
@@ -631,12 +679,13 @@ async def tool_parallel_search(
             if line.startswith("   http") and not first_url:
                 first_url = line.strip()
             if "[OFFICIAL-DOCS]" in line or "[GITHUB-REPO]" in line:
-                first_type = line[line.find("["):line.find("]")+1]
+                first_type = line[line.find("[") : line.find("]") + 1]
             if "[PRIMARY]" in line:
                 first_primary = "✓"
         if not first_title and first_url:
             # Fallback to domain name
             from urllib.parse import urlparse
+
             first_title = urlparse(first_url).netloc[:40]
         if not first_title:
             first_title = "(no title)"
@@ -736,9 +785,17 @@ TOOLS = {
                 "query": {"type": "string", "description": "Question or topic to answer"},
                 "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
                 "max_sources": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
-                "max_tokens": {"type": "integer", "default": 8000, "minimum": 1000, "maximum": 15000},
-                "primary_sources_only": {"type": "boolean", "default": False,
-                                         "description": "Only official docs, GitHub, registries, papers, SO"},
+                "max_tokens": {
+                    "type": "integer",
+                    "default": 8000,
+                    "minimum": 1000,
+                    "maximum": 15000,
+                },
+                "primary_sources_only": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Only official docs, GitHub, registries, papers, SO",
+                },
             },
             "required": ["query"],
         },
@@ -784,8 +841,11 @@ TOOLS = {
             "type": "object",
             "properties": {
                 "url": {"type": "string", "description": "URL to fetch"},
-                "stealth": {"type": "boolean", "default": False,
-                            "description": "Use anti-bot bypass. Try this if first attempt is blocked."},
+                "stealth": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Use anti-bot bypass. Try this if first attempt is blocked.",
+                },
                 "max_tokens": {"type": "integer", "default": 6000, "minimum": 500, "maximum": 8000},
             },
             "required": ["url"],
@@ -799,8 +859,11 @@ TOOLS = {
         {
             "type": "object",
             "properties": {
-                "urls": {"type": "array", "items": {"type": "string"},
-                         "description": "List of URLs to fetch"},
+                "urls": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of URLs to fetch",
+                },
                 "stealth": {"type": "boolean", "default": False},
                 "max_concurrent": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
                 "max_tokens": {"type": "integer", "default": 3000, "minimum": 300, "maximum": 5000},
@@ -827,8 +890,11 @@ TOOLS = {
                 "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
                 "max_sources": {"type": "integer", "default": 8, "minimum": 1, "maximum": 15},
                 "expand_queries": {"type": "boolean", "default": True},
-                "primary_sources_only": {"type": "boolean", "default": False,
-                                         "description": "Only official docs, GitHub, registries, papers, SO"},
+                "primary_sources_only": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Only official docs, GitHub, registries, papers, SO",
+                },
             },
             "required": ["query"],
         },
@@ -857,12 +923,18 @@ TOOLS = {
         {
             "type": "object",
             "properties": {
-                "queries": {"type": "array", "items": {"type": "string"},
-                            "description": "Search queries to run in parallel"},
+                "queries": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Search queries to run in parallel",
+                },
                 "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
                 "max_results": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
-                "comparison_mode": {"type": "boolean", "default": False,
-                                    "description": "Generate structured comparison table with renumbered citations"},
+                "comparison_mode": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Generate structured comparison table with renumbered citations",
+                },
             },
             "required": ["queries"],
         },

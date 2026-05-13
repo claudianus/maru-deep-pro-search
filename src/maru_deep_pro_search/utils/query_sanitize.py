@@ -76,7 +76,12 @@ def sanitize_query(query: str, current_year: int | None = None) -> str:
 
     # Replace stale phrases like "in 2024" → "in latest"
     for phrase_pattern in _STALE_PHRASES:
-        result = re.sub(phrase_pattern, lambda m: re.sub(r"\d{4}", "latest", m.group(0)), result, flags=re.IGNORECASE)
+        result = re.sub(
+            phrase_pattern,
+            lambda m: re.sub(r"\d{4}", "latest", m.group(0)),
+            result,
+            flags=re.IGNORECASE,
+        )
 
     # Final cleanup: dedupe spaces and duplicate "latest"
     result = re.sub(r"\blatest\s+latest\b", "latest", result, flags=re.IGNORECASE)

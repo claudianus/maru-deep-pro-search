@@ -52,10 +52,7 @@ def detect_gaps(query: str, sources: list) -> list[str]:
     source_text = source_text.lower()
 
     # Check which query keywords are poorly covered
-    uncovered_keywords = [
-        kw for kw in query_keywords
-        if kw not in source_text and len(kw) > 3
-    ]
+    uncovered_keywords = [kw for kw in query_keywords if kw not in source_text and len(kw) > 3]
 
     # Check which research angles are uncovered
     uncovered_angles: list[str] = []

@@ -12,9 +12,7 @@ _logger = logging.getLogger("maru_deep_pro_search")
 _logger.setLevel(logging.INFO)
 
 _stderr_handler = logging.StreamHandler(sys.stderr)
-_stderr_handler.setFormatter(
-    logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-)
+_stderr_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
 _logger.addHandler(_stderr_handler)
 _logger.propagate = False
 
@@ -48,6 +46,7 @@ def _inject_notice_into_response(response: str) -> str:
 # Enforcement Layer — Session-level research gates
 # ═══════════════════════════════════════════════════════════════
 
+
 def _get_session_id(ctx: Context | None) -> str:
     """Extract a stable session identifier from the MCP context."""
     if ctx is None:
@@ -63,6 +62,7 @@ def _with_enforcement(tool_name: str | None = None):
     completed in the same session.  deep_research itself marks the
     session as researched.
     """
+
     def decorator(fn):
         name = tool_name or fn.__name__
 
@@ -89,12 +89,14 @@ def _with_enforcement(tool_name: str | None = None):
             return await fn(*args, ctx=ctx, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 # ═══════════════════════════════════════════════════════════════
 # MCP Prompts — Force Research-First Behavior
 # ═══════════════════════════════════════════════════════════════
+
 
 @mcp.prompt()
 def always_research_first() -> str:
@@ -387,6 +389,7 @@ def research_workflow() -> str:
 # MCP Tools — With Session Enforcement
 # ═══════════════════════════════════════════════════════════════
 
+
 @mcp.tool()
 async def answer(
     query: str,
@@ -398,6 +401,7 @@ async def answer(
 ) -> str:
     """Quick answer with inline citations for simple factual questions."""
     from .tools import tool_answer
+
     result = await tool_answer(query, engine, max_sources, max_tokens, primary_sources_only)
     return _inject_notice_into_response(result)
 
@@ -411,6 +415,7 @@ async def web_search(
 ) -> str:
     """Search and return ranked results with citations."""
     from .tools import tool_web_search
+
     return await tool_web_search(query, engine, max_results)
 
 
@@ -423,6 +428,7 @@ async def search_with_citations(
 ) -> str:
     """Search with pre-numbered sources for academic writing."""
     from .tools import tool_search_with_citations
+
     return await tool_search_with_citations(query, engine, max_results)
 
 
@@ -435,6 +441,7 @@ async def fetch_page(
 ) -> str:
     """Extract clean content from a single URL."""
     from .tools import tool_fetch_page
+
     return await tool_fetch_page(url, stealth, max_tokens)
 
 
@@ -448,6 +455,7 @@ async def fetch_bulk(
 ) -> str:
     """Parallel fetch multiple URLs with deduplication."""
     from .tools import tool_fetch_bulk
+
     return await tool_fetch_bulk(urls, stealth, max_concurrent, max_tokens)
 
 
@@ -471,8 +479,13 @@ async def deep_research(
     to read the content of URLs it finds relevant.
     """
     from .tools import tool_deep_research
+
     result = await tool_deep_research(
-        query, engine, max_sources, expand_queries, primary_sources_only,
+        query,
+        engine,
+        max_sources,
+        expand_queries,
+        primary_sources_only,
     )
     return _inject_notice_into_response(result)
 
@@ -485,6 +498,7 @@ async def stealthy_fetch(
 ) -> str:
     """Anti-bot bypass fetch for protected sites."""
     from .tools import tool_stealthy_fetch
+
     return await tool_stealthy_fetch(url, max_tokens)
 
 
@@ -498,6 +512,7 @@ async def parallel_search(
 ) -> str:
     """Run multiple searches simultaneously for comparative analysis."""
     from .tools import tool_parallel_search
+
     return await tool_parallel_search(queries, engine, max_results, comparison_mode)
 
 
@@ -547,9 +562,7 @@ async def generate_code(
     enforcer = get_enforcer()
 
     try:
-        report = enforcer.validate_code_generation(
-            session_id, task_description, proposed_code
-        )
+        report = enforcer.validate_code_generation(session_id, task_description, proposed_code)
     except CodeGenerationBlockedError as exc:
         return str(exc)
 
@@ -575,13 +588,15 @@ async def generate_code(
             lines.append(
                 f"💡 Research has unused citations you should cite: {report['unused_citations']}"
             )
-        lines.extend([
-            "",
-            "ACTION REQUIRED:",
-            "1. Run deep_research() on your topic",
-            "2. Include [N] citations from research in your code",
-            "3. Call generate_code() again with validated code",
-        ])
+        lines.extend(
+            [
+                "",
+                "ACTION REQUIRED:",
+                "1. Run deep_research() on your topic",
+                "2. Include [N] citations from research in your code",
+                "3. Call generate_code() again with validated code",
+            ]
+        )
         return "\n".join(lines)
 
     # Mark code as generated in session
@@ -605,9 +620,18 @@ def _research_main(argv: list[str] | None = None) -> int:
         epilog='Example: python -m maru_deep_pro_search.server research "FastAPI vs Django 2025" --output report.md',
     )
     parser.add_argument("query", help="Research query string")
-    parser.add_argument("--output", "-o", default="research-report.md", help="Output file path (default: research-report.md)")
-    parser.add_argument("--engine", default="duckduckgo_lite", help="Search engine (default: duckduckgo_lite)")
-    parser.add_argument("--max-sources", type=int, default=8, help="Maximum sources to return (default: 8)")
+    parser.add_argument(
+        "--output",
+        "-o",
+        default="research-report.md",
+        help="Output file path (default: research-report.md)",
+    )
+    parser.add_argument(
+        "--engine", default="duckduckgo_lite", help="Search engine (default: duckduckgo_lite)"
+    )
+    parser.add_argument(
+        "--max-sources", type=int, default=8, help="Maximum sources to return (default: 8)"
+    )
     parser.add_argument("--no-expand", action="store_true", help="Disable query expansion")
     args = parser.parse_args(argv)
 
@@ -619,6 +643,7 @@ def _research_main(argv: list[str] | None = None) -> int:
 
     async def _run() -> str:
         from .tools import tool_deep_research
+
         return await tool_deep_research(
             args.query,
             args.engine,
@@ -637,28 +662,35 @@ def _research_main(argv: list[str] | None = None) -> int:
     except Exception as exc:
         print(f"❌ Research failed: {exc}")
         import traceback
+
         traceback.print_exc()
         return 1
 
 
 def run() -> None:
     import asyncio
+
     if len(sys.argv) > 1:
         sub = sys.argv[1]
         if sub == "setup":
             from .cli.setup import main as _setup_main
+
             sys.exit(_setup_main(sys.argv[1:]))
         if sub == "init":
             from .cli.init_cmd import main as _init_main
+
             sys.exit(_init_main(sys.argv[2:]))
         if sub == "stats":
             from .cli.stats_cmd import main as _stats_main
+
             sys.exit(_stats_main(sys.argv[2:]))
         if sub == "workflow":
             from .cli.workflow_cmd import main as _workflow_main
+
             sys.exit(_workflow_main(sys.argv[2:]))
         if sub == "update":
             from .cli.update_cmd import main as _update_main
+
             sys.exit(_update_main(sys.argv[2:]))
         if sub == "research":
             sys.exit(_research_main(sys.argv[2:]))
@@ -667,6 +699,7 @@ def run() -> None:
     global _pending_update_notice
     try:
         from .utils.updater import check_for_update, get_update_notice
+
         result = check_for_update()
         notice = get_update_notice(result)
         if notice:

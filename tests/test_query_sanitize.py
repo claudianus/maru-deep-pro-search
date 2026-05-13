@@ -1,15 +1,20 @@
 """Tests for query_sanitize — stale year removal."""
 
-
 from maru_deep_pro_search.utils.query_sanitize import sanitize_query
 
 
 class TestSanitizeQuery:
     def test_no_change_for_current_year(self):
-        assert sanitize_query("Python 3.13 features 2026", current_year=2026) == "Python 3.13 features 2026"
+        assert (
+            sanitize_query("Python 3.13 features 2026", current_year=2026)
+            == "Python 3.13 features 2026"
+        )
 
     def test_replaces_single_stale_year(self):
-        assert sanitize_query("React best practices 2024", current_year=2026) == "React best practices latest"
+        assert (
+            sanitize_query("React best practices 2024", current_year=2026)
+            == "React best practices latest"
+        )
 
     def test_replaces_stale_year_range(self):
         result = sanitize_query("AI regulation 2024 2025", current_year=2026)

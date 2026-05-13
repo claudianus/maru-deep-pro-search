@@ -23,8 +23,6 @@ PACKAGE_NAME = "maru-deep-pro-search"
 PYPI_URL = f"https://pypi.org/pypi/{PACKAGE_NAME}/json"
 
 
-
-
 def _get_installed_version() -> str:
     """Return the currently installed version."""
     try:
@@ -51,7 +49,10 @@ def _get_latest_version() -> str | None:
     try:
         req = Request(
             PYPI_URL,
-            headers={"Accept": "application/json", "User-Agent": f"{PACKAGE_NAME}/{_get_installed_version()}"},
+            headers={
+                "Accept": "application/json",
+                "User-Agent": f"{PACKAGE_NAME}/{_get_installed_version()}",
+            },
         )
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
@@ -180,8 +181,7 @@ def perform_update(dry_run: bool = False) -> tuple[bool, str]:
             continue
 
     return False, (
-        f"❌ Update failed ({current} → {latest}).\n"
-        f"   Try manually: pip install -U {PACKAGE_NAME}"
+        f"❌ Update failed ({current} → {latest}).\n   Try manually: pip install -U {PACKAGE_NAME}"
     )
 
 
@@ -196,5 +196,3 @@ def maybe_notify_update() -> str | None:
 
     result = check_for_update()
     return get_update_notice(result)
-
-

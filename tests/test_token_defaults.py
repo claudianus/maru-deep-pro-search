@@ -13,17 +13,17 @@ from maru_deep_pro_search.tools import (
 class TestTokenDefaults:
     def test_fetch_page_default_increased(self):
         sig = inspect.signature(tool_fetch_page)
-        default = sig.parameters['max_tokens'].default
+        default = sig.parameters["max_tokens"].default
         assert default == 6000, f"Expected 6000, got {default}"
 
     def test_fetch_bulk_default_increased(self):
         sig = inspect.signature(tool_fetch_bulk)
-        default = sig.parameters['max_tokens'].default
+        default = sig.parameters["max_tokens"].default
         assert default == 3000, f"Expected 3000, got {default}"
 
     def test_stealthy_fetch_default_increased(self):
         sig = inspect.signature(tool_stealthy_fetch)
-        default = sig.parameters['max_tokens'].default
+        default = sig.parameters["max_tokens"].default
         assert default == 6000, f"Expected 6000, got {default}"
 
     def test_maximum_bounds_unchanged(self):

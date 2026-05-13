@@ -19,7 +19,9 @@ class TestKnowledgeStore:
         with tempfile.TemporaryDirectory() as tmp:
             db = Path(tmp) / "test.db"
             store = KnowledgeStore(db_path=db)
-            store.save(query="Python async best practices", answer="Use asyncio.gather...", sources=[])
+            store.save(
+                query="Python async best practices", answer="Use asyncio.gather...", sources=[]
+            )
             results = store.query("Python async best practices")
             assert len(results) == 1
             assert results[0].answer == "Use asyncio.gather..."
@@ -125,6 +127,7 @@ class TestWorkflowEngine:
             init_project(path=root)
             # Change to project dir so AGENTS.md is found
             import os
+
             old_cwd = os.getcwd()
             os.chdir(root)
             try:

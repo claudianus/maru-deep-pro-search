@@ -22,10 +22,7 @@ class CodexAdapter(AgentAdapter):
     display_name = "OpenAI Codex"
 
     def detect(self) -> bool:
-        return (
-            shutil.which("codex") is not None
-            or Path.home().joinpath(".codex").exists()
-        )
+        return shutil.which("codex") is not None or Path.home().joinpath(".codex").exists()
 
     def _config_path(self, scope: str) -> Path:
         if scope == "project":
@@ -120,7 +117,7 @@ class CodexAdapter(AgentAdapter):
         if not self._has_mcp_server(content):
             mcp_block = f'[mcp_servers.maru-deep-pro-search]\ncommand = "{cmd}"\n'
             if args:
-                args_toml = ', '.join(f'"{a}"' for a in args)
+                args_toml = ", ".join(f'"{a}"' for a in args)
                 mcp_block += f"args = [{args_toml}]\n"
             mcp_block += "enabled = true\n"
             lines.append("")

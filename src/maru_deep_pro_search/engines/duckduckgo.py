@@ -22,10 +22,12 @@ from .base import (
 
 logger = logging.getLogger(__name__)
 
+
 # Suppress Scrapling false-positive deprecation warning
 class _SuppressScraplingNoise(logging.Filter):
     def filter(self, record):
         return "This logic is deprecated" not in record.getMessage()
+
 
 logging.getLogger("scrapling").addFilter(_SuppressScraplingNoise())
 
@@ -59,37 +61,81 @@ _SERP_SELECTORS = {
 }
 
 _DOCS_DOMAINS = {
-    "docs.python.org", "python.org", "developer.mozilla.org", "mdn.io",
-    "react.dev", "nextjs.org", "nodejs.org", "deno.com",
-    "go.dev", "pkg.go.dev", "doc.rust-lang.org", "docs.rs",
-    "api.rubyonrails.org", "guides.rubyonrails.org",
-    "learn.microsoft.com", "docs.microsoft.com",
-    "postgresql.org/docs", "dev.mysql.com/doc",
-    "kubernetes.io/docs", "helm.sh/docs", "terraform.io/docs",
-    "fastapi.tiangolo.com", "flask.palletsprojects.com",
-    "docs.djangoproject.com", "vuejs.org", "svelte.dev",
+    "docs.python.org",
+    "python.org",
+    "developer.mozilla.org",
+    "mdn.io",
+    "react.dev",
+    "nextjs.org",
+    "nodejs.org",
+    "deno.com",
+    "go.dev",
+    "pkg.go.dev",
+    "doc.rust-lang.org",
+    "docs.rs",
+    "api.rubyonrails.org",
+    "guides.rubyonrails.org",
+    "learn.microsoft.com",
+    "docs.microsoft.com",
+    "postgresql.org/docs",
+    "dev.mysql.com/doc",
+    "kubernetes.io/docs",
+    "helm.sh/docs",
+    "terraform.io/docs",
+    "fastapi.tiangolo.com",
+    "flask.palletsprojects.com",
+    "docs.djangoproject.com",
+    "vuejs.org",
+    "svelte.dev",
 }
 
 _STRIP_SELECTORS = [
-    "script", "style", "noscript", "iframe", "svg",
-    "nav", "footer", "header", "aside",
-    "form", "button", "input", "select",
-    '[role="navigation"]', '[role="banner"]', '[role="contentinfo"]',
-    ".nav", ".navbar", ".footer", ".sidebar", ".ad", ".advertisement",
-    ".social-share", ".comments", ".related-posts", "#comments",
+    "script",
+    "style",
+    "noscript",
+    "iframe",
+    "svg",
+    "nav",
+    "footer",
+    "header",
+    "aside",
+    "form",
+    "button",
+    "input",
+    "select",
+    '[role="navigation"]',
+    '[role="banner"]',
+    '[role="contentinfo"]',
+    ".nav",
+    ".navbar",
+    ".footer",
+    ".sidebar",
+    ".ad",
+    ".advertisement",
+    ".social-share",
+    ".comments",
+    ".related-posts",
+    "#comments",
 ]
 
 _CONTENT_SELECTORS = [
-    "main", "article", '[role="main"]',
-    "#content", "#main-content", "#article", "#post",
-    ".post-content", ".article-content", ".entry-content",
-    ".markdown-body", ".prose", ".documentation",
-    "#readme", ".readme", "#wiki-body",
+    "main",
+    "article",
+    '[role="main"]',
+    "#content",
+    "#main-content",
+    "#article",
+    "#post",
+    ".post-content",
+    ".article-content",
+    ".entry-content",
+    ".markdown-body",
+    ".prose",
+    ".documentation",
+    "#readme",
+    ".readme",
+    "#wiki-body",
 ]
-
-
-
-
 
 
 class DuckDuckGoEngine(SearchEngine):
@@ -161,7 +207,7 @@ class DuckDuckGoEngine(SearchEngine):
             containers = page.css("a[href^='http']")
             logger.debug("Fallback to all links, found %d", len(containers))
 
-        for _i, el in enumerate(containers[:max_results * 3]):
+        for _i, el in enumerate(containers[: max_results * 3]):
             title_el = _first(el, cfg["title"])
             url_el = _first(el, cfg["url"])
             snippet_el = _first(el, cfg["snippet"])
@@ -190,18 +236,20 @@ class DuckDuckGoEngine(SearchEngine):
 
             seen.add(normalized)
             source_type, is_primary = guess_source_type_and_primary(href, snippet)
-            results.append(SearchResult(
-                title=title,
-                url=href,
-                snippet=snippet,
-                position=len(results) + 1,
-                likely_content_type=_guess_content_type(href, snippet),
-                source_type=source_type,
-                is_primary=is_primary,
-                domain=domain,
-                url_suggests_docs=any(d in domain for d in _DOCS_DOMAINS),
-                engine=self.variant,
-            ))
+            results.append(
+                SearchResult(
+                    title=title,
+                    url=href,
+                    snippet=snippet,
+                    position=len(results) + 1,
+                    likely_content_type=_guess_content_type(href, snippet),
+                    source_type=source_type,
+                    is_primary=is_primary,
+                    domain=domain,
+                    url_suggests_docs=any(d in domain for d in _DOCS_DOMAINS),
+                    engine=self.variant,
+                )
+            )
 
             if len(results) >= max_results:
                 break
@@ -229,7 +277,7 @@ class DuckDuckGoEngine(SearchEngine):
                 page = await session.async_fetch(url, timeout=int(timeout * 1000))
             else:
                 page = await session.get(url, timeout=int(timeout))
-            final_url = page.url if hasattr(page, 'url') else url
+            final_url = page.url if hasattr(page, "url") else url
         except Exception as exc:
             duration = (time.monotonic() - t0) * 1000
             err = str(exc).lower()
@@ -268,7 +316,7 @@ class DuckDuckGoEngine(SearchEngine):
         duration = (time.monotonic() - t0) * 1000
 
         # Save original HTML for trafilatura
-        original_html = page.html_content if hasattr(page, 'html_content') else ""
+        original_html = page.html_content if hasattr(page, "html_content") else ""
 
         # Extract title
         title_el = _first(page, ["title", "h1"])
@@ -316,11 +364,14 @@ class DuckDuckGoEngine(SearchEngine):
                 )
                 if tf_result and len(tf_result) > max(len(markdown), 200):
                     markdown = tf_result
-                    plain = trafilatura.extract(
-                        original_html,
-                        output_format="txt",
-                        include_formatting=False,
-                    ) or plain
+                    plain = (
+                        trafilatura.extract(
+                            original_html,
+                            output_format="txt",
+                            include_formatting=False,
+                        )
+                        or plain
+                    )
                     stats["code_blocks"] = len(re.findall(r"```", markdown)) // 2
 
                 # Extract metadata
@@ -334,13 +385,17 @@ class DuckDuckGoEngine(SearchEngine):
                 # htmldate fallback
                 if not _date_result:
                     with contextlib.suppress(Exception):
-                        _date_result = _htmldate.find_date(
-                            original_html,
-                            outputformat="%Y-%m-%d",
-                        ) or ""
+                        _date_result = (
+                            _htmldate.find_date(
+                                original_html,
+                                outputformat="%Y-%m-%d",
+                            )
+                            or ""
+                        )
 
                 # Code-aware analysis
                 from ..extraction.code import analyze_code_content
+
                 _code_stats = analyze_code_content(markdown, published_date=_date_result)
 
             except ImportError:
@@ -419,7 +474,7 @@ def _extract_structured(element) -> tuple[str, str, dict]:
         text = str(el.text).strip()
         if not text or len(text) < 10:
             continue
-        tag = el.tag if hasattr(el, 'tag') else ""
+        tag = el.tag if hasattr(el, "tag") else ""
 
         if tag == "blockquote":
             md_lines.append(f"> {text}")
@@ -525,7 +580,11 @@ def _extract_github_meta(page, url: str, plain_text: str) -> dict | None:
                 meta["stars"] = txt
 
         # License
-        for sel in [".repository-content .BorderGrid-cell", "[title*='License']", "a[href*='LICENSE']"]:
+        for sel in [
+            ".repository-content .BorderGrid-cell",
+            "[title*='License']",
+            "a[href*='LICENSE']",
+        ]:
             els = page.css(sel)
             for el in els:
                 txt = str(el.text).strip() if el.text else ""
@@ -537,7 +596,11 @@ def _extract_github_meta(page, url: str, plain_text: str) -> dict | None:
 
         # Primary language
         lang_el = None
-        for sel in [".repository-content .Progress-item", ".text-bold[title]", "[data-testid='language']"]:
+        for sel in [
+            ".repository-content .Progress-item",
+            ".text-bold[title]",
+            "[data-testid='language']",
+        ]:
             els = page.css(sel)
             if els:
                 lang_el = els[0]

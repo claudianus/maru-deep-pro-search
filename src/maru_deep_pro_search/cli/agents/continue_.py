@@ -69,24 +69,28 @@ class ContinueAdapter(AgentAdapter):
         # Add /research and /verify commands if not exists
         existing_names = [c.get("name", "") for c in config["custom_commands"]]
         if "research" not in existing_names:
-            config["custom_commands"].append({
-                "name": "research",
-                "description": "Run deep research before any code change",
-                "prompt": (
-                    "Before writing or modifying any code, call deep_research "
-                    "with the user's request as the query. Summarize findings and "
-                    "wait for confirmation before proceeding."
-                ),
-            })
+            config["custom_commands"].append(
+                {
+                    "name": "research",
+                    "description": "Run deep research before any code change",
+                    "prompt": (
+                        "Before writing or modifying any code, call deep_research "
+                        "with the user's request as the query. Summarize findings and "
+                        "wait for confirmation before proceeding."
+                    ),
+                }
+            )
         if "verify" not in existing_names:
-            config["custom_commands"].append({
-                "name": "verify",
-                "description": "Verify research was completed for this session",
-                "prompt": (
-                    "Check if deep_research has been called in this session. "
-                    "If not, refuse to proceed and instruct the user to run /research first."
-                ),
-            })
+            config["custom_commands"].append(
+                {
+                    "name": "verify",
+                    "description": "Verify research was completed for this session",
+                    "prompt": (
+                        "Check if deep_research has been called in this session. "
+                        "If not, refuse to proceed and instruct the user to run /research first."
+                    ),
+                }
+            )
 
         # Inject system message
         current = config.get("system_message", "")
@@ -99,6 +103,8 @@ class ContinueAdapter(AgentAdapter):
         # .continueignore for harness artifacts
         ignore_path = self._ignore_path(scope)
         if not ignore_path.exists():
-            ignore_path.write_text(".maru/knowledge.db\n.maru/knowledge.db-journal\n", encoding="utf-8")
+            ignore_path.write_text(
+                ".maru/knowledge.db\n.maru/knowledge.db-journal\n", encoding="utf-8"
+            )
 
         return True

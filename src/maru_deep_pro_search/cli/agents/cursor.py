@@ -138,26 +138,26 @@ class CursorAdapter(AgentAdapter):
         pre_edit_script = hooks_dir / "onPreEdit"
         if not pre_edit_script.exists():
             pre_edit_script.write_text(
-                '#!/usr/bin/env python3\n'
+                "#!/usr/bin/env python3\n"
                 '"""Cursor onPreEdit hook — vetoes edits without research."""\n'
-                'import json, os, sys, time\n\n'
-                'def main() -> None:\n'
-                '    # Cursor hooks receive JSON via stdin (tool_name, file_path, etc.)\n'
-                '    try:\n'
-                '        data = json.load(sys.stdin)\n'
-                '    except Exception:\n'
-                '        sys.exit(0)\n'
+                "import json, os, sys, time\n\n"
+                "def main() -> None:\n"
+                "    # Cursor hooks receive JSON via stdin (tool_name, file_path, etc.)\n"
+                "    try:\n"
+                "        data = json.load(sys.stdin)\n"
+                "    except Exception:\n"
+                "        sys.exit(0)\n"
                 '    marker = os.path.expanduser("~/.maru/last_research")\n'
-                '    if not os.path.exists(marker):\n'
+                "    if not os.path.exists(marker):\n"
                 '        print("[MARU] Research required before editing. Run /research first.", file=sys.stderr)\n'
-                '        sys.exit(2)\n'
-                '    elapsed = time.time() - os.path.getmtime(marker)\n'
-                '    if elapsed > 1800:\n'
+                "        sys.exit(2)\n"
+                "    elapsed = time.time() - os.path.getmtime(marker)\n"
+                "    if elapsed > 1800:\n"
                 '        print(f"[MARU] Research expired ({elapsed/60:.0f}min). Re-run /research.", file=sys.stderr)\n'
-                '        sys.exit(2)\n'
-                '    sys.exit(0)\n\n'
+                "        sys.exit(2)\n"
+                "    sys.exit(0)\n\n"
                 'if __name__ == "__main__":\n'
-                '    main()\n',
+                "    main()\n",
                 encoding="utf-8",
             )
             pre_edit_script.chmod(0o755)

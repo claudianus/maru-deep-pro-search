@@ -21,20 +21,26 @@ from maru_deep_pro_search.tools import (
 class TestDeepResearchOutput:
     @pytest.mark.asyncio
     async def test_has_research_header(self):
-        result = await tool_deep_research("React 19", engine="bing", max_sources=2, expand_queries=False)
+        result = await tool_deep_research(
+            "React 19", engine="bing", max_sources=2, expand_queries=False
+        )
         assert "## Research:" in result
         assert "React 19" in result
 
     @pytest.mark.asyncio
     async def test_has_engine_coverage_metadata(self):
-        result = await tool_deep_research("Python asyncio", engine="bing", max_sources=2, expand_queries=False)
+        result = await tool_deep_research(
+            "Python asyncio", engine="bing", max_sources=2, expand_queries=False
+        )
         assert "_engines:" in result
         assert "sources:" in result
         assert "ms_" in result
 
     @pytest.mark.asyncio
     async def test_has_sources_section_with_badges(self):
-        result = await tool_deep_research("React 19", engine="bing", max_sources=2, expand_queries=False)
+        result = await tool_deep_research(
+            "React 19", engine="bing", max_sources=2, expand_queries=False
+        )
         assert "### Sources" in result
         assert "#### [1]" in result
         assert "http" in result  # URL present
@@ -42,7 +48,9 @@ class TestDeepResearchOutput:
     @pytest.mark.asyncio
     async def test_no_full_markdown_content(self):
         """Output must NOT contain code blocks or very long content lines."""
-        result = await tool_deep_research("React 19", engine="bing", max_sources=2, expand_queries=False)
+        result = await tool_deep_research(
+            "React 19", engine="bing", max_sources=2, expand_queries=False
+        )
         assert "```" not in result, "Output should not contain code blocks"
         lines = result.split("\n")
         long_lines = [ln for ln in lines if len(ln) > 600]
@@ -50,13 +58,17 @@ class TestDeepResearchOutput:
 
     @pytest.mark.asyncio
     async def test_has_key_findings_section(self):
-        result = await tool_deep_research("React 19", engine="bing", max_sources=2, expand_queries=False)
+        result = await tool_deep_research(
+            "React 19", engine="bing", max_sources=2, expand_queries=False
+        )
         assert "### Key Findings" in result
 
     @pytest.mark.asyncio
     async def test_no_synthesized_answer_section(self):
         """Old format had synthesized answer; new format must not have it."""
-        result = await tool_deep_research("React 19", engine="bing", max_sources=2, expand_queries=False)
+        result = await tool_deep_research(
+            "React 19", engine="bing", max_sources=2, expand_queries=False
+        )
         assert "### Key Findings" in result
         # Should NOT have old-style sections
         assert "Current state" not in result or "### Sources" in result
@@ -150,7 +162,9 @@ class TestParallelSearchOutput:
             pytest.skip("All search engines unavailable")
         # Extract table rows and ensure no "(no title)" when URLs exist
         lines = result.split("\n")
-        table_rows = [ln for ln in lines if ln.startswith("| ") and "Query" not in ln and "---" not in ln]
+        table_rows = [
+            ln for ln in lines if ln.startswith("| ") and "Query" not in ln and "---" not in ln
+        ]
         for row in table_rows:
             parts = row.split("|")
             if len(parts) >= 3:

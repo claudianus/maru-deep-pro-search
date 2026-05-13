@@ -9,7 +9,6 @@ __all__ = [
     "format_for_llm",
     "ResearchResult",
     "CitedSource",
-
     "expand_query",
     "extract_keywords",
     "merge_results",

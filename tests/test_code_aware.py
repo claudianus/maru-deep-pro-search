@@ -25,15 +25,15 @@ class TestDetectLanguage:
         assert detect_language(code) == "typescript"
 
     def test_detect_go(self):
-        code = "func Hello(name string) string {\n    return fmt.Sprintf(\"hello %s\", name)\n}"
+        code = 'func Hello(name string) string {\n    return fmt.Sprintf("hello %s", name)\n}'
         assert detect_language(code) == "go"
 
     def test_detect_rust(self):
-        code = "pub fn main() {\n    let x = Some(42);\n    println!(\"{:?}\", x.unwrap());\n}"
+        code = 'pub fn main() {\n    let x = Some(42);\n    println!("{:?}", x.unwrap());\n}'
         assert detect_language(code) == "rust"
 
     def test_detect_java(self):
-        code = "public class Hello {\n    public static void main(String[] args) {\n        System.out.println(\"hi\");\n    }\n}"
+        code = 'public class Hello {\n    public static void main(String[] args) {\n        System.out.println("hi");\n    }\n}'
         assert detect_language(code) == "java"
 
     def test_detect_shell(self):

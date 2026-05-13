@@ -40,7 +40,6 @@ _QUERY_TEMPLATES = {
         "{domain} Reddit discussion experiences {_CURRENT_YEAR}",
         "{domain} Hacker News thread {_CURRENT_YEAR}",
     ],
-
     # ── How-To / Tutorial ──
     "howto_install": [
         "{domain} install setup getting started {_CURRENT_YEAR}",
@@ -54,7 +53,6 @@ _QUERY_TEMPLATES = {
         "{domain} common mistakes anti patterns avoid",
         "{domain} best practices do and don't",
     ],
-
     # ── Comparison ──
     "compare_alternative": [
         "{domain} vs best alternative {_CURRENT_YEAR} comparison",
@@ -68,7 +66,6 @@ _QUERY_TEMPLATES = {
         "{domain} ecosystem plugins libraries {_CURRENT_YEAR}",
         "{domain} community size adoption rate",
     ],
-
     # ── Debug / Problem-Solving ──
     "debug_errors": [
         "{domain} common error fix solution",
@@ -78,7 +75,6 @@ _QUERY_TEMPLATES = {
         "{domain} github issues open bugs {_CURRENT_YEAR}",
         "{domain} deprecated removed migration guide",
     ],
-
     # ── Definition / Concept ──
     "def_official": [
         "{domain} official documentation what is overview",
@@ -88,7 +84,6 @@ _QUERY_TEMPLATES = {
         "{domain} explained simply beginner introduction",
         "{domain} core concepts how it works",
     ],
-
     # ── News / Recent ──
     "news_latest": [
         "{domain} latest news {_CURRENT_YEAR} release",
@@ -103,40 +98,91 @@ _QUERY_TEMPLATES = {
 # Mapping: intent → ordered list of angles (priority order)
 _INTENT_ANGLES = {
     "trends": [
-        "trends_survey", "trends_benchmark", "trends_official",
-        "trends_authority", "trends_community",
+        "trends_survey",
+        "trends_benchmark",
+        "trends_official",
+        "trends_authority",
+        "trends_community",
     ],
     "howto": [
-        "howto_install", "howto_examples", "howto_pitfalls",
+        "howto_install",
+        "howto_examples",
+        "howto_pitfalls",
     ],
     "comparison": [
-        "compare_alternative", "compare_benchmark", "compare_ecosystem",
+        "compare_alternative",
+        "compare_benchmark",
+        "compare_ecosystem",
     ],
     "debug": [
-        "debug_errors", "debug_issues",
+        "debug_errors",
+        "debug_issues",
     ],
     "definition": [
-        "def_official", "def_simple",
+        "def_official",
+        "def_simple",
     ],
     "news": [
-        "news_latest", "news_release", "trends_official",
+        "news_latest",
+        "news_release",
+        "trends_official",
     ],
     "korean": [
-        "korean_community", "korean_docs", "recent_general",
+        "korean_community",
+        "korean_docs",
+        "recent_general",
     ],
 }
 
 # Stable concepts — skip "latest YYYY" noise for these
 _STABLE_CONCEPTS = {
-    "list comprehension", "dictionary", "tuple", "set", "string",
-    "for loop", "while loop", "if statement", "function", "class",
-    "inheritance", "polymorphism", "encapsulation", "recursion",
-    "ownership", "borrowing", "lifetime", "trait", "struct", "enum",
-    "closure", "iterator", "generics", "macro",
-    "variable", "constant", "scope", "namespace", "module",
-    "http", "tcp", "udp", "rest", "json", "xml", "yaml",
-    "algorithm", "data structure", "big o", "complexity",
-    "sort", "search", "tree", "graph", "queue", "stack", "heap",
+    "list comprehension",
+    "dictionary",
+    "tuple",
+    "set",
+    "string",
+    "for loop",
+    "while loop",
+    "if statement",
+    "function",
+    "class",
+    "inheritance",
+    "polymorphism",
+    "encapsulation",
+    "recursion",
+    "ownership",
+    "borrowing",
+    "lifetime",
+    "trait",
+    "struct",
+    "enum",
+    "closure",
+    "iterator",
+    "generics",
+    "macro",
+    "variable",
+    "constant",
+    "scope",
+    "namespace",
+    "module",
+    "http",
+    "tcp",
+    "udp",
+    "rest",
+    "json",
+    "xml",
+    "yaml",
+    "algorithm",
+    "data structure",
+    "big o",
+    "complexity",
+    "sort",
+    "search",
+    "tree",
+    "graph",
+    "queue",
+    "stack",
+    "heap",
 }
 
 
@@ -176,7 +222,9 @@ def expand_query(query: str, max_subqueries: int = 8) -> list[str]:
 
     logger.debug(
         "Expanded query '%s' (intent=%s) into %d subqueries",
-        query[:60], intent, len(subqueries),
+        query[:60],
+        intent,
+        len(subqueries),
     )
     return subqueries[:max_subqueries]
 
@@ -186,55 +234,119 @@ def _detect_intent(query: str) -> str:
     lower = query.lower()
 
     # Korean language queries → preserve original Korean expansion behavior
-    has_korean = any('\uac00' <= char <= '\ud7a3' for char in query)
+    has_korean = any("\uac00" <= char <= "\ud7a3" for char in query)
     korean_keywords = ["한국", "국내", "korean", "한글", "한국어"]
     if has_korean or any(kw in lower for kw in korean_keywords):
         return "korean"
 
     # Comparison intent
-    if any(k in lower for k in [
-        " vs ", " versus ", "compare", "comparison",
-        "difference between", "diff between", "which is better",
-        "pros and cons", "advantages disadvantages",
-    ]):
+    if any(
+        k in lower
+        for k in [
+            " vs ",
+            " versus ",
+            "compare",
+            "comparison",
+            "difference between",
+            "diff between",
+            "which is better",
+            "pros and cons",
+            "advantages disadvantages",
+        ]
+    ):
         return "comparison"
 
     # How-To intent
-    if any(k in lower for k in [
-        "how to ", "install ", "setup ", "configure ", "deploy ",
-        "getting started", "tutorial", "guide", "learn ", "beginner",
-        "quickstart", "step by step",
-    ]):
+    if any(
+        k in lower
+        for k in [
+            "how to ",
+            "install ",
+            "setup ",
+            "configure ",
+            "deploy ",
+            "getting started",
+            "tutorial",
+            "guide",
+            "learn ",
+            "beginner",
+            "quickstart",
+            "step by step",
+        ]
+    ):
         return "howto"
 
     # Debug / Problem intent
-    if any(k in lower for k in [
-        "error", "fix", "deprecated", "removed", "alternative",
-        "migrate", "troubleshoot", "issue", "problem", "bug",
-        "solution", "workaround", "broken", "fail",
-    ]):
+    if any(
+        k in lower
+        for k in [
+            "error",
+            "fix",
+            "deprecated",
+            "removed",
+            "alternative",
+            "migrate",
+            "troubleshoot",
+            "issue",
+            "problem",
+            "bug",
+            "solution",
+            "workaround",
+            "broken",
+            "fail",
+        ]
+    ):
         return "debug"
 
     # Definition intent
-    if any(k in lower for k in [
-        "what is ", "meaning of", "define ", "definition",
-        "explain ", "introduction to ", "overview of",
-    ]):
+    if any(
+        k in lower
+        for k in [
+            "what is ",
+            "meaning of",
+            "define ",
+            "definition",
+            "explain ",
+            "introduction to ",
+            "overview of",
+        ]
+    ):
         return "definition"
 
     # News / Recent intent (strong signal)
-    if any(k in lower for k in [
-        "latest", "news", "update", "release", "announcement",
-        "just released", "new version", "changelog",
-    ]):
+    if any(
+        k in lower
+        for k in [
+            "latest",
+            "news",
+            "update",
+            "release",
+            "announcement",
+            "just released",
+            "new version",
+            "changelog",
+        ]
+    ):
         return "news"
 
     # Trends / Landscape (default for broad queries)
-    if any(k in lower for k in [
-        "trends", "trend", "stack", "ecosystem", "landscape",
-        "technology", "frameworks", "tools", "popular",
-        "most used", "adoption", "state of",
-    ]):
+    if any(
+        k in lower
+        for k in [
+            "trends",
+            "trend",
+            "stack",
+            "ecosystem",
+            "landscape",
+            "technology",
+            "frameworks",
+            "tools",
+            "popular",
+            "most used",
+            "adoption",
+            "state of",
+        ]
+    ):
         return "trends"
 
     # Default to trends for broad technical queries
@@ -280,7 +392,8 @@ def _extract_domain(query: str) -> str:
         r"\s+(new features|features|best practices|practices|patterns|"
         r"tutorial|guide|example|vs|versus|comparison|performance|"
         r"speed|latency|throughput|memory|error|fix|solution).*$",
-        "", domain,
+        "",
+        domain,
     )
 
     # Normalize hyphens to spaces before removing filler words
@@ -290,10 +403,21 @@ def _extract_domain(query: str) -> str:
     # Remove common filler words that bloat queries
     # NOTE: "stack" is intentionally kept (e.g., "full stack", "MEAN stack")
     fillers = [
-        r"\bweb\b", r"\bdevelopment\b", r"\bdeveloper\b", r"\btechnology\b",
-        r"\btechnologies\b", r"\bframework\b", r"\bframeworks\b", r"\btool\b",
-        r"\btools\b", r"\becosystem\b", r"\blandscape\b",
-        r"\bmost\b", r"\bpopular\b", r"\bused\b", r"\badoption\b",
+        r"\bweb\b",
+        r"\bdevelopment\b",
+        r"\bdeveloper\b",
+        r"\btechnology\b",
+        r"\btechnologies\b",
+        r"\bframework\b",
+        r"\bframeworks\b",
+        r"\btool\b",
+        r"\btools\b",
+        r"\becosystem\b",
+        r"\blandscape\b",
+        r"\bmost\b",
+        r"\bpopular\b",
+        r"\bused\b",
+        r"\badoption\b",
     ]
     for f in fillers:
         domain = re.sub(f, "", domain, flags=re.IGNORECASE)
@@ -312,28 +436,145 @@ def _extract_domain(query: str) -> str:
 def extract_keywords(query: str) -> list[str]:
     """Extract key terms from a query for relevance scoring."""
     stop_words = {
-        "a", "an", "the", "is", "are", "was", "were", "be", "been",
-        "being", "have", "has", "had", "do", "does", "did", "will",
-        "would", "could", "should", "may", "might", "must", "shall",
-        "can", "need", "dare", "ought", "used", "to", "of", "in",
-        "for", "on", "with", "at", "by", "from", "as", "into",
-        "through", "during", "before", "after", "above", "below",
-        "between", "under", "again", "further", "then", "once",
-        "here", "there", "when", "where", "why", "how", "all",
-        "each", "few", "more", "most", "other", "some", "such",
-        "no", "nor", "not", "only", "own", "same", "so", "than",
-        "too", "very", "just", "and", "but", "if", "or", "because",
-        "until", "while", "what", "which", "who", "whom", "this",
-        "that", "these", "those", "am", "it", "its", "about",
-        "against", "down", "out", "off", "over", "i", "me", "my", "myself", "we",
-        "our", "ours", "ourselves", "you", "your", "yours", "yourself",
-        "yourselves", "he", "him", "his", "himself", "she", "her",
-        "hers", "herself", "they", "them", "their", "theirs",
-        "themselves", "get", "using", "use", "tutorial",
-        "guide", "example", "sample", "documentation", "docs",
+        "a",
+        "an",
+        "the",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "must",
+        "shall",
+        "can",
+        "need",
+        "dare",
+        "ought",
+        "used",
+        "to",
+        "of",
+        "in",
+        "for",
+        "on",
+        "with",
+        "at",
+        "by",
+        "from",
+        "as",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "between",
+        "under",
+        "again",
+        "further",
+        "then",
+        "once",
+        "here",
+        "there",
+        "when",
+        "where",
+        "why",
+        "how",
+        "all",
+        "each",
+        "few",
+        "more",
+        "most",
+        "other",
+        "some",
+        "such",
+        "no",
+        "nor",
+        "not",
+        "only",
+        "own",
+        "same",
+        "so",
+        "than",
+        "too",
+        "very",
+        "just",
+        "and",
+        "but",
+        "if",
+        "or",
+        "because",
+        "until",
+        "while",
+        "what",
+        "which",
+        "who",
+        "whom",
+        "this",
+        "that",
+        "these",
+        "those",
+        "am",
+        "it",
+        "its",
+        "about",
+        "against",
+        "down",
+        "out",
+        "off",
+        "over",
+        "i",
+        "me",
+        "my",
+        "myself",
+        "we",
+        "our",
+        "ours",
+        "ourselves",
+        "you",
+        "your",
+        "yours",
+        "yourself",
+        "yourselves",
+        "he",
+        "him",
+        "his",
+        "himself",
+        "she",
+        "her",
+        "hers",
+        "herself",
+        "they",
+        "them",
+        "their",
+        "theirs",
+        "themselves",
+        "get",
+        "using",
+        "use",
+        "tutorial",
+        "guide",
+        "example",
+        "sample",
+        "documentation",
+        "docs",
     }
 
-    words = re.findall(r'\b[a-zA-Z]+\b', query.lower())
+    words = re.findall(r"\b[a-zA-Z]+\b", query.lower())
     keywords = [w for w in words if w not in stop_words and len(w) > 2]
 
     return keywords

@@ -68,6 +68,7 @@ class SessionState:
     @staticmethod
     def _generate_research_id() -> str:
         import uuid
+
         return f"RSCH-{uuid.uuid4().hex[:12].upper()}"
 
     def _extract_citations(self, text: str) -> None:
@@ -110,9 +111,7 @@ class SessionEnforcer:
                 self._sessions[session_id] = SessionState(session_id=session_id)
             return self._sessions[session_id]
 
-    def mark_research_done(
-        self, session_id: str, query: str, result: str
-    ) -> SessionState:
+    def mark_research_done(self, session_id: str, query: str, result: str) -> SessionState:
         with self._lock:
             state = self.get_or_create(session_id)
             state.mark_research(query, result)
@@ -185,14 +184,10 @@ class SessionEnforcer:
         state = self.get_or_create(session_id)
 
         if not state.research_done:
-            raise CodeGenerationBlockedError(
-                "no research has been performed in this session."
-            )
+            raise CodeGenerationBlockedError("no research has been performed in this session.")
 
         if not state.is_fresh:
-            raise CodeGenerationBlockedError(
-                "research is stale (>30min). Re-run deep_research."
-            )
+            raise CodeGenerationBlockedError("research is stale (>30min). Re-run deep_research.")
 
         if research_id != state.research_id:
             raise CodeGenerationBlockedError(
@@ -240,9 +235,7 @@ class SessionEnforcer:
         now = time.time()
         with self._lock:
             stale = [
-                sid
-                for sid, s in self._sessions.items()
-                if now - s.created_at > max_age_seconds
+                sid for sid, s in self._sessions.items() if now - s.created_at > max_age_seconds
             ]
             for sid in stale:
                 del self._sessions[sid]

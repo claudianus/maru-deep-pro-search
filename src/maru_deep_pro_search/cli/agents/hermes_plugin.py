@@ -79,6 +79,7 @@ def _check_research() -> tuple[bool, str]:
 # Plugin entry point — called by Hermes on startup
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def register(ctx) -> None:
     """Register hooks and commands with Hermes.
 
@@ -196,9 +197,7 @@ def register(ctx) -> None:
 
     # ── CLI command: hermes maru status ─────────────────────────────
     def cli_status_setup(subparser) -> None:
-        subparser.add_argument(
-            "--json", action="store_true", help="Output as JSON"
-        )
+        subparser.add_argument("--json", action="store_true", help="Output as JSON")
 
     def cli_status_handler(args) -> int:
         ok, msg = _check_research()

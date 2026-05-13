@@ -43,10 +43,7 @@ class HermesAdapter(AgentAdapter):
     display_name = "Hermes (Nous Research)"
 
     def detect(self) -> bool:
-        return (
-            shutil.which("hermes") is not None
-            or Path.home().joinpath(".hermes").exists()
-        )
+        return shutil.which("hermes") is not None or Path.home().joinpath(".hermes").exists()
 
     # ── paths ────────────────────────────────────────────────────
     def _config_path(self, scope: str) -> Path:
@@ -149,7 +146,7 @@ class HermesAdapter(AgentAdapter):
                 "hooks:\n"
                 "  post_tool_call:\n"
                 "    - command: echo\n"
-                "      args: [\"[MARU-AUDIT] tool executed\"]\n"
+                '      args: ["[MARU-AUDIT] tool executed"]\n'
             )
 
         write_text_safe(config_path, content)
@@ -195,10 +192,7 @@ class HermesAdapter(AgentAdapter):
         hook_yaml = gateway_hook_dir / "HOOK.yaml"
         if not hook_yaml.exists():
             hook_yaml.write_text(
-                "name: maru-research-gate\n"
-                "events:\n"
-                "  - session:start\n"
-                "  - agent:end\n"
+                "name: maru-research-gate\nevents:\n  - session:start\n  - agent:end\n"
             )
 
         hook_handler = gateway_hook_dir / "handler.py"

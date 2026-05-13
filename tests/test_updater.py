@@ -21,7 +21,10 @@ class TestVersionParsing:
         assert _parse_version("1.2.3+build") == (1, 2, 3)
 
     def test_short_versions(self):
-        assert _parse_version("1.0") == (1, 0,)
+        assert _parse_version("1.0") == (
+            1,
+            0,
+        )
 
 
 class TestVersionComparison:

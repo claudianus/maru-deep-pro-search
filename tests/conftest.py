@@ -13,9 +13,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", "integration: mark test as requiring network access"
-    )
+    config.addinivalue_line("markers", "integration: mark test as requiring network access")
 
 
 def pytest_collection_modifyitems(config, items):

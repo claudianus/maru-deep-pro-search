@@ -195,7 +195,7 @@ class WorkflowEngine:
             return
 
         combined = "\n\n".join(
-            f"Source [{i+1}]: {e.query}\n{e.answer[:800]}"
+            f"Source [{i + 1}]: {e.query}\n{e.answer[:800]}"
             for i, e in enumerate(state.knowledge_entries)
         )
         result.output = (
@@ -209,7 +209,7 @@ class WorkflowEngine:
     def _phase_implement(self, state: WorkflowState, result: PhaseResult) -> None:
         """Emit implementation instructions with citation requirements."""
         citations = "\n".join(
-            f"[{i+1}] {e.query} — {e.sources[0].get('url', 'N/A') if e.sources else 'N/A'}"
+            f"[{i + 1}] {e.query} — {e.sources[0].get('url', 'N/A') if e.sources else 'N/A'}"
             for i, e in enumerate(state.knowledge_entries)
         )
         result.output = (
@@ -240,9 +240,7 @@ class WorkflowEngine:
         """Persist final results and close the workflow loop."""
         if self.store and state.knowledge_entries:
             # Save the final synthesized workflow as a knowledge entry
-            summary = "\n".join(
-                f"## {r.phase.value}\n{r.output[:500]}" for r in state.history
-            )
+            summary = "\n".join(f"## {r.phase.value}\n{r.output[:500]}" for r in state.history)
             self.store.save(
                 query=f"[workflow] {state.query}",
                 answer=summary,

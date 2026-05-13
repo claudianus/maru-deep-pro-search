@@ -30,21 +30,35 @@ _SERP_SELECTORS = {
 }
 
 _DOCS_DOMAINS = {
-    "developers.google.com", "cloud.google.com",
-    "docs.python.org", "python.org", "developer.mozilla.org", "mdn.io",
-    "react.dev", "nextjs.org", "nodejs.org", "deno.com",
-    "go.dev", "pkg.go.dev", "doc.rust-lang.org", "docs.rs",
-    "api.rubyonrails.org", "guides.rubyonrails.org",
-    "learn.microsoft.com", "docs.microsoft.com",
-    "postgresql.org/docs", "dev.mysql.com/doc",
-    "kubernetes.io/docs", "helm.sh/docs", "terraform.io/docs",
-    "fastapi.tiangolo.com", "flask.palletsprojects.com",
-    "docs.djangoproject.com", "vuejs.org", "svelte.dev",
+    "developers.google.com",
+    "cloud.google.com",
+    "docs.python.org",
+    "python.org",
+    "developer.mozilla.org",
+    "mdn.io",
+    "react.dev",
+    "nextjs.org",
+    "nodejs.org",
+    "deno.com",
+    "go.dev",
+    "pkg.go.dev",
+    "doc.rust-lang.org",
+    "docs.rs",
+    "api.rubyonrails.org",
+    "guides.rubyonrails.org",
+    "learn.microsoft.com",
+    "docs.microsoft.com",
+    "postgresql.org/docs",
+    "dev.mysql.com/doc",
+    "kubernetes.io/docs",
+    "helm.sh/docs",
+    "terraform.io/docs",
+    "fastapi.tiangolo.com",
+    "flask.palletsprojects.com",
+    "docs.djangoproject.com",
+    "vuejs.org",
+    "svelte.dev",
 }
-
-
-
-
 
 
 class GoogleEngine(SearchEngine):
@@ -88,8 +102,7 @@ class GoogleEngine(SearchEngine):
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
         """Search Google with session-based stealth."""
         search_url = (
-            f"https://www.google.com/search?q={quote_plus(query)}"
-            f"&num={max_results * 2}&hl=en"
+            f"https://www.google.com/search?q={quote_plus(query)}&num={max_results * 2}&hl=en"
         )
 
         session = await self._get_session()
@@ -111,10 +124,16 @@ class GoogleEngine(SearchEngine):
             ) from exc
 
         html_content = str(page.html_content) if hasattr(page, "html_content") else ""
-        if any(indicator in html_content for indicator in [
-            "unusual traffic", "captcha", "recaptcha",
-            "Before you continue", "I'm not a robot",
-        ]):
+        if any(
+            indicator in html_content
+            for indicator in [
+                "unusual traffic",
+                "captcha",
+                "recaptcha",
+                "Before you continue",
+                "I'm not a robot",
+            ]
+        ):
             raise BlockedError(
                 "Google returned CAPTCHA/anti-bot page.",
                 suggested_engine="duckduckgo_lite",
@@ -141,7 +160,7 @@ class GoogleEngine(SearchEngine):
                 suggested_engine="duckduckgo_lite",
             )
 
-        for el in containers[:max_results * 2]:
+        for el in containers[: max_results * 2]:
             title_el = _first(el, _SERP_SELECTORS["title"])
             url_el = _first(el, _SERP_SELECTORS["url"])
             snippet_el = _first(el, _SERP_SELECTORS["snippet"])

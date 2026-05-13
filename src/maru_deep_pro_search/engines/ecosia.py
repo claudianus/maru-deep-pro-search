@@ -29,15 +29,32 @@ _SERP_SELECTORS = {
 }
 
 _DOCS_DOMAINS = {
-    "docs.python.org", "python.org", "developer.mozilla.org", "mdn.io",
-    "react.dev", "nextjs.org", "nodejs.org", "deno.com",
-    "go.dev", "pkg.go.dev", "doc.rust-lang.org", "docs.rs",
-    "api.rubyonrails.org", "guides.rubyonrails.org",
-    "learn.microsoft.com", "docs.microsoft.com",
-    "postgresql.org/docs", "dev.mysql.com/doc",
-    "kubernetes.io/docs", "helm.sh/docs", "terraform.io/docs",
-    "fastapi.tiangolo.com", "flask.palletsprojects.com",
-    "docs.djangoproject.com", "vuejs.org", "svelte.dev",
+    "docs.python.org",
+    "python.org",
+    "developer.mozilla.org",
+    "mdn.io",
+    "react.dev",
+    "nextjs.org",
+    "nodejs.org",
+    "deno.com",
+    "go.dev",
+    "pkg.go.dev",
+    "doc.rust-lang.org",
+    "docs.rs",
+    "api.rubyonrails.org",
+    "guides.rubyonrails.org",
+    "learn.microsoft.com",
+    "docs.microsoft.com",
+    "postgresql.org/docs",
+    "dev.mysql.com/doc",
+    "kubernetes.io/docs",
+    "helm.sh/docs",
+    "terraform.io/docs",
+    "fastapi.tiangolo.com",
+    "flask.palletsprojects.com",
+    "docs.djangoproject.com",
+    "vuejs.org",
+    "svelte.dev",
 }
 
 
@@ -78,7 +95,7 @@ class EcosiaEngine(SearchEngine):
             if containers:
                 break
 
-        for el in containers[:max_results * 2]:
+        for el in containers[: max_results * 2]:
             title_el = _first(el, _SERP_SELECTORS["title"])
             url_el = _first(el, _SERP_SELECTORS["url"])
             snippet_el = _first(el, _SERP_SELECTORS["snippet"])
@@ -138,7 +155,3 @@ class EcosiaEngine(SearchEngine):
 
         engine = SearchEngineRegistry.create("duckduckgo")
         return await engine.fetch(url, stealth=stealth, timeout=timeout)
-
-
-
-

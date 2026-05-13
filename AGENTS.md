@@ -5,8 +5,7 @@
 ## Quick Start
 
 ```bash
-uv sync
-source .venv/bin/activate
+uv sync && source .venv/bin/activate
 
 # Single-file (fast feedback)
 uv run ruff check src/maru_deep_pro_search/<file>.py
@@ -63,14 +62,11 @@ assert hasattr(engine, '_circuit_breaker')
 ## Testing
 
 ```bash
-# All tests (273 total)
-uv run pytest tests/ -v
-
-# Specific test
-uv run pytest tests/test_engines.py -v
+uv run pytest tests/ -v        # All (273)
+uv run pytest tests/test_engines.py -v  # Specific
 ```
 
-**Integration tests** (`test_tool_integration.py`) call real search engines. They may flake if engines are down — this is **acceptable**.
+**Integration tests** (`test_tool_integration.py`) call real search engines. Flake is acceptable — it means we notice when engines break.
 
 **Output format invariants** (do NOT break without updating tests):
 - `deep_research`: `## Research:`, `_engines:`, `### Sources`, `#### [N] Title`, `_score:`
@@ -82,17 +78,24 @@ uv run pytest tests/test_engines.py -v
 
 ## Things to Avoid (Gotchas)
 
-| Trap | Why | Fix |
-|------|-----|-----|
-| `__version__` ≠ `pyproject.toml` | Runtime reports wrong version | Verify BOTH files on every bump |
-| PyPI re-upload same version | Wheel is immutable | Must cut new version (0.11.2 → 0.11.3) |
-| cubic push breaks lint | cubic does NOT run `ruff check` before push | Always run full validation after cubic push |
-| dependabot summary only | Summary understates required version | Read FULL advisory text before dismissing |
-| `hasattr()` hides intent | Returns `False` silently after refactors | Use explicit dataclass contracts |
-| `str(cache.get(key))` | Converts `None` to `"None"`, masks bugs | Use `assert key is not None` |
-| `\|\| true` in CI | Silently ignores failures, wastes time | Remove entirely; let CI actually fail |
-| Dead code | Computed but never consumed | Always verify values are used |
-| f-string without placeholders | ruff F541 lint error | Remove `f` prefix if no `{}` |
+| # | Trap | Fix |
+|---|------|-----|
+| 1 | `__version__` ≠ `pyproject.toml` | Verify BOTH files on every bump |
+| 2 | PyPI re-upload same version | Must cut new version (0.11.2 → 0.11.3) |
+| 3 | cubic push breaks lint | Run full validation after ANY cubic push |
+| 4 | dependabot summary only | Read FULL advisory text before dismissing |
+| 5 | `hasattr()` hides intent | Use explicit dataclass contracts |
+| 6 | `str(cache.get(key))` | Converts `None` → `"None"`. Use `assert key is not None` |
+| 7 | `\|\| true` in CI | Silently ignores failures. Remove it entirely |
+| 8 | Dead code | Verify computed values are actually consumed |
+| 9 | f-string without placeholders | ruff F541. Remove `f` prefix if no `{}` |
+| 10 | YAML front matter indent | `description: >` requires indent on continuation lines |
+| 11 | YAML colon in strings | Colons need quoting (`'...'`) in front matter |
+| 12 | Invariant omission | Modifying output formats? Update BOTH code AND tests |
+| 13 | Outdated dependabot PR | `@dependabot rebase` before merging after main changes |
+| 14 | `gh pr create` body | Bash interprets backticks/pipes/dollars. Use `--body-file` |
+| 15 | Not pulling main post-merge | `git pull` or stale files remain locally |
+| 16 | Assuming PR is merged | Always `gh pr view N --json state` before acting |
 
 ---
 
@@ -101,13 +104,10 @@ uv run pytest tests/test_engines.py -v
 ```bash
 # 1. Update version in BOTH pyproject.toml AND __init__.py
 # 2. Update CHANGELOG.md + docs/index.html badge
-# 3. Full validation
-uv run ruff check . && uv run ruff format --check . && uv run mypy src/
-uv run pytest tests/ -v
-# 4. PR → cubic review → merge
-# 5. git checkout main && git pull
-# 6. git tag vX.Y.Z && git push origin vX.Y.Z
-# 7. gh run watch --workflow=publish.yml
+# 3. Full validation → PR → cubic → merge
+# 4. git checkout main && git pull
+# 5. git tag vX.Y.Z && git push origin vX.Y.Z
+# 6. gh run watch --workflow=publish.yml
 ```
 
 ---
@@ -138,63 +138,60 @@ uv run pytest tests/ -q
 uv run python benchmark/search_quality_benchmark.py
 ```
 
-| Metric | web_search (Bing) | deep_research (multi) | Delta |
-|--------|-------------------|----------------------|-------|
-| Precision@5 | 0.140 | **0.260** | +86% |
-| NDCG@10 | 0.488 | **0.668** | +36% |
-| MRR | 0.483 | **0.603** | +25% |
-
-Trade-off: ~2× response time.
+Multi-engine vs single-engine (TREC-standard, 10 queries):
+- Precision@5: **+86%** | NDCG@10: **+36%** | MRR: **+25%**
+- Trade-off: ~2× response time
 
 ---
 
 ## Lessons Learned from Execution
 
-These insights were discovered by **running** the code, not by reading it.
+Insights discovered by **running** the code, not by reading it.
 
 ### Agent Behavior Design
 
-1. **Token efficiency IS enforcement** — Long docs get ignored. 1-line rules get followed. SKILL.md was compressed ~50% and protocol rewritten into 13 one-line imperatives.
+1. **Token efficiency IS enforcement** — Long docs get ignored. 1-line rules get followed. SKILL.md ~50% compression + 13 one-line imperatives.
 2. **Imperative > descriptive** — "STOP and search immediately" works better than "When you encounter uncertainty, consider searching."
-3. **Mid-task search triggers are the real value** — Agents search once at start then code for 30min. Error-driven, refactor-driven, and 10-15min self-check triggers are what actually change behavior.
+3. **Mid-task triggers are the real value** — Agents search once then code for 30min. Error-driven, refactor-driven, and 10-15min self-check triggers actually change behavior.
 
 ### mypy Strict Mode (57 → 0 errors)
 
-4. **`cache_key` explicit cast** — `dict.get()` returns `str | None`. Never use `str(cache.get(key))` — it converts `None` to `"None"`. Use `assert key is not None`.
-5. **Loop variable shadowing** — Reusing the same variable name in nested loops breaks mypy inference.
-6. **`__new__` attribute access** — Dataclass `__new__` bypasses mypy tracking. Requires `# type: ignore[attr-defined]` or typed protocol.
-7. **`Exception` catch narrows too wide** — `except Exception as e:` gives `e: Exception`. Assert subclass before accessing specific attributes.
-8. **Session redefinition across branches** — Same variable in `if`/`else` with different types needs explicit annotation on first assignment.
+4. **`cache_key` explicit cast** — `dict.get()` returns `str | None`. Never use `str(cache.get(key))` — converts `None` to `"None"`. Use `assert key is not None`.
+5. **Loop variable shadowing** — Reusing variable names in nested loops breaks inference.
+6. **`__new__` attribute access** — Dataclass `__new__` bypasses tracking. Requires `# type: ignore[attr-defined]`.
+7. **`Exception` catch narrows too wide** — `except Exception as e:` gives `e: Exception`. Assert subclass before specific access.
+8. **Session redefinition** — Same variable in `if`/`else` with different types needs explicit first annotation.
 
 ### CI & Automation
 
-9. **`\|\| true` silently ignores failures** — Found in both `test.yml` and `lint.yml`. Removes all signal while wasting runner time.
-10. **`gh pr create` body with backticks/pipes/dollars** — Bash interprets them as command substitution. Always use `--body-file`.
-11. **cubic reviews stale commits** — Trust the check status (`cubic · AI code reviewer: pass`), not just the comment text. Comments may reflect an older commit.
-12. **pytest count changes must be intentional** — When tests decrease, verify it's expected (e.g., removed feature).
+9. **`\|\| true` silently ignores failures** — Found in `test.yml` and `lint.yml`. Removes all signal while wasting time.
+10. **`gh pr create` body with backticks/pipes/dollars** — Bash interprets as command substitution. Always `--body-file`.
+11. **cubic reviews stale commits** — Trust check status, not comment text. Comments may reflect older commits.
+12. **pytest count changes** — When tests decrease, verify it's expected (e.g., removed feature).
+13. **dependabot PR outdated** — Main changes? `@dependabot rebase` before merging. Otherwise lint/test fails on stale code.
 
 ### Packaging & Distribution
 
-13. **Root-level files are NOT pip-installed** — Only files under package directories are installed. `skills/` must live inside `src/maru_deep_pro_search/skills/` with `[tool.setuptools.package-data]`.
-14. **YAML front matter traps** — `description: >` requires indent on continuation lines. Colons in strings need quoting (`'...'`).
-15. **f-string without placeholders** — ruff F541. Remove `f` prefix if no `{}` inside.
+14. **Root-level files NOT pip-installed** — Only package directory files installed. `skills/` must live in `src/maru_deep_pro_search/skills/` with `[tool.setuptools.package-data]`.
+15. **YAML front matter traps** — `description: >` requires indent. Colons need quoting.
+16. **f-string without placeholders** — ruff F541. Remove `f` if no `{}`.
 
 ### Benchmark & Quality
 
-16. **DuckDuckGo circuit breaker storm** — Back-to-back benchmark modes without `asyncio.sleep(5)` opens the breaker. Always delay between modes.
-17. **Single-engine can win individual queries** — `deep_research` does NOT universally dominate. On "httpx async client tutorial" Bing single matched multi-engine. Average matters.
-18. **Ground truth patterns must be broad** — Narrow patterns (only `nvd.nist.gov` for CVE) penalize legitimate sources (GitHub Advisory, Snyk).
+17. **DuckDuckGo circuit breaker storm** — Back-to-back modes without `asyncio.sleep(5)` opens breaker.
+18. **Single-engine can win** — `deep_research` does NOT universally dominate. On "httpx async" Bing single matched multi-engine.
+19. **Ground truth breadth** — Narrow patterns (only `nvd.nist.gov`) penalize legitimate sources (GitHub Advisory, Snyk).
 
 ---
 
-## Architecture Decisions (one-liners)
+## Architecture Decisions
 
 1. **100% FREE** — No paid APIs ever.
 2. **Engine registry** — Multi-engine failover via `SearchEngineRegistry`.
-3. **BM25 + metadata ranking** — Perplexity-level quality, local computation only.
+3. **BM25 + metadata** — Perplexity-level quality, local computation.
 4. **Citation-native** — `[1]`, `[2]` IDs without external services.
-5. **Research-first enforcement** — MCP prompts + `TOOL_GUIDANCE` force agents to search before coding.
+5. **Research-first** — MCP prompts + `TOOL_GUIDANCE` force search before coding.
 6. **Prompt injection defense** — Zero-width chars removed, chat tokens neutralized.
-7. **Three-layer rate limiting** — Semaphore(3) + per-engine cooldowns + token bucket.
+7. **Three-layer rate limiting** — Semaphore(3) + cooldowns + token bucket.
 8. **Session-reuse stealth** — `AsyncStealthySession` for Google/Startpage.
-9. **MCP tools provide DATA, not INTELLIGENCE** — Agent's LLM decides synthesis.
+9. **MCP tools provide DATA** — Agent's LLM decides synthesis.

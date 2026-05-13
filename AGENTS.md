@@ -332,7 +332,7 @@ These insights were discovered by **running** the code, not by reading it. They 
 
 ### mypy Strict Mode (57 → 0 errors)
 
-1. **`cache_key` requires explicit cast** — `dict.get()` returns `str | None`; mypy cannot narrow through `if key is not None`. Cast: `str(cache.get(key))` or assert.
+1. **`cache_key` requires explicit cast** — `dict.get()` returns `str | None`; mypy cannot narrow through `if key is not None`. Use `assert key is not None` or explicit `if key is None: raise TypeError(...)`. **Never use `str(cache.get(key))`** — it silently converts `None` to `"None"` and masks missing-cache bugs.
 2. **Loop variable shadowing breaks inference** — Reusing the same variable name in nested loops causes mypy to infer the outer variable's type from the inner loop's assignment.
 3. **`__new__` attribute access is invisible** — Dataclass `__new__` implementations bypass mypy's attribute tracking. Accessing attributes set in `__new__` requires `# type: ignore[attr-defined]` or a typed protocol.
 4. **`Exception` catch narrows too wide** — `except Exception as e:` gives `e: Exception`. If you later access subclass-specific attributes, assert the type: `assert isinstance(e, MyError)`.

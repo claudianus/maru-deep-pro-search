@@ -1,4 +1,4 @@
-"""Tests for maru harness: persistence, project init, workflow."""
+"""Tests for maru harness: persistence, project init."""
 
 from __future__ import annotations
 
@@ -7,11 +7,6 @@ from pathlib import Path
 
 from maru_deep_pro_search.harness.persistence import KnowledgeStore
 from maru_deep_pro_search.harness.project import HarnessProject, init_project
-from maru_deep_pro_search.harness.workflow import (
-    WorkflowEngine,
-    WorkflowPhase,
-    WorkflowState,
-)
 
 
 class TestKnowledgeStore:
@@ -106,36 +101,3 @@ class TestHarnessProject:
             hp = HarnessProject(root)
             assert hp.is_initialized()
             assert hp.store is not None
-
-
-class TestWorkflowEngine:
-    def test_run_full_workflow(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            db = Path(tmp) / "wf.db"
-            store = KnowledgeStore(db_path=db)
-            engine = WorkflowEngine(store=store)
-            state = WorkflowState(query="How to use React hooks")
-            results = list(engine.run(state))
-            # Should yield context_load, research, gap_detection, design, implement, verify, complete
-            assert len(results) >= 4
-            assert results[0].phase == WorkflowPhase.CONTEXT_LOAD
-            assert results[0].success is True
-
-    def test_context_load_with_agents_md(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            init_project(path=root)
-            # Change to project dir so AGENTS.md is found
-            import os
-
-            old_cwd = os.getcwd()
-            os.chdir(root)
-            try:
-                store = KnowledgeStore(db_path=root / ".maru" / "knowledge.db")
-                engine = WorkflowEngine(store=store)
-                state = WorkflowState(query="test")
-                results = list(engine.run(state))
-                assert results[0].phase == WorkflowPhase.CONTEXT_LOAD
-                assert "AGENTS.md" in results[0].output or "No project context" in results[0].output
-            finally:
-                os.chdir(old_cwd)

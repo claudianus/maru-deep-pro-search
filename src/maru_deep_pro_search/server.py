@@ -305,86 +305,6 @@ When using fetch_bulk with multiple URLs:
 """
 
 
-@mcp.prompt()
-def research_workflow() -> str:
-    """Recommended workflow for comprehensive research tasks."""
-    return """# Research Workflow Template
-
-## Phase 0: MANDATORY Research
-**Before ANY code or architecture decision:**
-
-1. Call `deep_research(query)` with the user's core intent
-   - Let it auto-expand queries
-   - Review quality badges ([HIGH] = prioritize)
-   - Note all promising URLs
-
-2. If the topic is security-related:
-   - Also call `answer("latest CVE {technology}")`
-   - Check for deprecation notices
-
-## Phase 1: Discovery
-**Goal**: Find relevant sources
-
-1. Already done by deep_research in Phase 0
-2. Use `parallel_search` for targeted angles if needed:
-   ```
-   [
-     "{topic} tutorial beginner 2025",
-     "{topic} best practices 2025",
-     "{topic} common pitfalls 2025"
-   ]
-   ```
-
-## Phase 2: Deep Reading
-**Goal**: Extract detailed information
-
-1. Use `fetch_bulk(urls)` for all promising URLs from research
-2. Check quality signals:
-   - [HIGH] → Read fully
-   - [med] → Skim for relevance
-   - [BLOCKED] → Retry with stealth
-
-3. For critical sources that failed:
-   - `fetch_page(url, stealth=True)`
-   - Or `stealthy_fetch(url)` as last resort
-
-## Phase 3: Synthesis & Action
-**Goal**: Combine findings and THEN code
-
-1. Review all fetched content
-2. Cross-reference information across sources
-3. **NOW you may write code** — based on verified, current information
-4. Always cite sources using [1], [2] format when answering
-
-## Token Management Tips
-
-- **Default budgets are generous** (fetch_page: 6000 tokens)
-- **Use summarize=True** in deep_research if output exceeds context window
-- **Quality over quantity**: 3 [HIGH] sources beat 10 [low] ones
-- **Check code-to-text ratios**: [code-heavy 40%] means more code examples
-
-## Example: Building a Real-Time Chat App
-
-```
-❌ WRONG: "I'll use Socket.IO because I know it"
-
-✅ CORRECT:
-1. deep_research("real-time chat architecture 2025 WebSocket vs SSE")
-   → Discovers: SSE is simpler for one-way, WebSocket for bidirectional
-   → Discovers: PartyKit, Socket.IO, and native WebSocket all viable
-   → Discovers: Yjs for collaborative features
-
-2. deep_research("Yjs WebSocket production best practices")
-   → Gets implementation patterns, scaling considerations
-
-3. fetch_bulk([url1, url2, url3])  # Top [HIGH] sources
-   → Reads official docs and verified tutorials
-
-4. NOW write code based on verified 2025 best practices
-```
-"""
-
-
 # ═══════════════════════════════════════════════════════════════
 # MCP Tools — With Session Enforcement
 # ═══════════════════════════════════════════════════════════════
@@ -684,10 +604,6 @@ def run() -> None:
             from .cli.stats_cmd import main as _stats_main
 
             sys.exit(_stats_main(sys.argv[2:]))
-        if sub == "workflow":
-            from .cli.workflow_cmd import main as _workflow_main
-
-            sys.exit(_workflow_main(sys.argv[2:]))
         if sub == "update":
             from .cli.update_cmd import main as _update_main
 

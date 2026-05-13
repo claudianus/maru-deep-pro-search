@@ -316,3 +316,42 @@ Metrics: Precision@K, Recall@K, NDCG@K, MRR, response time.
 
 Multi-engine cross-ranking outperforms single-engine on all relevance metrics.
 Trade-off: ~2× response time (multi-engine search overhead).
+
+---
+
+## Lessons Learned from Execution
+
+These insights were discovered by **running** the code, not by reading it. They capture behavior that is invisible in static analysis.
+
+### Benchmark Execution
+
+1. **DuckDuckGo circuit breaker storm** — Running benchmark modes back-to-back without delay causes the circuit breaker to open on the second mode. Always insert `await asyncio.sleep(5)` between `web_search` and `deep_research` benchmark runs.
+2. **Single-engine can win individual queries** — `deep_research` does NOT universally dominate. On "httpx async client tutorial" and "pytest asyncio fixture", Bing single-engine matched or beat multi-engine. Average matters, not every query.
+3. **Ground truth patterns must be broad** — Narrow patterns (e.g., only `nvd.nist.gov` for CVE queries) penalize legitimate security sources (GitHub Advisory, Snyk). Binary relevance scoring is sensitive to pattern breadth.
+4. **Query type strongly predicts engine quality** — Technical documentation queries (FastAPI, Python docs) benefit massively from multi-engine. Comparison queries ("vs") and CVE queries show smaller or negative deltas.
+
+### mypy Strict Mode (57 → 0 errors)
+
+1. **`cache_key` requires explicit cast** — `dict.get()` returns `str | None`; mypy cannot narrow through `if key is not None`. Use `assert key is not None` or explicit `if key is None: raise TypeError(...)`. **Never use `str(cache.get(key))`** — it silently converts `None` to `"None"` and masks missing-cache bugs.
+2. **Loop variable shadowing breaks inference** — Reusing the same variable name in nested loops causes mypy to infer the outer variable's type from the inner loop's assignment.
+3. **`__new__` attribute access is invisible** — Dataclass `__new__` implementations bypass mypy's attribute tracking. Accessing attributes set in `__new__` requires `# type: ignore[attr-defined]` or a typed protocol.
+4. **`Exception` catch narrows too wide** — `except Exception as e:` gives `e: Exception`. If you later access subclass-specific attributes, assert the type: `assert isinstance(e, MyError)`.
+5. **Session redefinition across branches** — Assigning `session = ...` in both `if` and `else` branches with different types requires explicit annotation on the first assignment.
+
+### cubic AI Review Behavior
+
+1. **cubic pushes with `--force-with-lease`** — It does NOT open a separate commit; it amends and force-pushes to the PR branch. Always `git pull --rebase` before adding your own commits.
+2. **cubic does NOT run lint before push** — After cubic pushes, always run the full validation suite locally. The PR CI will catch it, but local verification is faster.
+3. **cubic focuses on correctness over style** — It catches logic bugs and security issues but rarely comments on naming or docstring quality. Those remain the human's responsibility.
+
+### Multi-Engine Trade-offs
+
+| Dimension | Single-Engine (Bing) | Multi-Engine (deep_research) |
+|-----------|---------------------|------------------------------|
+| Precision@5 | 0.140 | **0.260** (+86%) |
+| MRR | 0.483 | **0.603** (+25%) |
+| Response Time | ~2s | ~4–6s |
+| Coverage | 1 engine | 3+ engines (dedup by class) |
+| Best For | Simple homepage lookups | Technical docs, cross-source verification |
+
+**Rule of thumb**: If the query is "go to X's official docs", single-engine is sufficient. If the query is "how does X work" or "X vs Y", always use multi-engine.

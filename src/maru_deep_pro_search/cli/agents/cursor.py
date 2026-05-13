@@ -53,6 +53,11 @@ class CursorAdapter(AgentAdapter):
             return Path(".cursor") / "hooks"
         return Path.home() / ".cursor" / "hooks"
 
+    def _skills_dir(self, scope: str) -> Path | None:
+        if scope == "project":
+            return Path(".cursor") / "rules"
+        return Path.home() / ".cursor" / "rules"
+
     def backup(self) -> list[Path]:
         paths = [self._mcp_path("user"), self._rules_path("user"), self._settings_path("user")]
         backups = [backup_file(p) for p in paths]

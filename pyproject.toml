@@ -74,6 +74,9 @@ quiet = true
 requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.package-data]
+"maru_deep_pro_search" = ["skills/**/*"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

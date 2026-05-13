@@ -90,7 +90,7 @@ MCP Client (Claude, Cursor, Kimi, Windsurf, ...)
         ▼
 ┌──────────────────────────────────────┐
 │  maru-deep-pro-search MCP Server     │
-│  ├─ 8 Tools (search, fetch, cite)   │
+│  ├─ 10 Tools (search, fetch, cite)  │
 │  ├─ 9-Engine Failover Registry      │
 │  ├─ Hybrid Ranking (BM25+semantic)  │
 │  ├─ 3-Layer Enforcement             │
@@ -100,11 +100,12 @@ MCP Client (Claude, Cursor, Kimi, Windsurf, ...)
 
 The server contains **zero generative LLMs**. Your agent's LLM handles all reasoning and synthesis. The server focuses on search quality: multi-engine coverage, intelligent ranking, and clean content extraction.
 
-For deep technical details, see [`docs/engine_insights.md`](./docs/engine_insights.md) and [`docs/lessons_learned.md`](./docs/lessons_learned.md).
+For deep technical details, see [`docs/engine_insights.md`](./docs/engine_insights.md) and [`docs/lessons_learned.md`](./docs/lessons_learned.md).  
+For execution-learned insights, see [`AGENTS.md`](./AGENTS.md).
 
 ---
 
-## 8 Tools
+## 10 Tools
 
 | Tool | Purpose |
 |------|---------|
@@ -143,24 +144,8 @@ All optional. Loaded via `pydantic-settings` with prefix `MARU_SEARCH_`.
 | `ENGINE` | `duckduckgo_lite` | Default search engine |
 | `MAX_RESULTS` | `10` | Results per query per engine |
 | `MAX_CONCURRENT` | `5` | Parallel fetch limit |
-| `MAX_CONCURRENT` | `5` | Parallel fetch limit |
-| `TIMEOUT` | `30.0` | Fetch timeout (seconds) |
 | `TIMEOUT` | `30.0` | Fetch timeout (seconds) |
 | `RETRIES` | `3` | Retry attempts |
-
-### GitHub Actions Bot Identity (optional)
-
-By default, workflow comments appear as `github-actions[bot]`. To use a custom bot name and icon:
-
-1. Create a GitHub App at **Settings → Developer settings → GitHub Apps → New GitHub App**
-   - Name: `marubot` (or your preference)
-   - Upload a custom icon (PNG, 200×200)
-   - Permissions: **Issues** (write), **Pull requests** (write), **Actions** (read)
-2. Install the app on your repository
-3. Go to **Settings → Secrets and variables → Actions** and add:
-   - `MARUBOT_APP_ID` — your GitHub App ID
-   - `MARUBOT_PRIVATE_KEY` — the PEM private key from the app
-4. The generated workflow automatically falls back to `github-actions[bot]` if `MARUBOT_TOKEN` is not set.
 
 ---
 
@@ -177,9 +162,6 @@ maru-deep-pro-search setup --restore
 
 # Initialize project harness
 maru-deep-pro-search init --agents cursor claude
-
-# Generate GitHub Actions workflow
-maru-deep-pro-search workflow --force
 
 # Manage plugins
 maru-deep-pro-search-plugin list

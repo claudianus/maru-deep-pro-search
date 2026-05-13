@@ -14,31 +14,21 @@ PROTOCOL_END_MARKER = "<!-- MARU-RESEARCH-PROTOCOL-END -->"
 
 # The unified research-first protocol injected as system prompt / rules.
 # English only — token-efficient and optimal for all LLMs.
-_RESEARCH_PROTOCOL_BODY = f"""MANDATORY RESEARCH PROTOCOL — DO NOT VIOLATE
+_RESEARCH_PROTOCOL_BODY = """MANDATORY RESEARCH PROTOCOL
 
-Rule 1: Before answering ANY technical question, you MUST call
-        maru-deep-pro-search's deep_research(query) tool.
-
-Rule 2: NEVER include past years (2024, 2023, etc.) in the query passed
-        to deep_research. Use the current year ({_CURRENT_YEAR}), "latest",
-        "current", or "recent" only. maru-deep-pro-search automatically
-        finds the most up-to-date results.
-
-Rule 3: After receiving research results, analyze ALL sources and cite
-        them in your answer using [1], [2], [3] format.
-
-Rule 4: If results are insufficient or contradictory, call deep_research
-        again with a refined query. NEVER guess.
-
-Rule 5: For comparison questions ("A vs B"), use parallel_search for
-        multi-angle research: ["A advantages", "B advantages",
-        "A vs B benchmark {_CURRENT_YEAR}"].
-
-Rule 6: For code / library questions, verify the latest version and API
-        via deep_research BEFORE writing any code.
-
-Rule 7: Your training data is stale. The web is current.
-        Always verify freshness with deep_research."""
+Rule 1: BEFORE any work → deep_research(user's raw intent). No exceptions.
+Rule 2: Uncertain concept/function/class → STOP and search immediately.
+Rule 3: New import/package → verify latest version/API via deep_research first.
+Rule 4: Error/warning/deprecation → search EXACT text BEFORE fixing.
+Rule 5: Refactor or architecture change → re-search best practice first.
+Rule 6: User request changes → re-search new scope before continuing.
+Rule 7: Every 10-15 min of coding → ask "What did I assume?" → search if unsure.
+Rule 8: "I think I know this" → you don't. Search anyway.
+Rule 9: Comparison (A vs B) → parallel_search multi-angle.
+Rule 10: Insufficient results → re-search refined query. NEVER guess.
+Rule 11: Security topic → also search "latest CVE" + "advisory".
+Rule 12: Cite sources [1][2][3] after every search. Never cite from memory.
+Rule 13: No search in last 3-5 tool calls → search again."""
 
 RESEARCH_PROTOCOL = f"{PROTOCOL_START_MARKER}\n{_RESEARCH_PROTOCOL_BODY}\n{PROTOCOL_END_MARKER}"
 

@@ -32,7 +32,7 @@ jobs:
 
       - name: Install maru-deep-pro-search
         run: |
-          pip install maru-deep-pro-search
+          pip install git+https://github.com/${{ github.repository }}.git@${{ github.head_ref || github.ref_name }}
 
       - name: Run deep research
         id: research

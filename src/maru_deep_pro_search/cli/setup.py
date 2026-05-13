@@ -120,6 +120,10 @@ def cmd_setup(args: argparse.Namespace) -> int:
             print("   ✓ 리서치 프로토콜 주입 완료")
         else:
             print(f"   {yellow('! 규칙 주입 실패 (수동 설정 필요)')}")
+        if result.get("skills_installed"):
+            print("   ✓ SKILL.md 규칙 파일 설치 완료")
+        elif result.get("skills_installed") is False:
+            print(f"   {yellow('! SKILL.md 규칙 파일 설치 실패 (수동 설정 필요)')}")
 
     # Semantic search recommendation
     import importlib.util

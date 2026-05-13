@@ -8,6 +8,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
+import maru_deep_pro_search
+
 
 def get_mcp_server_command() -> dict[str, Any]:
     """Return the MCP server command configuration for JSON-based agents.
@@ -88,14 +90,47 @@ class AgentAdapter(ABC):
         """Restore agent configs from the most recent backup."""
         ...
 
+    def _skills_dir(self, scope: str) -> Path | None:
+        """Return the agent-specific directory for skill files.
+
+        Override in subclasses that support skill files (e.g. Cursor).
+        """
+        return None
+
+    def _get_skills_source_dir(self) -> Path:
+        """Return the directory containing packaged SKILL.md files."""
+        return Path(maru_deep_pro_search.__file__).parent / "skills"
+
+    def install_skills(self, scope: str = "user") -> bool:
+        """Copy SKILL.md files to the agent's rules directory."""
+        source = self._get_skills_source_dir()
+        target = self._skills_dir(scope)
+        if target is None:
+            return False
+        if not source.exists():
+            return False
+
+        target.mkdir(parents=True, exist_ok=True)
+        copied = 0
+        for skill_dir in source.iterdir():
+            if skill_dir.is_dir():
+                skill_file = skill_dir / "SKILL.md"
+                if skill_file.exists():
+                    dest = target / f"{skill_dir.name}.md"
+                    shutil.copy2(skill_file, dest)
+                    copied += 1
+        return copied > 0
+
     def configure(self, scope: str = "user") -> dict[str, Any]:
-        """Full setup: backup → install MCP → inject rules."""
+        """Full setup: backup → install MCP → inject rules → install skills."""
         backups = self.backup()
         mcp_ok = self.install_mcp(scope)
         rules_ok = self.inject_rules(scope)
+        skills_ok = self.install_skills(scope)
         return {
             "backups": [str(b) for b in backups if b],
             "mcp_installed": mcp_ok,
             "rules_injected": rules_ok,
+            "skills_installed": skills_ok,
             "success": mcp_ok and rules_ok,
         }

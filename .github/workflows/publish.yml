@@ -14,7 +14,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: rm -rf dist/
       - run: uv build
       - name: Publish to PyPI

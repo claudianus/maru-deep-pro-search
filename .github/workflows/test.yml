@@ -32,8 +32,6 @@ jobs:
       - name: Run tests
         run: uv run pytest tests/ -v --tb=short
 
-      - name: Run type check
-        run: python -m mypy src/maru_deep_pro_search --ignore-missing-imports || true
-
-      - name: Run lint
-        run: ruff check src/ tests/ || true
+      # NOTE: Type check and lint are handled by the dedicated lint.yml workflow.
+      # Do NOT add them here — running them with `|| true` wastes CI time
+      # while silently ignoring failures.

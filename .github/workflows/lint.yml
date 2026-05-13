@@ -30,4 +30,4 @@ jobs:
         run: ruff format --check src/ tests/
 
       - name: Run mypy
-        run: mypy src/maru_deep_pro_search --ignore-missing-imports || true
+        run: mypy src/maru_deep_pro_search --ignore-missing-imports

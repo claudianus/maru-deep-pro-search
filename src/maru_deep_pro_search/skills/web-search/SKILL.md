@@ -19,7 +19,7 @@ triggers:
 ```python
 results = await web_search(
     query="Python 3.12 new features",
-    engine="duckduckgo_lite",  # or "auto", "bing", "google"
+    engine="duckduckgo_lite",  # or "bing", "google", "startpage"
     max_results=5,
 )
 ```

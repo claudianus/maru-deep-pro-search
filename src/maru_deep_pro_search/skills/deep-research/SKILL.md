@@ -3,7 +3,7 @@ name: Deep Research with maru-deep-pro-search
 id: deep-research
 description: >
   Multi-engine web research with BM25 cross-ranking. Use before ANY technical
-decision — library versions, APIs, best practices, security advisories.
+  decision — library versions, APIs, best practices, security advisories.
 triggers:
   - Before implementing new features
   - Before adding dependencies
@@ -14,7 +14,7 @@ triggers:
   - When seeing an error, warning, or deprecation notice
   - When refactoring or changing approach mid-task
   - When the user's request changes or expands
-  - Every 10-15 minutes of continuous coding (self-check: "What have I assumed?")
+  - 'Every 10-15 minutes of continuous coding (self-check: "What have I assumed?")'
   - When importing a package not used in the last 7 days
   - When you think "I think I know this" — you don't. Search.
 ---

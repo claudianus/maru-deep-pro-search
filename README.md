@@ -105,7 +105,7 @@ For execution-learned insights, see [`AGENTS.md`](./AGENTS.md).
 
 ---
 
-## 8 Tools
+## 10 Tools
 
 | Tool | Purpose |
 |------|---------|

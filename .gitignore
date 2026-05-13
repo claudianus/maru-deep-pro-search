@@ -69,3 +69,7 @@ preview-*.png
 docs/dist/
 docs/layouts/default-backup.vue
 .maru/
+
+# ── Screenshots / Artifacts ──
+*.png
+.playwright-mcp/

@@ -594,6 +594,53 @@ async def generate_code(
     )
 
 
+def _research_main(argv: list[str] | None = None) -> int:
+    """CLI entry point for running deep research from the command line."""
+    import argparse
+    import asyncio
+
+    parser = argparse.ArgumentParser(
+        prog="maru-deep-pro-search research",
+        description="Run deep research from the command line and save results to a file.",
+        epilog='Example: python -m maru_deep_pro_search.server research "FastAPI vs Django 2025" --output report.md',
+    )
+    parser.add_argument("query", help="Research query string")
+    parser.add_argument("--output", "-o", default="research-report.md", help="Output file path (default: research-report.md)")
+    parser.add_argument("--engine", default="duckduckgo_lite", help="Search engine (default: duckduckgo_lite)")
+    parser.add_argument("--max-sources", type=int, default=8, help="Maximum sources to return (default: 8)")
+    parser.add_argument("--no-expand", action="store_true", help="Disable query expansion")
+    args = parser.parse_args(argv)
+
+    print(f"🔍 Researching: {args.query}")
+    print(f"   Engine: {args.engine}")
+    print(f"   Max sources: {args.max_sources}")
+    print(f"   Output: {args.output}")
+    print()
+
+    async def _run() -> str:
+        from .tools import tool_deep_research
+        return await tool_deep_research(
+            args.query,
+            args.engine,
+            args.max_sources,
+            expand_queries=not args.no_expand,
+            primary_sources_only=False,
+        )
+
+    try:
+        result = asyncio.run(_run())
+        with open(args.output, "w", encoding="utf-8") as f:
+            f.write(result)
+        print(f"✅ Research complete: {args.output}")
+        print(f"   Output size: {len(result)} chars")
+        return 0
+    except Exception as exc:
+        print(f"❌ Research failed: {exc}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+
 def run() -> None:
     import asyncio
     if len(sys.argv) > 1:
@@ -613,6 +660,8 @@ def run() -> None:
         if sub == "update":
             from .cli.update_cmd import main as _update_main
             sys.exit(_update_main(sys.argv[2:]))
+        if sub == "research":
+            sys.exit(_research_main(sys.argv[2:]))
 
     # Background update check on startup — store notice for user-facing display
     global _pending_update_notice

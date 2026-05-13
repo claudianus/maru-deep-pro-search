@@ -349,7 +349,7 @@ These insights were discovered by **running** the code, not by reading it. They 
 | Dimension | Single-Engine (Bing) | Multi-Engine (deep_research) |
 |-----------|---------------------|------------------------------|
 | Precision@5 | 0.140 | **0.260** (+86%) |
-| MRR | 0.483 | **0.540** (+12%) |
+| MRR | 0.483 | **0.603** (+25%) |
 | Response Time | ~2s | ~4–6s |
 | Coverage | 1 engine | 3+ engines (dedup by class) |
 | Best For | Simple homepage lookups | Technical docs, cross-source verification |

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-05-13
+
+### Added
+- **`research` CLI subcommand** — `python -m maru_deep_pro_search.server research "query" --output report.md` for headless deep research from command line. Supports `--engine`, `--max-sources`, and `--no-expand` flags.
+- **GitHub Actions workflow overhaul** — `maru-deep-pro-search workflow` now generates a production-ready workflow with:
+  - pip caching via `actions/setup-python@v5`
+  - Auto-posts research summary as PR/Issue comment via `gh CLI`
+  - Supports `MARUBOT_TOKEN` secret for custom bot identity
+  - Installs from current branch instead of PyPI (fallback)
+  - Explicit `permissions` block for security
+
+### Fixed
+- **`workflow_cmd.py` SyntaxWarning** — Removed invalid backtick escape sequences in generated workflow template.
+- **`.gitignore` hygiene** — Added `*.png` and `.playwright-mcp/` to prevent screenshot artifacts from being committed.
+
 ## [0.11.0] - 2026-05-13
 
 ### Changed (BREAKING ARCHITECTURE)

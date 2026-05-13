@@ -150,6 +150,34 @@ All optional. Loaded via `pydantic-settings` with prefix `MARU_SEARCH_`.
 
 ---
 
+## CLI Commands
+
+```bash
+# MCP server (stdio transport)
+maru-deep-pro-search
+
+# Setup AI agents with MCP config
+maru-deep-pro-search setup
+maru-deep-pro-search setup --list
+maru-deep-pro-search setup --restore
+
+# Initialize project harness
+maru-deep-pro-search init --agents cursor claude
+
+# Generate GitHub Actions workflow
+maru-deep-pro-search workflow --force
+
+# Manage plugins
+maru-deep-pro-search-plugin list
+maru-deep-pro-search-plugin install <git-url>
+
+# Headless deep research (CI/CD friendly)
+python -m maru_deep_pro_search.server research "FastAPI vs Django 2025" \
+  --output report.md --max-sources 8
+```
+
+---
+
 ## Docker
 
 ```bash

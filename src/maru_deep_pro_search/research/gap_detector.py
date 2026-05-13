@@ -8,31 +8,17 @@ from __future__ import annotations
 
 from .expander import extract_keywords
 
-# Predefined angles that are commonly missing from initial searches
-_FOLLOWUP_ANGLES = [
-    "benchmark",
-    "performance",
-    "comparison",
-    "vs",
-    "tutorial",
-    "getting started",
-    "API reference",
-    "documentation",
-    "common errors",
-    "troubleshooting",
-    "fix",
+# Research angles that are commonly valuable
+_RESEARCH_ANGLES = [
+    "benchmark performance",
+    "security vulnerability",
+    "production deployment",
+    "migration guide",
     "best practices",
-    "security",
-    "deployment",
-    "production",
-    "case study",
-    "example",
-    "github",
-    "reddit discussion",
-    "latest",
-    "2026",
-    "new features",
-    "update",
+    "common errors",
+    "official documentation",
+    "github repository",
+    "release notes",
 ]
 
 
@@ -41,60 +27,67 @@ def detect_gaps(query: str, sources: list) -> list[str]:
 
     Args:
         query: Original search query.
-        sources: List of CitedSource objects (or any object with
-                 content/markdown/snippet attributes).
+        sources: List of CitedSource objects.
 
     Returns:
-        List of suggested follow-up queries (2-3 items max).
+        List of suggested follow-up queries (max 3).
     """
     if not sources:
         return []
 
-    # 1. Extract keywords from the original query
-    set(extract_keywords(query))
+    # Extract query keywords
+    query_keywords = set(extract_keywords(query))
+    if not query_keywords:
+        return []
 
-    # 2. Collect all text from sources
-    source_texts: list[str] = []
+    # Collect all text from sources
+    source_text = ""
     for src in sources:
-        text = ""
         if hasattr(src, "markdown") and src.markdown:
-            text += src.markdown + " "
+            source_text += src.markdown + " "
         if hasattr(src, "content") and src.content:
-            text += src.content + " "
+            source_text += src.content + " "
         if hasattr(src, "snippet") and src.snippet:
-            text += src.snippet + " "
-        source_texts.append(text.lower())
+            source_text += src.snippet + " "
+    source_text = source_text.lower()
 
-    # 3. Check which follow-up angles are poorly covered
-    covered_scores: dict[str, int] = {}
-    for angle in _FOLLOWUP_ANGLES:
-        score = 0
-        for text in source_texts:
-            if angle.lower() in text:
-                score += 1
-        covered_scores[angle] = score
-
-    # 4. Identify poorly covered angles (appearing in 0 or 1 sources)
-    poorly_covered = [
-        angle for angle, score in covered_scores.items()
-        if score <= 1
+    # Check which query keywords are poorly covered
+    uncovered_keywords = [
+        kw for kw in query_keywords
+        if kw not in source_text and len(kw) > 3
     ]
 
-    # 5. Generate follow-up queries by combining the original query
-    #    with the poorly covered angles
+    # Check which research angles are uncovered
+    uncovered_angles: list[str] = []
+    for angle in _RESEARCH_ANGLES:
+        if angle not in source_text:
+            uncovered_angles.append(angle)
+
+    # Build suggestions
     suggestions: list[str] = []
-    for angle in poorly_covered[:3]:
-        # Don't duplicate if the angle is already in the query
-        if angle.lower() in query.lower():
-            continue
-        suggestions.append(f"{query} {angle}")
 
-    # 6. If no angles triggered, fall back to a generic "latest" query
+    # Priority 1: uncovered keywords + angle
+    for kw in uncovered_keywords[:2]:
+        for angle in uncovered_angles[:2]:
+            suggestions.append(f"{kw} {angle}")
+            if len(suggestions) >= 3:
+                break
+        if len(suggestions) >= 3:
+            break
+
+    # Priority 2: original query + uncovered angle
+    if len(suggestions) < 3:
+        for angle in uncovered_angles:
+            if angle.lower() not in query.lower():
+                suggestions.append(f"{query} {angle}")
+                if len(suggestions) >= 3:
+                    break
+
+    # Priority 3: original query + benchmark/security if nothing else
     if not suggestions:
-        if "latest" not in query.lower():
-            suggestions.append(f"{query} latest")
-        if "2026" not in query.lower():
-            suggestions.append(f"{query} 2026")
+        if "benchmark" not in query.lower():
+            suggestions.append(f"{query} benchmark")
+        if "security" not in query.lower() and len(suggestions) < 3:
+            suggestions.append(f"{query} security")
 
-    # Limit to 3 suggestions
     return suggestions[:3]

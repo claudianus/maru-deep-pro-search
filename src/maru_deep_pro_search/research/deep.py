@@ -10,6 +10,7 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from ..engines.base import (
     ExtractionQuality,
@@ -179,8 +180,9 @@ async def deep_research(
         logger.warning("Engine '%s' not registered, falling back to duckduckgo_lite", engine)
         engine = "duckduckgo_lite"
 
+    # Phase 0b: Engine selection — use up to 5 engines for coverage
     if engine == "duckduckgo_lite":
-        engines = SearchEngineRegistry.recommend_engines(query, count=2)
+        engines = SearchEngineRegistry.recommend_engines(query, count=5)
         logger.info("Auto-selected engines: %s", engines)
     else:
         engines = [engine]
@@ -192,52 +194,38 @@ async def deep_research(
     if expand_queries:
         subqueries = expand_query(query, max_subqueries=5)
 
-    # Phase 2: Search across engines — ALL CONCURRENT
-    # Primary engine subqueries + secondary engines run in parallel
+    # Phase 2: Search across ALL engines with ALL subqueries
+    # Every engine runs every subquery for maximum coverage
     engine_results: dict[str, list[SearchResult]] = {e: [] for e in engines}
-    _search_semaphore = asyncio.Semaphore(4)  # Limit concurrent searches
+    _search_semaphore = asyncio.Semaphore(6)  # Increased for more engines
 
-    async def _search_subquery(sq: str) -> list[SearchResult]:
+    async def _search_one(eng_name: str, sq: str) -> tuple[str, list[SearchResult]]:
         async with _search_semaphore:
             try:
-                return await with_retry(
-                    primary_engine.search,
-                    sq,
-                    max_results=max_sources * 2,
-                    max_attempts=2,
-                    retryable_exceptions=(NetworkError, ParseError),
-                )
-            except Exception as exc:
-                logger.warning("Subquery '%s' on %s failed: %s", sq, engines[0], exc)
-                return []
-
-    async def _search_secondary(eng_name: str) -> tuple[str, list[SearchResult]]:
-        async with _search_semaphore:
-            try:
-                secondary = SearchEngineRegistry.create(eng_name)
+                eng = SearchEngineRegistry.create(eng_name)
                 results = await with_retry(
-                    secondary.search,
-                    query,
+                    eng.search,
+                    sq,
                     max_results=max_sources * 2,
                     max_attempts=2,
                     retryable_exceptions=(NetworkError, ParseError),
                 )
                 return (eng_name, results)
             except Exception as exc:
-                logger.warning("Engine %s failed for original query: %s", eng_name, exc)
+                logger.warning("Subquery '%s' on %s failed: %s", sq[:40], eng_name, exc)
                 return (eng_name, [])
 
     search_tasks: list[asyncio.Task] = []
-    for sq in subqueries:
-        search_tasks.append(asyncio.create_task(_search_subquery(sq)))
-    for eng_name in engines[1:]:
-        search_tasks.append(asyncio.create_task(_search_secondary(eng_name)))
+    for eng_name in engines:
+        for sq in subqueries:
+            search_tasks.append(asyncio.create_task(_search_one(eng_name, sq)))
+    # Also run original query on all engines (in case expander produced poor subqueries)
+    for eng_name in engines:
+        search_tasks.append(asyncio.create_task(_search_one(eng_name, query)))
 
     all_results = await asyncio.gather(*search_tasks, return_exceptions=True)
     for res in all_results:
-        if isinstance(res, list):
-            engine_results[engines[0]].extend(res)
-        elif isinstance(res, tuple):
+        if isinstance(res, tuple):
             eng_name, results = res
             engine_results[eng_name].extend(results)
         elif isinstance(res, Exception):
@@ -310,6 +298,32 @@ async def deep_research(
         pages = [stealth_map.get(normalize_url(p.url), p) for p in pages]
 
     pages = rank_pages(pages, query)
+
+    # Phase 4b: Recency gate for trends/news queries
+    query_type = _classify_query(query)
+    if query_type in ("news", "trends"):
+        original_count = len(pages)
+        filtered_pages = []
+        for p in pages:
+            freshness_ok = True
+            if p.freshness_days is not None and p.freshness_days > 180:
+                freshness_ok = False
+            elif p.published_date:
+                try:
+                    dt = datetime.fromisoformat(p.published_date.replace('Z', '+00:00'))
+                    age_days = (datetime.now(dt.tzinfo) - dt).days
+                    if age_days > 180:
+                        freshness_ok = False
+                except Exception:
+                    pass
+            if freshness_ok:
+                filtered_pages.append(p)
+        if len(filtered_pages) < original_count:
+            logger.info(
+                "Recency gate: %d -> %d pages (trends/news query)",
+                original_count, len(filtered_pages),
+            )
+        pages = filtered_pages if filtered_pages else pages
 
     # Build cited sources
     sources: list[CitedSource] = []
@@ -537,9 +551,12 @@ def _classify_query(query: str) -> str:
         return "problem"
     if any(k in lower for k in ["what is ", "meaning of", "define ", "definition"]):
         return "definition"
-    if any(k in lower for k in ["latest", "new ", "2025", "2026", "2027", "recent", "update", "news"]):
+    if any(k in lower for k in ["latest", "new ", "2025", "2026", "2027", "recent", "update", "news", "trends", "trend", "state of", "landscape", "ecosystem"]):
         return "news"
     return "general"
+
+
+_CURRENT_YEAR = datetime.now().year
 
 
 def _extract_key_sentences(text: str, query_keywords: set[str], max_sentences: int = 3, query: str = "") -> list[str]:
@@ -658,12 +675,10 @@ def _deduplicate_insights(insights: list[tuple[str, int]]) -> list[tuple[str, in
 def _synthesize_answer(query: str, sources: list[CitedSource]) -> str:
     """Generate a structured, query-type-aware synthesized answer.
 
-    Perplexity-style synthesis that adapts structure based on query type:
-    - comparison: "X is ..., Y is ..., conclusion: ..."
-    - problem:   "Problem: ... Alternatives: (1) ... (2) ..."
-    - howto:     "Step 1: ... Step 2: ..."
-    - definition: "X is a ... It works by ..."
-    - general:   Key findings with inline citations
+    Improved synthesis with topic clustering and logical flow:
+    1. Sort sources by authority + relevance
+    2. Extract key sentences grouped by topic
+    3. Build query-type-aware structure with logical sections
     """
     if not sources:
         return ""
@@ -673,65 +688,111 @@ def _synthesize_answer(query: str, sources: list[CitedSource]) -> str:
     if not query_keywords:
         query_keywords = set(query.lower().split())
 
-    # Extract structured insights from each source
-    insights: list[tuple[str, int]] = []
-    for src in sources:
-        # Prefer raw content over summarized markdown for synthesis
+    # Sort sources by authority + relevance (authority-first)
+    sorted_sources = sorted(
+        sources,
+        key=lambda s: (
+            (2.0 if s.authority_boost else 0.0)
+            + (1.0 if s.is_primary else 0.0)
+            + (s.relevance_score * 0.5)
+            + {"high": 1.0, "medium": 0.5, "low": 0.2, "empty": 0.0}.get(s.quality, 0.0)
+        ),
+        reverse=True,
+    )
+
+    # Extract and tag insights by topic
+    topic_buckets: dict[str, list[tuple[str, int]]] = {
+        "definition": [],
+        "current_state": [],
+        "comparison": [],
+        "performance": [],
+        "issues": [],
+        "outlook": [],
+        "general": [],
+    }
+
+    seen_sentences: set[str] = set()
+
+    for src in sorted_sources:
         text = src.content or src.markdown or src.snippet
         if not text:
             continue
 
-        # Extract the most relevant sentences from the source
-        key_sents = _extract_key_sentences(text, query_keywords, max_sentences=2, query=query)
+        key_sents = _extract_key_sentences(text, query_keywords, max_sentences=3, query=query)
         for sent in key_sents:
-            insights.append((sent, src.citation_id))
+            sent_lower = sent.lower()
+            # Skip duplicates
+            if sent in seen_sentences:
+                continue
+            seen_sentences.add(sent)
 
-    # Deduplicate insights
-    insights = _deduplicate_insights(insights)
+            # Tag by topic
+            if any(w in sent_lower for w in ["is a", "refers to", "means", "definition", "describes"]):
+                bucket = "definition"
+            elif any(w in sent_lower for w in ["vs", "versus", "compared to", "unlike", "whereas", "alternative"]):
+                bucket = "comparison"
+            elif any(w in sent_lower for w in ["faster", "slower", "performance", "latency", "throughput", "benchmark", "memory", "cpu"]):
+                bucket = "performance"
+            elif any(w in sent_lower for w in ["deprecated", "removed", "issue", "bug", "error", "problem", "fix", "broken"]):
+                bucket = "issues"
+            elif any(w in sent_lower for w in ["future", "upcoming", "planned", "roadmap", "will be", "next year", "2027", "trend"]):
+                bucket = "outlook"
+            elif any(w in sent_lower for w in ["currently", "now", "in 2026", "adoption", "usage", "popular", "market share"]):
+                bucket = "current_state"
+            else:
+                bucket = "general"
 
-    if not insights:
-        return ""
+            topic_buckets[bucket].append((sent, src.citation_id))
 
-    # Build answer based on query type
+    # Build answer with logical flow based on query type
     answer_parts: list[str] = []
 
-    if query_type == "comparison":
+    def _add_section(title: str, items: list[tuple[str, int]], max_items: int = 4):
+        if not items:
+            return
+        answer_parts.append(f"**{title}**")
+        answer_parts.append("")
+        for text, cid in items[:max_items]:
+            answer_parts.append(f"- {text} [{cid}]")
+        answer_parts.append("")
+
+    if query_type == "definition":
+        answer_parts.append(f"### Definition: {query}")
+        answer_parts.append("")
+        _add_section("What it is", topic_buckets["definition"])
+        _add_section("How it works", topic_buckets["general"])
+        _add_section("Current adoption", topic_buckets["current_state"])
+
+    elif query_type == "comparison":
         answer_parts.append(f"### Comparison: {query}")
         answer_parts.append("")
-        for text, cid in insights[:5]:
-            answer_parts.append(f"- {text} [{cid}]")
-
-    elif query_type == "problem":
-        answer_parts.append(f"### Problem & Solution: {query}")
-        answer_parts.append("")
-        # First insight often describes the problem
-        if insights:
-            answer_parts.append(f"**Situation:** {insights[0][0]} [{insights[0][1]}]")
-            answer_parts.append("")
-        # Subsequent insights are alternatives/solutions
-        answer_parts.append("**Key points:**")
-        for text, cid in insights[1:5]:
-            answer_parts.append(f"- {text} [{cid}]")
+        _add_section("Key differences", topic_buckets["comparison"])
+        _add_section("Performance", topic_buckets["performance"])
+        _add_section("Current landscape", topic_buckets["current_state"])
 
     elif query_type == "howto":
         answer_parts.append(f"### Guide: {query}")
         answer_parts.append("")
-        for i, (text, cid) in enumerate(insights[:5], 1):
-            answer_parts.append(f"{i}. {text} [{cid}]")
+        _add_section("Overview", topic_buckets["definition"])
+        _add_section("Steps", topic_buckets["general"])
+        _add_section("Common issues", topic_buckets["issues"])
 
-    elif query_type == "definition":
-        answer_parts.append(f"### Definition: {query}")
+    elif query_type == "problem":
+        answer_parts.append(f"### Problem & Solution: {query}")
         answer_parts.append("")
-        for text, cid in insights[:4]:
-            answer_parts.append(f"- {text} [{cid}]")
+        _add_section("Situation", topic_buckets["general"][:1])
+        _add_section("Known issues", topic_buckets["issues"])
+        _add_section("Recommendations", topic_buckets["current_state"])
 
-    else:  # general / news
-        answer_parts.append(f"### Quick Answer: {query}")
+    else:  # general / news / trends
+        answer_parts.append(f"### Key Findings: {query}")
         answer_parts.append("")
-        for text, cid in insights[:5]:
-            answer_parts.append(f"- {text} [{cid}]")
+        _add_section("Current state", topic_buckets["current_state"])
+        _add_section("Performance & benchmarks", topic_buckets["performance"])
+        _add_section("Comparisons", topic_buckets["comparison"])
+        _add_section("Known issues", topic_buckets["issues"])
+        _add_section("Outlook", topic_buckets["outlook"])
 
-    answer_parts.append("")
     answer_parts.append("---")
     answer_parts.append("")
 
@@ -835,29 +896,64 @@ def _extractive_summarize(markdown: str, max_tokens: int, query: str = "") -> st
     return summary + "\n\n_[Content summarized for brevity]_"
 
 
-def _prioritize_urls(urls: list[str]) -> list[str]:
-    """Sort URLs so high-trust domains are fetched first."""
-    from ..utils.url import get_domain
+# ── Spam / SEO blog domain blacklist ──
+_SPAM_DOMAINS = {
+    # Low-quality SEO aggregators and bootcamp marketing blogs
+    "nucamp.co", "pillaiinfotech.com", "indiit.com", "cloudbuzz.ai",
+    "acemindtech.com", "solutionsuggest.com", "geeksforgeeks.org",
+    "tutorialspoint.com", "javatpoint.com", "w3schools.com",
+    "simplilearn.com", "intellipaat.com", "edureka.co",
+    # Redirect / placeholder pages
+    "google.com", "bing.com", "yahoo.com",
+}
 
-    HIGH_TRUST = {
-        "github.com", "gitlab.com", "stackoverflow.com", "stackexchange.com",
-        "docs.python.org", "developer.mozilla.org", "react.dev", "nextjs.org",
-        "nodejs.org", "go.dev", "pkg.go.dev", "doc.rust-lang.org", "docs.rs",
-        "learn.microsoft.com", "postgresql.org", "kubernetes.io", "fastapi.tiangolo.com",
-        "docs.djangoproject.com", "vuejs.org", "svelte.dev",
-    }
+# Authority tier for scoring
+_AUTHORITY_TIER1 = {
+    "github.com", "gitlab.com", "stackoverflow.com", "stackexchange.com",
+    "docs.python.org", "developer.mozilla.org", "react.dev", "nextjs.org",
+    "nodejs.org", "go.dev", "pkg.go.dev", "doc.rust-lang.org", "docs.rs",
+    "learn.microsoft.com", "postgresql.org", "kubernetes.io", "fastapi.tiangolo.com",
+    "docs.djangoproject.com", "vuejs.org", "svelte.dev", "angular.io",
+    "astro.build", "kit.svelte.dev", "remix.run", "nuxt.com",
+    "docs.astro.build", "trpc.io", "prisma.io", "orm.drizzle.team",
+    "turso.tech", "neon.tech", "planetscale.com", "vercel.com",
+    "cloudflare.com", "workers.cloudflare.com", "aws.amazon.com",
+    "openai.com", "platform.openai.com", "anthropic.com", "claude.ai",
+    "docs.anthropic.com", "ai.google.dev", "gemini.google.com",
+    "arxiv.org", "semanticscholar.org", "scholar.google.com",
+    "ieee.org", "acm.org", "usenix.org",
+    "npmjs.com", "pypi.org", "crates.io", "pkg.go.dev",
+    "huggingface.co", "paperswithcode.com",
+}
+
+
+def _prioritize_urls(urls: list[str]) -> list[str]:
+    """Sort URLs so high-trust domains are fetched first.
+
+    Filters out known spam/SEO domains and penalizes low-authority blogs.
+    """
+    from ..utils.url import get_domain
 
     def _score(url: str) -> int:
         domain = get_domain(url)
-        if any(d in domain for d in HIGH_TRUST):
+        # Spam domains: discard (return high score so they sort last, then we filter)
+        if any(d in domain for d in _SPAM_DOMAINS):
+            return 999
+        # Tier 1 authority
+        if any(d in domain for d in _AUTHORITY_TIER1):
             return 0
         if domain.endswith((".edu", ".gov", ".ac.kr", ".go.kr", ".or.kr")):
             return 1
+        # Developer-focused platforms
         if any(d in domain for d in ["medium.com", "dev.to", "blog.", "tistory.com", "velog.io"]):
             return 3
         return 2
 
-    return sorted(urls, key=_score)
+    scored = [(u, _score(u)) for u in urls]
+    # Filter out spam (score 999)
+    scored = [(u, s) for u, s in scored if s < 900]
+    scored.sort(key=lambda x: x[1])
+    return [u for u, _ in scored]
 
 
 async def _probe_network(engine) -> dict:
@@ -1013,100 +1109,32 @@ def format_for_llm(
     lines.append("")
 
     for src in result.sources:
-        badge = ""
-        if src.quality == "high":
-            badge = " **[HIGH]**"
-        elif src.quality == "medium":
-            badge = " *[med]*"
-        elif src.quality == "low":
-            badge = " *[low]*"
-        elif src.quality == "blocked":
-            badge = " **[BLOCKED]**"
+        # Minimal badge: only show HIGH quality and freshness
+        badge = " **[HIGH]**" if src.quality == "high" else ""
 
-        type_hint = f" _({src.content_type})_" if src.content_type else ""
-
-        # Code-aware badges
-        code_badges: list[str] = []
-        if src.is_api_reference:
-            code_badges.append("[API-REF]")
-        if src.is_tutorial:
-            code_badges.append("[TUTORIAL]")
-        if src.is_error_solution:
-            code_badges.append("[ERROR-FIX]")
-        if src.code_languages:
-            code_badges.append(f"[{', '.join(src.code_languages[:3])}]")
-        if src.code_to_text_ratio > 0.2:
-            code_badges.append(f"[code-heavy {src.code_to_text_ratio:.0%}]")
-        code_badge_str = " " + " ".join(code_badges) if code_badges else ""
-
-        # Source type badge
-        source_type_badge = ""
-        if src.source_type and src.source_type != "unknown":
-            source_type_badge = f" [{src.source_type.upper().replace('_', '-')}]"
-
-        # Primary source indicator
-        primary_badge = " [PRIMARY]" if src.is_primary else ""
-
-        # Freshness (separated)
-        freshness_parts: list[str] = []
-        if src.published_date:
-            freshness_parts.append(f"published: {src.published_date}")
-        if src.last_updated:
-            freshness_parts.append(f"updated: {src.last_updated}")
+        freshness = ""
         if src.freshness_days is not None:
             if src.freshness_days > 365:
-                freshness_parts.append(f"age: {src.freshness_days // 30}mo")
+                freshness = f" | age: {src.freshness_days // 30}mo"
             else:
-                freshness_parts.append(f"age: {src.freshness_days}d")
-        freshness = f" [{' | '.join(freshness_parts)}]" if freshness_parts else ""
+                freshness = f" | age: {src.freshness_days}d"
+        elif src.published_date:
+            freshness = f" | {src.published_date}"
 
-        authority = " [AUTHORITY]" if src.authority_boost else ""
-        cross_engine = ""
-        if len(src.engines_found) > 1:
-            cross_engine = f" [✓ {len(src.engines_found)} engines]"
+        authority = " | 🔒" if src.authority_boost else ""
+        cross_engine = f" | ✓{len(src.engines_found)}" if len(src.engines_found) > 1 else ""
 
         lines.append(
-            f"#### [{src.citation_id}] {src.title}{badge}{type_hint}{source_type_badge}{primary_badge}{code_badge_str}{freshness}{authority}{cross_engine}"
+            f"#### [{src.citation_id}] {src.title}{badge}{freshness}{authority}{cross_engine}"
         )
-        lines.append(f"URL: {src.url}")
+        lines.append(f"{src.url}")
 
-        # GitHub metadata table
-        if src.github_meta:
+        if src.github_meta and "stars" in src.github_meta:
             gm = src.github_meta
-            gh_parts: list[str] = []
-            if "stars" in gm:
-                gh_parts.append(f"⭐ {gm['stars']}")
-            if "primary_language" in gm:
-                gh_parts.append(f"lang: {gm['primary_language']}")
-            if "license" in gm:
-                gh_parts.append(f"license: {gm['license']}")
+            gh_info = f"⭐ {gm['stars']}"
             if "last_updated" in gm:
-                gh_parts.append(f"last push: {gm['last_updated'][:10]}")
-            if "topics" in gm:
-                gh_parts.append(f"topics: {', '.join(gm['topics'][:5])}")
-            if gh_parts:
-                lines.append(f"_GitHub: {' | '.join(gh_parts)}_")
-
-        if src.relevance_score > 0:
-            lines.append(f"_relevance: {src.relevance_score:.1f}_")
-
-        if src.api_signatures:
-            sig_preview = "; ".join(
-                s["signature"][:80] for s in src.api_signatures[:6]
-            )
-            lines.append(f"_APIs: {sig_preview}_")
-
-        if src.package_refs:
-            pkg_preview = ", ".join(
-                f"{p['package']} ({p['language']})" for p in src.package_refs[:5]
-            )
-            lines.append(f"_Packages: {pkg_preview}_")
-
-        if src.external_links:
-            link_preview = ", ".join(
-                f"[{link['text'][:40]}]({link['url']})" for link in src.external_links[:5]
-            )
-            lines.append(f"_Links: {link_preview}_")
+                gh_info += f" | updated {gm['last_updated'][:10]}"
+            lines.append(f"_{gh_info}_")
 
         if src.markdown:
             content = truncate_for_llm(src.markdown, max_tokens_per_source)

@@ -3,7 +3,7 @@
 
 from maru_deep_pro_search.engines.base import ContentType
 from maru_deep_pro_search.engines.base import _guess_content_type
-from maru_deep_pro_search.research.expander import _select_angles, expand_query
+from maru_deep_pro_search.research.expander import _detect_intent, expand_query
 from maru_deep_pro_search.utils.url import is_authority_domain
 
 
@@ -13,18 +13,17 @@ class TestKoreanQueryExpansion:
         assert any("한국" in sq or "국내" in sq for sq in subqueries)
 
     def test_korean_angles_selected(self):
-        angles = _select_angles("한국 개발자 커뮤니티")
-        assert "korean_community" in angles
-        assert "korean_docs" in angles
+        intent = _detect_intent("한국 개발자 커뮤니티")
+        assert intent == "korean"
 
     def test_english_query_not_korean(self):
-        angles = _select_angles("python asyncio tutorial")
-        assert "korean_community" not in angles
-        assert any(a.startswith("recent") for a in angles)
+        intent = _detect_intent("python asyncio tutorial")
+        assert intent != "korean"
+        assert intent == "howto"
 
     def test_mixed_query_korean_priority(self):
-        angles = _select_angles("Korean python developer community")
-        assert "korean_community" in angles
+        intent = _detect_intent("Korean python developer community")
+        assert intent == "korean"
 
 
 class TestKoreanDomains:

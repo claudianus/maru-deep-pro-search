@@ -75,13 +75,53 @@ def _compute_bm25_scores(query: str, results: list[SearchResult]) -> dict[str, f
     }
 
 
+# Inline authority/spam lists to avoid circular imports
+_TIER1_DOMAINS = {
+    "github.com", "gitlab.com", "stackoverflow.com",
+    "docs.python.org", "developer.mozilla.org", "react.dev", "nextjs.org",
+    "nodejs.org", "go.dev", "pkg.go.dev", "doc.rust-lang.org",
+    "learn.microsoft.com", "postgresql.org", "kubernetes.io",
+    "docs.djangoproject.com", "vuejs.org", "svelte.dev", "angular.io",
+    "astro.build", "remix.run", "nuxt.com",
+    "trpc.io", "prisma.io", "orm.drizzle.team",
+    "turso.tech", "neon.tech", "planetscale.com", "vercel.com",
+    "cloudflare.com", "workers.cloudflare.com", "aws.amazon.com",
+    "openai.com", "platform.openai.com", "anthropic.com", "claude.ai",
+    "docs.anthropic.com", "ai.google.dev",
+    "arxiv.org", "semanticscholar.org", "scholar.google.com",
+    "ieee.org", "acm.org", "usenix.org",
+    "npmjs.com", "pypi.org", "crates.io",
+    "huggingface.co", "paperswithcode.com",
+}
+
+_SPAM_DOMAINS_LOCAL = {
+    "nucamp.co", "pillaiinfotech.com", "indiit.com", "cloudbuzz.ai",
+    "acemindtech.com", "solutionsuggest.com", "geeksforgeeks.org",
+    "tutorialspoint.com", "javatpoint.com", "w3schools.com",
+    "simplilearn.com", "intellipaat.com", "edureka.co",
+}
+
+
 def _score_metadata(result: SearchResult) -> float:
     """Score a result based on metadata quality signals."""
     score = 0.0
+    domain = result.url.split('/')[2] if '/' in result.url else ""
 
-    # Authority boost
-    if is_authority_domain(result.url):
-        score += _AUTHORITY_BOOST
+    # Authority boost — stronger for tier-1 domains
+    if any(d in domain for d in _TIER1_DOMAINS):
+        score += _AUTHORITY_BOOST * 2.0  # 4.0 for tier-1
+    elif is_authority_domain(result.url):
+        score += _AUTHORITY_BOOST  # 2.0 for general authority
+
+    # Spam / SEO blog penalty
+    if any(d in domain for d in _SPAM_DOMAINS_LOCAL):
+        score -= 3.0
+    # Medium penalty — most Medium posts are low-quality SEO content
+    if "medium.com" in domain:
+        score -= 1.5
+    # Generic blog penalty
+    if domain.startswith("blog.") or ".blog" in domain:
+        score -= 0.5
 
     # Content type preference
     if result.likely_content_type == ContentType.DOCUMENTATION:

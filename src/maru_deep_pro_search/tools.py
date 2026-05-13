@@ -383,7 +383,12 @@ async def tool_deep_research(
     # Check cache
     cache = get_search_cache()
     key = cache_key(
-        "deep_research", engine, str(max_sources), str(expand_queries), str(primary_sources_only), query
+        "deep_research",
+        engine,
+        str(max_sources),
+        str(expand_queries),
+        str(primary_sources_only),
+        query,
     )
     cached = cache.get(key)
     if cached is not None:

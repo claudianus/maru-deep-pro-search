@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import contextlib
-from typing import Any
 import logging
 import re
 import time
+from typing import Any
 from urllib.parse import quote_plus, urljoin
 
 from ..exceptions import NetworkError, ParseError

@@ -1,88 +1,43 @@
 # Agent Instructions — maru-deep-pro-search
 
-> **CRITICAL**: PyPI deployment is **AUTOMATED** by GitHub Actions on git tag push. DO NOT run `twine upload` manually.
+> **CRITICAL**: PyPI deployment is **AUTOMATED** on git tag push. DO NOT use `twine`.
 
 ## Quick Start
 
 ```bash
-# Setup
 uv sync
 source .venv/bin/activate
 
-# Single-file checks (fast feedback)
+# Single-file (fast feedback)
 uv run ruff check src/maru_deep_pro_search/<file>.py
-uv run ruff format --check src/maru_deep_pro_search/<file>.py
 uv run mypy src/maru_deep_pro_search/<file>.py
 
 # Full validation
 uv run ruff check . && uv run ruff format --check . && uv run mypy src/
 uv run pytest tests/ -q
-
-# Run MCP server locally
-uv run python -m maru_deep_pro_search.server
 ```
 
-**Definition of Done** — Before declaring a task complete, verify:
-- [ ] `ruff check .` passes with zero errors
+**Definition of Done**
+- [ ] `ruff check .` passes
 - [ ] `ruff format --check .` passes
-- [ ] `mypy src/maru_deep_pro_search` passes (0 errors)
+- [ ] `mypy src/` passes (0 errors)
 - [ ] `pytest tests/ -q` passes (273 tests)
-- [ ] `__version__` in `__init__.py` matches `pyproject.toml` if version changed
-- [ ] Direct push to `main` is PROHIBITED — open a PR
-
----
-
-## Tech Stack
-
-- **Python**: 3.12
-- **Package Manager**: uv (replaces pip/poetry)
-- **Formatter/Linter**: ruff (line length 100)
-- **Type Checker**: mypy (strict)
-- **Test**: pytest + pytest-asyncio + pytest-cov
-- **Search Scrapers**: scrapling (DuckDuckGo, Google, Bing, Baidu, Naver, Yahoo, Ecosia, Startpage, Bing)
-- **API**: MCP (Model Context Protocol) server with 10 tools
-- **CI**: GitHub Actions (lint, test, CodeQL, PyPI publish)
-
----
-
-## Setup Commands
-
-### File-scoped (preferred — fast feedback)
-
-```bash
-# Type-check a single file
-uv run mypy src/maru_deep_pro_search/<file>.py
-
-# Lint a single file
-uv run ruff check src/maru_deep_pro_search/<file>.py
-uv run ruff format --check src/maru_deep_pro_search/<file>.py
-
-# Run one test file
-uv run pytest tests/test_<name>.py -v
-```
-
-### Full suite (only when explicitly requested)
-
-```bash
-uv run ruff check . && uv run ruff format --check . && uv run mypy src/
-uv run pytest tests/ -v
-```
+- [ ] `__version__` synced with `pyproject.toml`
+- [ ] Direct push to `main` is **PROHIBITED** — open a PR
 
 ---
 
 ## Code Style
 
-- **Formatting**: ruff, line length 100
-- **Imports**: `from __future__ import annotations` at top; sorted by `ruff check --fix`
-- **Types**: Full type hints required; `Any` only with `# type: ignore[no-any-return]` if runtime validation is impossible
-- **Naming**: snake_case for functions/variables, PascalCase for classes
+- **ruff**: line length 100
+- **Imports**: `from __future__ import annotations` at top
+- **Types**: Full hints; `Any` only with `# type: ignore[no-any-return]`
+- **Naming**: snake_case (functions), PascalCase (classes)
 - **Docstrings**: Google style for public APIs
 
 ### Inheritance Safety (MANDATORY)
 
 **ALL subclasses overriding `__init__` MUST call `super().__init__()` as the FIRST statement.**
-
-The `SearchEngine` base class initializes `self._circuit_breaker` and `self._last_request_time` in `__init__`. Skipping `super().__init__()` causes silent failures that only explode at runtime when `search()` is called:
 
 ```python
 # ❌ WRONG
@@ -101,7 +56,6 @@ Every new `SearchEngine` subclass MUST include an instantiation test:
 ```python
 engine = SomeNewEngine()
 assert hasattr(engine, '_circuit_breaker')
-assert hasattr(engine, '_last_request_time')
 ```
 
 ---
@@ -116,133 +70,60 @@ uv run pytest tests/ -v
 uv run pytest tests/test_engines.py -v
 ```
 
-**Integration tests** (`test_tool_integration.py`) call real search engines. They may flake if engines are down — this is **acceptable**; it means we notice when engines break.
+**Integration tests** (`test_tool_integration.py`) call real search engines. They may flake if engines are down — this is **acceptable**.
 
 **Output format invariants** (do NOT break without updating tests):
 - `deep_research`: `## Research:`, `_engines:`, `### Sources`, `#### [N] Title`, `_score:`
-- `web_search`: `Search:`, numbered results `1. **Title** [N]`, indented URLs
+- `web_search`: `Search:`, numbered results `1. **Title** [N]`
 - `fetch_page`: `EXTERNAL CONTENT`, `AGENT SECURITY PROTOCOL`
 - `parallel_search`: `### Comparison Summary`, `| Query | Top Source | Type | Primary |`
 
 ---
 
-## Project Structure
-
-```
-src/maru_deep_pro_search/
-├── server.py          # MCP server + 10 tools + prompts
-├── tools.py           # MCP tool implementations + TOOL_GUIDANCE
-├── config.py          # Runtime configuration
-├── exceptions.py      # Structured exception hierarchy
-├── engines/           # 9 search engines + registry
-│   ├── base.py        # SearchEngine ABC + circuit breaker wrapping
-│   ├── registry.py    # SearchEngineRegistry (factory)
-│   └── duckduckgo.py  # Default engine (DuckDuckGo SSR)
-├── research/          # Deep research pipeline
-│   ├── deep.py        # Search-only deep research (319 lines)
-│   └── semantic_ranker.py  # Optional sentence-transformers
-├── harness/           # KnowledgeStore (SQLite) + workflow engine
-└── utils/             # retry, url, query sanitize
-```
-
----
-
-## Architecture Decisions
-
-1. **100% FREE — No paid APIs ever** — All search, ranking, extraction work with zero API keys. Only direct scraping and local computation.
-2. **Engine registry pattern** — `SearchEngineRegistry` enables multi-engine failover (all free scrapers).
-3. **BM25 + metadata ranking** — Perplexity-level quality using only local computation.
-4. **Citation-native output** — All results include `[1]`, `[2]` citation IDs without external services.
-5. **Research-first enforcement** — MCP prompts, tool descriptions, and `TOOL_GUIDANCE` FORCE agents to research before coding.
-6. **Prompt injection defense** — Fetched content is sanitized (zero-width chars removed, chat tokens neutralized).
-7. **Three-layer rate limiting** — `asyncio.Semaphore(3)` + per-engine cooldowns + global token bucket.
-8. **Session-reuse stealth** — Google/Startpage use `AsyncStealthySession` (browser reuse) instead of new browser per call.
-9. **MCP tools provide DATA, not INTELLIGENCE** — `deep_research` returns ranked URLs + metadata only. The agent's LLM decides which sources to read and how to synthesize.
-
----
-
-## Security
-
-- **Secrets**: Use environment variables; never hardcode credentials
-- **urllib3**: Pinned to `>=2.7.0` (CVE-2026-44431)
-- **Fetched content**: Always sanitized before LLM injection
-- **GitGuardian**: Runs on every PR to catch leaked secrets
-
----
-
 ## Things to Avoid (Gotchas)
 
-### ❌ `__version__` is NOT auto-synced with `pyproject.toml`
-`src/maru_deep_pro_search/__init__.py` contains hard-coded `__version__`. PyPI can show `0.11.3` while runtime reports `0.9.2`. **Always verify both files on version bumps.**
-
-### ❌ PyPI does NOT allow re-uploading the same version
-Once a tag is pushed, the wheel is immutable. If a bug is discovered post-release, you MUST cut a new version (e.g., `0.11.2` → `0.11.3`).
-
-### ❌ cubic's AI commits can still break lint
-cubic pushes commits but does NOT run `ruff check` first. After ANY cubic push, run lint locally or wait for CI and push a follow-up fix.
-
-### ❌ dependabot dismiss requires reading the FULL advisory
-The summary often understates the required version. CVE-2026-44431 summary suggested `>=2.2.2`; the full text required `>=2.7.0`.
-
-### ❌ `hasattr()` hides intent
-Prefer explicit dataclass contracts. `hasattr(src, "markdown")` silently returns `False` after refactors instead of failing loud.
-
-### ❌ Dead code is worse than no code
-Always verify computed values are actually consumed. `urls_to_prioritize()` in `deep.py` was computed but never used.
+| Trap | Why | Fix |
+|------|-----|-----|
+| `__version__` ≠ `pyproject.toml` | Runtime reports wrong version | Verify BOTH files on every bump |
+| PyPI re-upload same version | Wheel is immutable | Must cut new version (0.11.2 → 0.11.3) |
+| cubic push breaks lint | cubic does NOT run `ruff check` before push | Always run full validation after cubic push |
+| dependabot summary only | Summary understates required version | Read FULL advisory text before dismissing |
+| `hasattr()` hides intent | Returns `False` silently after refactors | Use explicit dataclass contracts |
+| `str(cache.get(key))` | Converts `None` to `"None"`, masks bugs | Use `assert key is not None` |
+| `\|\| true` in CI | Silently ignores failures, wastes time | Remove entirely; let CI actually fail |
+| Dead code | Computed but never consumed | Always verify values are used |
+| f-string without placeholders | ruff F541 lint error | Remove `f` prefix if no `{}` |
 
 ---
 
 ## Release Workflow
 
 ```bash
-# 1. Update version in BOTH files
-#    pyproject.toml: version = "X.Y.Z"
-#    src/maru_deep_pro_search/__init__.py: __version__ = "X.Y.Z"
-
-# 2. Update CHANGELOG.md with new version section
-
-# 3. Update docs/index.html hero badge
-
-# 4. Run full validation
+# 1. Update version in BOTH pyproject.toml AND __init__.py
+# 2. Update CHANGELOG.md + docs/index.html badge
+# 3. Full validation
 uv run ruff check . && uv run ruff format --check . && uv run mypy src/
 uv run pytest tests/ -v
-
-# 5. Commit on main (via PR)
-git checkout -b release/vX.Y.Z
-git add -A && git commit -m "release: vX.Y.Z"
-# Open PR → cubic AI review → merge
-
-# 6. Tag triggers PyPI auto-deploy
-git checkout main && git pull
-git tag vX.Y.Z && git push origin vX.Y.Z
-
-# 7. Verify
-gh run watch --workflow=publish.yml
-python -c "import maru_deep_pro_search; print(maru_deep_pro_search.__version__)"
+# 4. PR → cubic review → merge
+# 5. git checkout main && git pull
+# 6. git tag vX.Y.Z && git push origin vX.Y.Z
+# 7. gh run watch --workflow=publish.yml
 ```
 
 ---
 
 ## Code Review & Merge Workflow
 
-### Required: PR-based development
-
-**Direct pushes to `main` are PROHIBITED.** All changes must go through a Pull Request so cubic AI review can run.
-
 ```
 1. git checkout -b feat/description
 2. 작업 + 커밋
-3. (선택) cubic review --base main   # 로컬 사전 검증
-4. git push -u origin feat/description
-5. gh pr create --title "feat: description" --body "..."
-6. cubic AI가 PR 자동 리뷰
-7. 피드백 반영 후 push
-8. 머지 조건: CI 전체 통과 + cubic resolved + 1 approving review
+3. git push -u origin feat/description
+4. gh pr create --title "feat: description" --body-file /tmp/pr.md
+5. cubic AI 리뷰 → 피드백 반영 → push
+6. 머지 조건: CI 전체 통과 + cubic pass
 ```
 
-### Post-cubic-push checklist
-
-After ANY cubic AI push to a PR branch:
+**After ANY cubic push to PR branch:**
 ```bash
 git pull origin <branch>
 uv run ruff check src/ && uv run ruff format --check src/ && uv run mypy src/
@@ -251,107 +132,69 @@ uv run pytest tests/ -q
 
 ---
 
-## Permissions
-
-### Allowed without prompting
-- Read/list files
-- Single-file lint, type check, format
-- Single test file run
-- Edit existing code
-
-### Ask first
-- `uv add` new dependencies
-- `git push` to remote
-- File deletion
-- Full test suite or E2E runs
-- Version tag creation
-
----
-
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| `docs/engine_insights.md` | 10 scraping insights (selectors, DOM quirks) |
-| `docs/lessons_learned.md` | Rate limit architecture, anti-bot strategies, obfuscated DOM recovery |
-| `AGENT_COMPATIBILITY.md` | Per-agent setup (Claude, Cursor, Kimi, etc.) |
-
-**When modifying engines**: Read `docs/lessons_learned.md` first. It contains the rationale for every cooldown value and proven selector.
-
----
-
-## Skills (SKILL.md)
-
-Modular skills for MCP-compatible agents. Each skill provides domain-specific guidance:
-
-| Skill | Purpose | Trigger |
-|-------|---------|---------|
-| `skills/deep-research/SKILL.md` | How to use `deep_research` effectively | Before technical decisions |
-| `skills/web-search/SKILL.md` | How to use `web_search` + engine selection | Quick lookups |
-| `skills/fetch-page/SKILL.md` | Safe content fetching + risk levels | Reading external sources |
-| `skills/parallel-search/SKILL.md` | Comparative multi-query search | Technology comparisons |
-
-Load skills via `skills-mcp` or include directly in agent context.
-
----
-
 ## Benchmarks
 
-Search quality is measured against TREC-standard IR metrics:
-
 ```bash
-# Run search quality benchmark (10 queries, web_search vs deep_research)
 uv run python benchmark/search_quality_benchmark.py
 ```
 
-Metrics: Precision@K, Recall@K, NDCG@K, MRR, response time.
+| Metric | web_search (Bing) | deep_research (multi) | Delta |
+|--------|-------------------|----------------------|-------|
+| Precision@5 | 0.140 | **0.260** | +86% |
+| NDCG@10 | 0.488 | **0.668** | +36% |
+| MRR | 0.483 | **0.603** | +25% |
 
-**Latest result** (10 queries, Bing single vs multi-engine cross-ranking):
-
-| Metric | web_search | deep_research | Delta |
-|--------|-----------|---------------|-------|
-| Precision@5 | 0.140 | **0.260** | **+86%** |
-| NDCG@10 | 0.488 | **0.668** | **+36%** |
-| MRR | 0.483 | **0.603** | **+25%** |
-
-Multi-engine cross-ranking outperforms single-engine on all relevance metrics.
-Trade-off: ~2× response time (multi-engine search overhead).
+Trade-off: ~2× response time.
 
 ---
 
 ## Lessons Learned from Execution
 
-These insights were discovered by **running** the code, not by reading it. They capture behavior that is invisible in static analysis.
+These insights were discovered by **running** the code, not by reading it.
 
-### Benchmark Execution
+### Agent Behavior Design
 
-1. **DuckDuckGo circuit breaker storm** — Running benchmark modes back-to-back without delay causes the circuit breaker to open on the second mode. Always insert `await asyncio.sleep(5)` between `web_search` and `deep_research` benchmark runs.
-2. **Single-engine can win individual queries** — `deep_research` does NOT universally dominate. On "httpx async client tutorial" and "pytest asyncio fixture", Bing single-engine matched or beat multi-engine. Average matters, not every query.
-3. **Ground truth patterns must be broad** — Narrow patterns (e.g., only `nvd.nist.gov` for CVE queries) penalize legitimate security sources (GitHub Advisory, Snyk). Binary relevance scoring is sensitive to pattern breadth.
-4. **Query type strongly predicts engine quality** — Technical documentation queries (FastAPI, Python docs) benefit massively from multi-engine. Comparison queries ("vs") and CVE queries show smaller or negative deltas.
+1. **Token efficiency IS enforcement** — Long docs get ignored. 1-line rules get followed. SKILL.md was compressed ~50% and protocol rewritten into 13 one-line imperatives.
+2. **Imperative > descriptive** — "STOP and search immediately" works better than "When you encounter uncertainty, consider searching."
+3. **Mid-task search triggers are the real value** — Agents search once at start then code for 30min. Error-driven, refactor-driven, and 10-15min self-check triggers are what actually change behavior.
 
 ### mypy Strict Mode (57 → 0 errors)
 
-1. **`cache_key` requires explicit cast** — `dict.get()` returns `str | None`; mypy cannot narrow through `if key is not None`. Use `assert key is not None` or explicit `if key is None: raise TypeError(...)`. **Never use `str(cache.get(key))`** — it silently converts `None` to `"None"` and masks missing-cache bugs.
-2. **Loop variable shadowing breaks inference** — Reusing the same variable name in nested loops causes mypy to infer the outer variable's type from the inner loop's assignment.
-3. **`__new__` attribute access is invisible** — Dataclass `__new__` implementations bypass mypy's attribute tracking. Accessing attributes set in `__new__` requires `# type: ignore[attr-defined]` or a typed protocol.
-4. **`Exception` catch narrows too wide** — `except Exception as e:` gives `e: Exception`. If you later access subclass-specific attributes, assert the type: `assert isinstance(e, MyError)`.
-5. **Session redefinition across branches** — Assigning `session = ...` in both `if` and `else` branches with different types requires explicit annotation on the first assignment.
+4. **`cache_key` explicit cast** — `dict.get()` returns `str | None`. Never use `str(cache.get(key))` — it converts `None` to `"None"`. Use `assert key is not None`.
+5. **Loop variable shadowing** — Reusing the same variable name in nested loops breaks mypy inference.
+6. **`__new__` attribute access** — Dataclass `__new__` bypasses mypy tracking. Requires `# type: ignore[attr-defined]` or typed protocol.
+7. **`Exception` catch narrows too wide** — `except Exception as e:` gives `e: Exception`. Assert subclass before accessing specific attributes.
+8. **Session redefinition across branches** — Same variable in `if`/`else` with different types needs explicit annotation on first assignment.
 
-### cubic AI Review Behavior
+### CI & Automation
 
-1. **cubic pushes with `--force-with-lease`** — It does NOT open a separate commit; it amends and force-pushes to the PR branch. Always `git pull --rebase` before adding your own commits.
-2. **cubic does NOT run lint before push** — After cubic pushes, always run the full validation suite locally. The PR CI will catch it, but local verification is faster.
-3. **cubic focuses on correctness over style** — It catches logic bugs and security issues but rarely comments on naming or docstring quality. Those remain the human's responsibility.
+9. **`\|\| true` silently ignores failures** — Found in both `test.yml` and `lint.yml`. Removes all signal while wasting runner time.
+10. **`gh pr create` body with backticks/pipes/dollars** — Bash interprets them as command substitution. Always use `--body-file`.
+11. **cubic reviews stale commits** — Trust the check status (`cubic · AI code reviewer: pass`), not just the comment text. Comments may reflect an older commit.
+12. **pytest count changes must be intentional** — When tests decrease, verify it's expected (e.g., removed feature).
 
-### Multi-Engine Trade-offs
+### Packaging & Distribution
 
-| Dimension | Single-Engine (Bing) | Multi-Engine (deep_research) |
-|-----------|---------------------|------------------------------|
-| Precision@5 | 0.140 | **0.260** (+86%) |
-| MRR | 0.483 | **0.603** (+25%) |
-| Response Time | ~2s | ~4–6s |
-| Coverage | 1 engine | 3+ engines (dedup by class) |
-| Best For | Simple homepage lookups | Technical docs, cross-source verification |
+13. **Root-level files are NOT pip-installed** — Only files under package directories are installed. `skills/` must live inside `src/maru_deep_pro_search/skills/` with `[tool.setuptools.package-data]`.
+14. **YAML front matter traps** — `description: >` requires indent on continuation lines. Colons in strings need quoting (`'...'`).
+15. **f-string without placeholders** — ruff F541. Remove `f` prefix if no `{}` inside.
 
-**Rule of thumb**: If the query is "go to X's official docs", single-engine is sufficient. If the query is "how does X work" or "X vs Y", always use multi-engine.
+### Benchmark & Quality
+
+16. **DuckDuckGo circuit breaker storm** — Back-to-back benchmark modes without `asyncio.sleep(5)` opens the breaker. Always delay between modes.
+17. **Single-engine can win individual queries** — `deep_research` does NOT universally dominate. On "httpx async client tutorial" Bing single matched multi-engine. Average matters.
+18. **Ground truth patterns must be broad** — Narrow patterns (only `nvd.nist.gov` for CVE) penalize legitimate sources (GitHub Advisory, Snyk).
+
+---
+
+## Architecture Decisions (one-liners)
+
+1. **100% FREE** — No paid APIs ever.
+2. **Engine registry** — Multi-engine failover via `SearchEngineRegistry`.
+3. **BM25 + metadata ranking** — Perplexity-level quality, local computation only.
+4. **Citation-native** — `[1]`, `[2]` IDs without external services.
+5. **Research-first enforcement** — MCP prompts + `TOOL_GUIDANCE` force agents to search before coding.
+6. **Prompt injection defense** — Zero-width chars removed, chat tokens neutralized.
+7. **Three-layer rate limiting** — Semaphore(3) + per-engine cooldowns + token bucket.
+8. **Session-reuse stealth** — `AsyncStealthySession` for Google/Startpage.
+9. **MCP tools provide DATA, not INTELLIGENCE** — Agent's LLM decides synthesis.

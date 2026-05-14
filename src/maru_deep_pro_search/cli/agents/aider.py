@@ -209,6 +209,7 @@ class AiderAdapter(AgentAdapter):
         paths = [
             self._conventions_path("user"),
             self._config_path("user"),
+            self._ignore_path("user"),
         ]
         backups = [backup_file(p) for p in paths]
         return [b for b in backups if b is not None]

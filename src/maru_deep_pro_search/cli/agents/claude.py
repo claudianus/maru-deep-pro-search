@@ -87,7 +87,7 @@ class ClaudeAdapter(AgentAdapter):
         write_json_safe(path, config)
 
         # Also write .claude/settings.json with hooks + hook scripts
-        self._write_hooks(scope)
+        self._write_hooks()
         self._write_settings(scope)
         return True
 
@@ -102,15 +102,18 @@ class ClaudeAdapter(AgentAdapter):
             write_text_safe(md_path, new_content)
 
         # 2. Hook scripts (ensure they exist even if backup restored)
-        self._write_hooks(scope)
+        self._write_hooks()
 
         # 3. Custom commands
         self._write_commands(scope)
         return True
 
     # ── helpers ─────────────────────────────────────────────────
-    def _write_hooks(self, scope: str) -> None:
-        """Install the research-gate hook scripts that PreToolUse/PostToolUse call."""
+    def _write_hooks(self) -> None:
+        """Install the research-gate hook scripts that PreToolUse/PostToolUse call.
+
+        Claude hooks are global-only (user scope) per official docs.
+        """
         hooks_dir = Path.home() / ".claude" / "hooks"
         hooks_dir.mkdir(parents=True, exist_ok=True)
 

@@ -10,7 +10,7 @@ git clone https://github.com/claudianus/maru-deep-pro-search.git
 cd maru-deep-pro-search
 
 # Install with dev dependencies
-uv pip install -e ".[dev]"
+uv sync
 
 # Or use the install script
 bash scripts/install.sh

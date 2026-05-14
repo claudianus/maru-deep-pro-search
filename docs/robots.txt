@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://claudianus.github.io/maru-deep-pro-search/sitemap.xml

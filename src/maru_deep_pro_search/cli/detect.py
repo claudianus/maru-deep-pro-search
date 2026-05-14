@@ -86,6 +86,8 @@ def _detect_cline() -> bool:
     return (
         Path.home().joinpath(".vscode", "extensions", "saoudrizwan.claude-dev").exists()
         or Path.home().joinpath(".vscode", "extensions", "claude-dev").exists()
+        or Path.home().joinpath(".cline").exists()
+        or Path(".cline").exists()
     )
 
 

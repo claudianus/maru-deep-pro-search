@@ -22,7 +22,14 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from ..backup import backup_file, read_text_safe, restore_file, write_text_safe
+from ..backup import (
+    backup_dir,
+    backup_file,
+    read_text_safe,
+    restore_dir,
+    restore_file,
+    write_text_safe,
+)
 from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter, get_mcp_server_command
 
@@ -141,19 +148,52 @@ class ClineAdapter(AgentAdapter):
         return Path.home() / ".cline" / "mcp.json"
 
     def backup(self) -> list[Path]:
-        paths = [
+        file_paths = [
             self._mcp_path("user"),
             self._hooks_dir("user") / "PreToolUse.py",
         ]
-        backups = [backup_file(p) for p in paths]
-        return [b for b in backups if b is not None]
+        dir_paths = [
+            self._rules_dir("user"),
+            self._agents_dir("user"),
+            self._cron_dir("user"),
+        ]
+        skills = self._skills_dir("user")
+        if skills is not None:
+            dir_paths.append(skills)
+
+        backups: list[Path] = []
+        for p in file_paths:
+            if p.exists():
+                b = backup_file(p)
+                if b is not None:
+                    backups.append(b)
+        for p in dir_paths:
+            if p.exists():
+                b = backup_dir(p)
+                if b is not None:
+                    backups.append(b)
+        return backups
 
     def restore(self) -> bool:
         restored = False
+        # Restore files
         for p in [self._mcp_path("user"), self._hooks_dir("user") / "PreToolUse.py"]:
             backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
+        # Restore directories
+        dir_paths = [
+            self._rules_dir("user"),
+            self._agents_dir("user"),
+            self._cron_dir("user"),
+        ]
+        skills = self._skills_dir("user")
+        if skills is not None:
+            dir_paths.append(skills)
+        for p in dir_paths:
+            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            if backups:
+                restored = restore_dir(p, backups[0]) or restored
         return restored
 
     def install_mcp(self, scope: str = "user") -> bool:

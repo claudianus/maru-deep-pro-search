@@ -20,9 +20,11 @@ import shutil
 from pathlib import Path
 
 from ..backup import (
+    backup_dir,
     backup_file,
     read_json_safe,
     read_text_safe,
+    restore_dir,
     restore_file,
     write_json_safe,
     write_text_safe,
@@ -106,19 +108,30 @@ class WindsurfAdapter(AgentAdapter):
     skills_format = "flat"
 
     def backup(self) -> list[Path]:
-        paths = [
+        file_paths = [
             self._mcp_path("user"),
             self._hooks_path("user"),
+            self._agents_md_path("user"),
         ]
-        backups = [backup_file(p) for p in paths]
+        dir_paths = [
+            self._rules_dir("user"),
+        ]
+        backups = [backup_file(p) for p in file_paths if p.exists()]
+        backups += [backup_dir(p) for p in dir_paths if p.exists()]
         return [b for b in backups if b is not None]
 
     def restore(self) -> bool:
         restored = False
-        for p in [self._mcp_path("user"), self._hooks_path("user")]:
+        # Restore files
+        for p in [self._mcp_path("user"), self._hooks_path("user"), self._agents_md_path("user")]:
             backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
+        # Restore directories
+        for p in [self._rules_dir("user")]:
+            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            if backups:
+                restored = restore_dir(p, backups[0]) or restored
         return restored
 
     def install_mcp(self, scope: str = "user") -> bool:

@@ -67,3 +67,22 @@ def write_text_safe(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
+
+
+def backup_dir(path: Path) -> Path | None:
+    """Create a timestamped backup of a directory. Returns backup path or None."""
+    if not path.exists():
+        return None
+    backup_path = path.with_suffix(f".bak.{_timestamp()}")
+    shutil.copytree(path, backup_path)
+    return backup_path
+
+
+def restore_dir(path: Path, backup_path: Path) -> bool:
+    """Restore a directory from its backup. Returns True on success."""
+    if not backup_path.exists():
+        return False
+    if path.exists():
+        shutil.rmtree(path)
+    shutil.copytree(backup_path, path)
+    return True

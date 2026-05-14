@@ -15,6 +15,7 @@ Extension surfaces:
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -85,7 +86,7 @@ class WindsurfAdapter(AgentAdapter):
     def _hooks_path(self, scope: str) -> Path:
         if scope == "project":
             return Path(".windsurf") / "hooks.json"
-        return Path.home() / ".codeium" / "windsurf" / "hooks.json"
+        return Path.home() / ".windsurf" / "hooks.json"
 
     def _rules_dir(self, scope: str) -> Path:
         if scope == "project":
@@ -167,6 +168,18 @@ class WindsurfAdapter(AgentAdapter):
 
         hooks_path = self._hooks_path(scope)
         hooks = read_json_safe(hooks_path)
+
+        # Guard: if the existing file is a JSON array ([]), backup it
+        # and start fresh with a dict so we don't silently overwrite it.
+        if hooks_path.exists():
+            try:
+                with open(hooks_path, encoding="utf-8") as f:
+                    raw = json.load(f)
+                if isinstance(raw, list):
+                    backup_file(hooks_path)
+                    hooks = {}
+            except Exception:
+                pass
 
         # Merge hook definitions (idempotent)
         hook_defs = {

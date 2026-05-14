@@ -83,3 +83,95 @@ class TestSearchEngineRegistry:
             assert hasattr(engine, "_last_request_time"), (
                 f"{name}: missing _last_request_time — did __init__ forget super().__init__()?"
             )
+
+    def test_recommend_engines(self):
+        engines = SearchEngineRegistry.recommend_engines("python asyncio", count=3)
+        assert isinstance(engines, list)
+        assert len(engines) <= 3
+
+    def test_recommend_engines_handles_exception(self, monkeypatch):
+        original_create = SearchEngineRegistry.create
+        monkeypatch.setattr(
+            SearchEngineRegistry,
+            "create",
+            lambda name: (_ for _ in ()).throw(RuntimeError("fail")) if name == "duckduckgo" else original_create(name),
+        )
+        engines = SearchEngineRegistry.recommend_engines("test", count=5)
+        assert isinstance(engines, list)
+
+
+class TestBaseEngine:
+    @pytest.mark.asyncio
+    async def test_cooldown_wait(self):
+        from maru_deep_pro_search.engines.base import SearchEngine
+        engine = SearchEngineRegistry.create("duckduckgo")
+        engine.min_request_interval = 0.1
+        engine._last_request_time = 0
+        await engine._ensure_cooldown()
+        # Second call should wait
+        engine._last_request_time = __import__("time").monotonic()
+        start = __import__("time").monotonic()
+        await engine._ensure_cooldown()
+        assert __import__("time").monotonic() - start >= 0.08
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_open(self, monkeypatch):
+        from maru_deep_pro_search.engines.base import SearchEngine, NetworkError
+        engine = SearchEngineRegistry.create("duckduckgo")
+        monkeypatch.setattr(
+            engine._circuit_breaker,
+            "can_execute",
+            lambda: (_ for _ in ()).throw(NetworkError("open", retryable=False)),
+        )
+        with pytest.raises(NetworkError):
+            await engine.search("test", max_results=1)
+
+    def test_text_helper_none(self):
+        from maru_deep_pro_search.engines.base import _text
+        assert _text(None) == ""
+
+    def test_text_helper_get_all_text(self):
+        from unittest.mock import MagicMock
+        from maru_deep_pro_search.engines.base import _text
+        el = MagicMock()
+        el.text = None
+        el.get_all_text.return_value = "  hello  "
+        assert _text(el) == "hello"
+
+    def test_guess_content_type_korean_github(self):
+        from maru_deep_pro_search.engines.base import ContentType, _guess_content_type
+        result = _guess_content_type("https://github.com/user/repo", "")
+        assert result == ContentType.CODE
+
+    def test_guess_source_type_value_error(self):
+        from maru_deep_pro_search.engines.base import SourceType, guess_source_type_and_primary
+        st, is_prim = guess_source_type_and_primary("https://unknown.com", "")
+        assert st == SourceType.UNKNOWN
+
+    def test_text_helper_with_text(self):
+        from unittest.mock import MagicMock
+        from maru_deep_pro_search.engines.base import _text
+        el = MagicMock()
+        el.text = "  hello world  "
+        assert _text(el) == "hello world"
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_blocks_search(self, monkeypatch):
+        from maru_deep_pro_search.engines.base import SearchEngine, NetworkError
+        engine = SearchEngineRegistry.create("duckduckgo")
+
+        async def _false():
+            return False
+
+        monkeypatch.setattr(engine._circuit_breaker, "can_execute", _false)
+        with pytest.raises(NetworkError, match="circuit breaker is open"):
+            await engine.search("test", max_results=1)
+
+    def test_guess_source_type_invalid_enum(self, monkeypatch):
+        from maru_deep_pro_search.engines.base import SourceType, guess_source_type_and_primary
+        monkeypatch.setattr(
+            "maru_deep_pro_search.utils.url.classify_source_type",
+            lambda url, snippet="": "invalid_type",
+        )
+        st, _ = guess_source_type_and_primary("https://example.com", "")
+        assert st == SourceType.UNKNOWN

@@ -28,7 +28,12 @@ def cmd_stats(args: argparse.Namespace) -> int:
     top = stats.get("top_queries", [])
     if top:
         print(f"\n{bold('🔥 Top Queries')}:")
-        for query, count in top:
+        for item in top:
+            if isinstance(item, dict):
+                query = item["query"]
+                count = item["access_count"]
+            else:
+                query, count = item
             print(f"  {count:3d}x  {query[:60]}")
 
     # Domain stats

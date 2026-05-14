@@ -39,6 +39,12 @@ class ZedAdapter(AgentAdapter):
             return Path(".zed") / "assistant.md"
         return Path.home() / ".config" / "zed" / "assistant.md"
 
+    def _rules_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".rules")
+        # Zed doesn't have a global .rules file; use a marker in config dir
+        return Path.home() / ".config" / "zed" / "rules" / "maru.rules"
+
     def backup(self) -> list[Path]:
         paths = [self._settings_path("user"), self._assistant_path("user")]
         backups = [backup_file(p) for p in paths]
@@ -80,16 +86,24 @@ class ZedAdapter(AgentAdapter):
         return True
 
     def inject_rules(self, scope: str = "user") -> bool:
+        protocol = get_protocol_for_agent(self.name)
+
         # 1. Zed uses assistant.md for system prompt injection
         md_path = self._assistant_path(scope)
-        protocol = get_protocol_for_agent(self.name)
         content = read_text_safe(md_path)
-
         new_content = inject_protocol(content, protocol)
         if new_content != content:
             write_text_safe(md_path, new_content)
 
-        # 2. settings.json — default instructions hint + model selection
+        # 2. .rules file (project-level only; Zed only auto-discovers .rules in workspace)
+        if scope == "project":
+            rules_path = self._rules_path(scope)
+            rules_content = read_text_safe(rules_path)
+            new_rules = inject_protocol(rules_content, protocol)
+            if new_rules != rules_content:
+                write_text_safe(rules_path, new_rules)
+
+        # 3. settings.json — default instructions hint + model selection
         settings_path = self._settings_path(scope)
         config: dict[str, Any] = read_json_safe(settings_path)
         if "assistant" not in config:

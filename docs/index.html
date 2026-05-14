@@ -33,8 +33,10 @@
     "72-layer prompt injection defense",
     "MCP audit logging",
     "Docker sandbox support",
-    "20 AI agent adapters",
-    "3-layer real research enforcement"
+    "21 AI agent adapters with skill injection",
+    "3-layer real research enforcement",
+    "Code generation validation (generate_code)",
+    "Self-update system"
   ],
   "author": {
     "@type": "Organization",
@@ -346,6 +348,46 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
   </div>
 </section>
 
+<!-- Enforcement -->
+<section class="py-24 relative">
+  <div class="absolute inset-0 bg-gradient-to-b from-maru-950/20 to-transparent"></div>
+  <div class="relative max-w-6xl mx-auto px-4">
+    <div class="text-center mb-16 scroll-reveal">
+      <h2 class="text-3xl md:text-5xl font-bold mb-4">
+        <span class="ko"><span class="gradient-text">3계층</span> 강제 아키텍처</span>
+        <span class="en hidden"><span class="gradient-text">3-Layer</span> Enforcement</span>
+      </h2>
+      <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+        <span class="ko">"검색해주세요"가 아닌, 기술적으로 검색을 강제합니다</span>
+        <span class="en hidden">Not "please search". Technically enforced.</span>
+      </p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="glass-card rounded-2xl p-6 scroll-reveal border-t-4 border-t-red-500">
+        <div class="text-4xl font-bold text-red-400 mb-3">1</div>
+        <h3 class="text-lg font-bold mb-2 ko">MCP 프롬프트 주입</h3>
+        <h3 class="text-lg font-bold mb-2 en hidden">MCP Prompt Injection</h3>
+        <p class="text-gray-400 text-sm ko">`always_research_first()` 프롬프트가 모든 툴 호출 전 `deep_research`를 강제합니다. 예외는 없습니다.</p>
+        <p class="text-gray-400 text-sm en hidden">`always_research_first()` prompt forces `deep_research` before ANY tool call. No exceptions.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal border-t-4 border-t-orange-500">
+        <div class="text-4xl font-bold text-orange-400 mb-3">2</div>
+        <h3 class="text-lg font-bold mb-2 ko">세션 게이트</h3>
+        <h3 class="text-lg font-bold mb-2 en hidden">Session Gate</h3>
+        <p class="text-gray-400 text-sm ko">`generate_code()`가 세션 내 리서치 기록이 없으면 코드 생성을 차단하고 누락된 인용 목록을 반환합니다.</p>
+        <p class="text-gray-400 text-sm en hidden">`generate_code()` blocks code generation if no research was done in the session, returning missing citations.</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 scroll-reveal border-t-4 border-t-maru-500">
+        <div class="text-4xl font-bold text-maru-400 mb-3">3</div>
+        <h3 class="text-lg font-bold mb-2 ko">에이전트 규칙 주입</h3>
+        <h3 class="text-lg font-bold mb-2 en hidden">Agent Rule Injection</h3>
+        <p class="text-gray-400 text-sm ko">설정 CLI가 에이전트별 설정 파일에 리서치 우선 규칙을 주입합니다. `.cursorrules`, `CLAUDE.md`, `.kimi/settings.json` 등.</p>
+        <p class="text-gray-400 text-sm en hidden">Setup CLI injects research-first rules into per-agent config files: `.cursorrules`, `CLAUDE.md`, `.kimi/settings.json`, etc.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Security -->
 <section id="security" class="py-24 relative">
   <div class="absolute inset-0 bg-gradient-to-b from-maru-950/20 to-transparent"></div>
@@ -499,7 +541,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="border border-maru-500/30 rounded-xl p-4 bg-maru-950/30 mb-4">
         <div class="text-center text-maru-300 font-bold mb-2 ko">maru-deep-pro-search MCP 서버</div>
         <div class="text-center text-maru-300 font-bold mb-2 en hidden">maru-deep-pro-search MCP Server</div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">deep_research</div>
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">answer</div>
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">web_search</div>
@@ -508,6 +550,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">stealthy_fetch</div>
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">parallel_search</div>
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">search_with_citations</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">generate_code</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">version</div>
         </div>
       </div>
       <div class="text-center text-maru-300 mb-4 font-bold">▼</div>
@@ -564,28 +608,218 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
         <span class="en hidden">One setup injects research-first rules into every agent</span>
       </p>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 scroll-reveal">
-      <a href="https://github.com/anthropics/claude-code/releases" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-terminal text-purple-400 mb-2"></i><div class="text-xs font-medium text-white">Claude Code</div></a>
-      <a href="https://www.cursor.com/" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-mouse-pointer text-blue-400 mb-2"></i><div class="text-xs font-medium text-white">Cursor</div></a>
-      <a href="https://zed.dev/" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-code text-emerald-400 mb-2"></i><div class="text-xs font-medium text-white">Zed</div></a>
-      <a href="https://plugins.jetbrains.com/plugin/22282-jetbrains-ai-assistant" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-graduation-cap text-orange-400 mb-2"></i><div class="text-xs font-medium text-white">JetBrains</div></a>
-      <a href="https://marketplace.visualstudio.com/items?itemName=sourcegraph.cody-ai" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-magnifying-glass text-indigo-400 mb-2"></i><div class="text-xs font-medium text-white">Cody</div></a>
-      <a href="https://www.cognition.ai/" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-robot text-pink-400 mb-2"></i><div class="text-xs font-medium text-white">Devin</div></a>
-      <a href="https://github.com/aws/amazon-q-developer-cli/releases" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fab fa-aws text-yellow-400 mb-2"></i><div class="text-xs font-medium text-white">Amazon Q</div></a>
-      <a href="https://docs.tabnine.com/main/getting-started/tabnine-cli/getting-started/installation" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-shield-halved text-teal-400 mb-2"></i><div class="text-xs font-medium text-white">Tabnine</div></a>
-      <a href="https://marketplace.visualstudio.com/items?itemName=Codeium.codeium" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-bolt text-cyan-400 mb-2"></i><div class="text-xs font-medium text-white">Codeium</div></a>
-      <a href="https://github.com/openai/codex" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-microchip text-green-400 mb-2"></i><div class="text-xs font-medium text-white">Codex</div></a>
-      <a href="https://windsurf.com/download/editor" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-wind text-rose-400 mb-2"></i><div class="text-xs font-medium text-white">Windsurf</div></a>
-      <a href="https://aider.chat/docs/install.html" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-code-branch text-lime-400 mb-2"></i><div class="text-xs font-medium text-white">Aider</div></a>
-      <a href="https://github.com/features/copilot" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fab fa-github text-gray-400 mb-2"></i><div class="text-xs font-medium text-white">Copilot</div></a>
-      <a href="https://marketplace.visualstudio.com/items?itemName=Continue.continue" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-play text-sky-400 mb-2"></i><div class="text-xs font-medium text-white">Continue</div></a>
-      <a href="https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-terminal text-violet-400 mb-2"></i><div class="text-xs font-medium text-white">Cline</div></a>
-      <a href="https://github.com/MoonshotAI/kimi-cli/releases" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-star text-yellow-400 mb-2"></i><div class="text-xs font-medium text-white">Kimi</div></a>
-      <a href="https://marketplace.visualstudio.com/items?itemName=kilocode.Kilo-Code" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-weight-hanging text-red-400 mb-2"></i><div class="text-xs font-medium text-white">Kilo</div></a>
-      <a href="https://opencode.ai/download" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-door-open text-gray-400 mb-2"></i><div class="text-xs font-medium text-white">OpenCode</div></a>
-      <a href="https://antigravity.google" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-meteor text-amber-400 mb-2"></i><div class="text-xs font-medium text-white">AntiGravity</div></a>
-      <a href="https://github.com/NousResearch/hermes-agent/releases" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-brain text-fuchsia-400 mb-2"></i><div class="text-xs font-medium text-white">Hermes</div></a>
-      <a href="https://marketplace.visualstudio.com/items?itemName=supermaven.supermaven" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline"><i class="fas fa-bolt text-orange-400 mb-2"></i><div class="text-xs font-medium text-white">Supermaven</div></a>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 scroll-reveal">
+      <!-- Claude Code -->
+      <a href="https://github.com/anthropics/claude-code/releases" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fas fa-terminal text-purple-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Claude Code</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">4 Hooks</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">Cmds</span>
+        </div>
+      </a>
+      <!-- Cursor -->
+      <a href="https://www.cursor.com/" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fas fa-mouse-pointer text-blue-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Cursor</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">Cmds</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+        </div>
+      </a>
+      <!-- Kimi -->
+      <a href="https://github.com/MoonshotAI/kimi-cli/releases" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fas fa-star text-yellow-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Kimi</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">Hook</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/10 text-pink-300 border border-pink-500/20">TOML</span>
+        </div>
+      </a>
+      <!-- Cline -->
+      <a href="https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fas fa-terminal text-violet-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Cline</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">Hook</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Agent</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20">Cron</span>
+        </div>
+      </a>
+      <!-- Continue -->
+      <a href="https://marketplace.visualstudio.com/items?itemName=Continue.continue" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fas fa-play text-sky-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Continue</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">Cmds</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+        </div>
+      </a>
+      <!-- Windsurf -->
+      <a href="https://windsurf.com/download/editor" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fas fa-wind text-rose-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Windsurf</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">3 Hooks</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+        </div>
+      </a>
+      <!-- Zed -->
+      <a href="https://zed.dev/" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <i class="fas fa-code text-emerald-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Zed</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+        </div>
+      </a>
+      <!-- JetBrains -->
+      <a href="https://plugins.jetbrains.com/plugin/22282-jetbrains-ai-assistant" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fas fa-graduation-cap text-orange-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">JetBrains</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+        </div>
+      </a>
+      <!-- Cody -->
+      <a href="https://marketplace.visualstudio.com/items?itemName=sourcegraph.cody-ai" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <i class="fas fa-magnifying-glass text-indigo-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Cody</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+        </div>
+      </a>
+      <!-- Devin -->
+      <a href="https://www.cognition.ai/" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <i class="fas fa-robot text-pink-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Devin</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+        </div>
+      </a>
+      <!-- Amazon Q -->
+      <a href="https://github.com/aws/amazon-q-developer-cli/releases" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fab fa-aws text-yellow-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Amazon Q</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+        </div>
+      </a>
+      <!-- Tabnine -->
+      <a href="https://docs.tabnine.com/main/getting-started/tabnine-cli/getting-started/installation" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fas fa-shield-halved text-teal-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Tabnine</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Guidelines</span>
+        </div>
+      </a>
+      <!-- Codeium -->
+      <a href="https://marketplace.visualstudio.com/items?itemName=Codeium.codeium" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <i class="fas fa-bolt text-cyan-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Codeium</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+        </div>
+      </a>
+      <!-- Copilot -->
+      <a href="https://github.com/features/copilot" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <i class="fab fa-github text-gray-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Copilot</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Instructions</span>
+        </div>
+      </a>
+      <!-- Aider -->
+      <a href="https://aider.chat/docs/install.html" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <i class="fas fa-code-branch text-lime-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Aider</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Lint Gate</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Architect</span>
+        </div>
+      </a>
+      <!-- Codex -->
+      <a href="https://github.com/openai/codex" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <i class="fas fa-microchip text-green-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Codex</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">Hooks</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">AGENTS.md</span>
+        </div>
+      </a>
+      <!-- Kilo -->
+      <a href="https://marketplace.visualstudio.com/items?itemName=kilocode.Kilo-Code" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fas fa-weight-hanging text-red-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Kilo</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/10 text-pink-300 border border-pink-500/20">Experimental</span>
+        </div>
+      </a>
+      <!-- OpenCode -->
+      <a href="https://opencode.ai/download" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <i class="fas fa-door-open text-gray-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">OpenCode</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Agent</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">AGENTS.md</span>
+        </div>
+      </a>
+      <!-- AntiGravity -->
+      <a href="https://antigravity.google" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <i class="fas fa-meteor text-amber-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">AntiGravity</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+        </div>
+      </a>
+      <!-- Hermes -->
+      <a href="https://github.com/NousResearch/hermes-agent/releases" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400" title="Skills supported"></span>
+        <i class="fas fa-brain text-fuchsia-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Hermes</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">Hooks</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Plugin</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20">Cron</span>
+        </div>
+      </a>
+      <!-- Supermaven -->
+      <a href="https://marketplace.visualstudio.com/items?itemName=supermaven.supermaven" target="_blank" rel="noopener noreferrer" class="glass-card rounded-xl p-3 text-center block no-underline relative">
+        <i class="fas fa-bolt text-orange-400 mb-2 text-lg"></i>
+        <div class="text-xs font-medium text-white">Supermaven</div>
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20">Rules</span>
+        </div>
+      </a>
+    </div>
+    <div class="mt-4 flex flex-wrap justify-center gap-4 text-xs text-gray-500">
+      <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="ko">Skills 설치 지원</span><span class="en hidden">Skills supported</span></span>
+      <span class="inline-flex items-center gap-1.5"><span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">MCP</span><span class="ko">MCP 서버 등록</span><span class="en hidden">MCP server</span></span>
+      <span class="inline-flex items-center gap-1.5"><span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">Hook</span><span class="ko">라이프사이클 훅</span><span class="en hidden">Lifecycle hook</span></span>
+      <span class="inline-flex items-center gap-1.5"><span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">Cmd</span><span class="ko">커스텀 커맨드</span><span class="en hidden">Custom command</span></span>
+      <span class="inline-flex items-center gap-1.5"><span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Agent</span><span class="ko">커스텀 에이전트</span><span class="en hidden">Custom agent</span></span>
+      <span class="inline-flex items-center gap-1.5"><span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20">Cron</span><span class="ko">크론 자동화</span><span class="en hidden">Cron automation</span></span>
     </div>
   </div>
 </section>
@@ -601,46 +835,46 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="flex items-start gap-3">
           <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <i class="fas fa-gauge-high text-emerald-400 text-sm"></i>
+            <i class="fas fa-layer-group text-emerald-400 text-sm"></i>
           </div>
           <div>
-            <h4 class="text-white font-semibold text-sm ko">3계층 레이트 리밋</h4>
-            <h4 class="text-white font-semibold text-sm en hidden">3-Layer Rate Limiting</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">Semaphore(3) + 엔진별 쿨다운 + TokenBucket. Google 429 방어</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">Semaphore(3) + per-engine cooldowns + TokenBucket. Defends against Google 429</p>
+            <h4 class="text-white font-semibold text-sm ko">9개 에이전트 스킬 설치</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">9-Agent Skill File Injection</h4>
+            <p class="text-gray-400 text-xs mt-1 ko">Cursor/Kimi/Claude/Cline/Continue/Windsurf/Kilo/Tabnine/Hermes에 SKILL.md 자동 설치</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">Auto-installs SKILL.md to Cursor, Kimi, Claude, Cline, Continue, Windsurf, Kilo, Tabnine, Hermes</p>
           </div>
         </div>
         <div class="flex items-start gap-3">
           <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <i class="fas fa-fingerprint text-blue-400 text-sm"></i>
+            <i class="fas fa-shield-halved text-blue-400 text-sm"></i>
           </div>
           <div>
-            <h4 class="text-white font-semibold text-sm ko">안티봇 세션 재사용</h4>
-            <h4 class="text-white font-semibold text-sm en hidden">Anti-Bot Session Reuse</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">AsyncStealthySession으로 브라우저 재사용. Google/Startpage 안정성 대폭 향상</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">AsyncStealthySession browser reuse. Dramatically improves Google/Startpage reliability</p>
+            <h4 class="text-white font-semibold text-sm ko">코드 생성 검증 툴</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">Code Generation Validation</h4>
+            <p class="text-gray-400 text-xs mt-1 ko">generate_code()가 리서치 인용 없는 코드 생성을 차단하고 상세 보고서 반환</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">generate_code() blocks un-researched code with detailed citation-missing reports</p>
           </div>
         </div>
         <div class="flex items-start gap-3">
           <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <i class="fas fa-wrench text-purple-400 text-sm"></i>
+            <i class="fas fa-robot text-purple-400 text-sm"></i>
           </div>
           <div>
-            <h4 class="text-white font-semibold text-sm ko">엔진 안정성 개선</h4>
-            <h4 class="text-white font-semibold text-sm en hidden">Engine Reliability Overhaul</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">Naver 난독화 DOM 우회, Baidu 노이즈 필터링, Bing 로케일 고정</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">Naver obfuscated DOM bypass, Baidu noise filtering, Bing locale pinning</p>
+            <h4 class="text-white font-semibold text-sm ko">21개 에이전트 완벽 지원</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">21 Agents Fully Supported</h4>
+            <p class="text-gray-400 text-xs mt-1 ko">공식 문서 기준 전수 조사. 스킬 미지원 에이전트는 "미지원"으로 명확 표시</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">All 21 adapters audited against official docs. Unsupported agents show "not supported" clearly</p>
           </div>
         </div>
         <div class="flex items-start gap-3">
-          <div class="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <i class="fas fa-code-branch text-red-400 text-sm"></i>
+          <div class="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <i class="fas fa-code text-pink-400 text-sm"></i>
           </div>
           <div>
-            <h4 class="text-white font-semibold text-sm ko">코드 중복 제거</h4>
-            <h4 class="text-white font-semibold text-sm en hidden">Code Deduplication</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">8개 엔진의 공통 헬퍼를 base.py로 이동. 유지보수성 향상</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">Moved shared helpers from 8 engines into base.py. Improved maintainability</p>
+            <h4 class="text-white font-semibold text-sm ko">3계층 강제 아키텍처</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">3-Layer Enforcement</h4>
+            <p class="text-gray-400 text-xs mt-1 ko">MCP 프롬프트 + 세션 게이트 + 에이전트 규칙 주입으로 리서치 우선 강제</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">MCP prompt + session gate + agent rule injection forces research-first behavior</p>
           </div>
         </div>
         <div class="flex items-start gap-3">
@@ -650,8 +884,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div>
             <h4 class="text-white font-semibold text-sm ko">273개 테스트 통과</h4>
             <h4 class="text-white font-semibold text-sm en hidden">273 Tests Passing</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">레이트 리밋, 엔진 스크래핑, 랭킹 알고리즘 전체 커버리지</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">Full coverage for rate limiting, engine scraping, and ranking algorithms</p>
+            <p class="text-gray-400 text-xs mt-1 ko">레이트 리밋, 엔진 스크래핑, 랭킹 알고리즘, 어댑터 멱등성 전체 커버리지</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">Full coverage for rate limiting, engine scraping, ranking, and adapter idempotency</p>
           </div>
         </div>
       </div>
@@ -853,9 +1087,8 @@ const enTexts = [
 ];
 let textIdx = 0, charIdx = 0, isDeleting = false;
 const typingEl = document.getElementById('typing');
-const isKo = !document.documentElement.classList.contains('en-mode');
-
 function type() {
+  const isKo = document.documentElement.lang === 'ko';
   const texts = isKo ? koTexts : enTexts;
   const current = texts[textIdx];
   if (isDeleting) {
@@ -897,6 +1130,8 @@ function toggleLang() {
   koEls.forEach(el => el.classList.toggle('hidden'));
   enEls.forEach(el => el.classList.toggle('hidden'));
   document.documentElement.lang = isKo ? 'en' : 'ko';
+  // Reset typing effect on language switch
+  textIdx = 0; charIdx = 0; isDeleting = false;
 }
 
 // Auto-detect browser language on first load

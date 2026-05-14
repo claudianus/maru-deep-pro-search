@@ -1,4 +1,12 @@
-"""OpenCode adapter."""
+"""OpenCode adapter.
+
+Official docs: https://opencode.ai/docs/agents
+
+OpenCode supports agents via:
+- JSON config in opencode.json (agents section)
+- Markdown files in ~/.config/opencode/agents/ or .opencode/agents/
+- The markdown filename becomes the agent name.
+"""
 
 from __future__ import annotations
 
@@ -31,6 +39,11 @@ class OpenCodeAdapter(AgentAdapter):
         if scope == "project":
             return Path("opencode.json")
         return Path.home() / ".config" / "opencode" / "opencode.json"
+
+    def _agents_dir(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".opencode") / "agents"
+        return Path.home() / ".config" / "opencode" / "agents"
 
     def _agents_md_path(self, scope: str) -> Path:
         if scope == "project":
@@ -65,24 +78,42 @@ class OpenCodeAdapter(AgentAdapter):
         return True
 
     def inject_rules(self, scope: str = "user") -> bool:
-        # 1. AGENTS.md
-        path = self._agents_md_path(scope)
-        content = read_text_safe(path)
         protocol = get_protocol_for_agent(self.name)
 
+        # 1. AGENTS.md — auto-discovered by OpenCode
+        agents_md_path = self._agents_md_path(scope)
+        content = read_text_safe(agents_md_path)
         new_content = inject_protocol(content, protocol)
         if new_content != content:
-            write_text_safe(path, new_content)
+            write_text_safe(agents_md_path, new_content)
 
-        # 2. opencode.json — default instructions hint
+        # 2. .opencode/agents/*.md — official OpenCode agent format
+        agents_dir = self._agents_dir(scope)
+        agents_dir.mkdir(parents=True, exist_ok=True)
+
+        agent_file = agents_dir / "maru-research-gate.md"
+        agent_content = read_text_safe(agent_file)
+        new_agent = inject_protocol(agent_content, protocol)
+        if new_agent != agent_content:
+            write_text_safe(agent_file, new_agent)
+
+        # 3. opencode.json — register the agent in config
         config_path = self._config_path(scope)
         config = read_json_safe(config_path)
-        if "agent" not in config:
-            config["agent"] = {}
-        config["agent"]["defaultInstructions"] = (
-            "You MUST call deep_research before any code generation or file edits. "
-            "This is enforced by the maru-deep-pro-search MCP server."
-        )
-        write_json_safe(config_path, config)
 
+        if "agents" not in config:
+            config["agents"] = {}
+        if "maru-research-gate" not in config["agents"]:
+            config["agents"]["maru-research-gate"] = {
+                "description": "Enforces deep-research before any code generation",
+                "mode": "primary",
+                "prompt": str(
+                    self._agents_dir(scope).relative_to(
+                        Path(".") if scope == "project" else Path.home()
+                    )
+                    / "maru-research-gate.md"
+                ),
+            }
+
+        write_json_safe(config_path, config)
         return True

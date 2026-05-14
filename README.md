@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>Force your AI agent to research before it codes.</strong><br>
-  Zero API keys · 9-engine failover · BM25+semantic ranking · Native citations
+  Zero API keys · 9-engine failover · BM25+semantic ranking · Native citations · 21 AI agents
 </p>
 
 <p align="center">
@@ -30,16 +30,17 @@
 
 | | Built-in Agent Search | maru-deep-pro-search |
 |---|---|---|
-| **Engines** | 1–2, no fallback | 9-engine auto-failover |
-| **Ranking** | Raw engine order | BM25 + semantic + authority/freshness/code-density |
-| **Citations** | Hallucinated or none | Native `[1]`, `[2]` IDs with real URLs |
-| **Defense** | None | 72-signature prompt injection + zero-width char sanitization |
-| **Enforcement** | "Please search first" (ignored) | 3-layer technical gatekeeping |
-| **Cost** | Varies | **$0 forever** — zero API keys |
+| **Engines** | 1–2, no fallback | **9-engine auto-failover** |
+| **Ranking** | Raw engine order | **BM25 + semantic + authority/freshness/code-density** |
+| **Citations** | Hallucinated or none | **Native `[1]`, `[2]` IDs with real URLs** |
+| **Defense** | None | **72-signature prompt injection + zero-width char sanitization** |
+| **Enforcement** | "Please search first" (ignored) | **3-layer technical gatekeeping + code validation** |
+| **Agents** | Generic | **21 dedicated adapters with skill file injection** |
+| **Cost** | Varies | **$0 forever — zero API keys** |
 
 ---
 
-## Install
+## ⚡ 10-Second Install
 
 **macOS / Linux — recommended (auto-installs `uv` if needed):**
 ```bash
@@ -60,67 +61,100 @@ The setup wizard auto-detects your AI agent, backs up existing configs, injects 
 
 ---
 
-## Quick Start
+## 🛠️ 10 MCP Tools
 
-```python
-from maru_deep_pro_search.tools import deep_research
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `deep_research` | Multi-engine deep search with query expansion & BM25 ranking | **🔴 ALWAYS FIRST** — before any code, architecture, or technical decision |
+| `answer` | Perplexity-style direct answer with inline citations | Quick factual check after research |
+| `parallel_search` | Run multiple searches simultaneously with comparison mode | Multi-angle analysis (e.g., "vs" comparisons) |
+| `web_search` | Scrape + rank + return cited results | Additional targeted sources |
+| `search_with_citations` | Pre-numbered sources for academic writing | Papers, documentation requiring strict attribution |
+| `fetch_page` | Extract clean content from a single URL | Reading specific docs found during research |
+| `fetch_bulk` | Parallel fetch with deduplication | Reading 2–10 known URLs at once |
+| `stealthy_fetch` | Anti-bot bypass for protected sites | Cloudflare/DataDome blocked sites (last resort) |
+| `generate_code` | Validate code against research citations | After research — blocks un-researched code |
+| `version` | Check version & available updates | Verify installation health |
 
-result = deep_research(
-    "What are the security implications of using pickle in Python?",
-    max_sources=5
-)
-print(result)  # ranked URLs with metadata — agent decides which to fetch
+**Tool decision tree:**
 ```
-
-**MCP tool decision tree:**
-- Quick answer? → `answer`
-- Need ranked sources? → `web_search`
-- Deep dive? → `deep_research`
-- Blocked by bot protection? → `stealthy_fetch`
-
-See [`AGENTS.md`](./AGENTS.md) for per-agent setup details.
+Any technical request?
+└── deep_research(query) FIRST
+    ├── Need quick fact? → answer
+    ├── Multiple angles? → parallel_search
+    ├── Specific URLs? → fetch_page / fetch_bulk
+    └── Blocked site? → stealthy_fetch (last resort)
+```
 
 ---
 
-## Architecture
+## 🤖 21 AI Agents — Extension Mechanism Matrix
+
+One setup injects research-first rules via **every extension surface** each agent offers — hooks, commands, plugins, cron, permissions, and more.
+
+| Agent | MCP | Hooks | Commands | Agents/Cron/Plugins | Rules / Prompts | Skills | Other Surfaces |
+|-------|:---:|:-----:|:--------:|:-------------------:|-----------------|--------|----------------|
+| **Claude Code** | ✅ | 4 lifecycle hooks | `research.md` `verify.md` | — | `CLAUDE.md` + hooks | `~/.claude/skills/` nested | Permissions deny patterns |
+| **Cursor** | ✅ | — | `research.json` `verify.json` | — | `.cursor/rules/*.md` | `~/.cursor/rules/` flat | `autoEnableTools` |
+| **Kimi** | ✅ | `PreToolUse` (TOML) | — | — | `config.toml` `system_prompt` | `~/.kimi/skills/` nested | `default_yolo=false` |
+| **Cline** | ✅ | `PreToolUse.py` | — | `maru-research-gate.md` agent + `.cron.md` | `.clinerules/*.md` | `~/.cline/skills/` flat | — |
+| **Continue** | ✅ | — | `research` `verify` | — | `system_message` + `.continue/rules/` | `~/.continue/rules/` flat | — |
+| **Windsurf** | ✅ | 3 Cascade hooks | — | — | `.windsurf/rules/*.md` + `AGENTS.md` | `~/.windsurf/rules/` flat | `.codeiumignore` |
+| **Zed** | ✅ | — | — | — | `.rules` + `assistant.md` | — | `tool_permissions` |
+| **JetBrains** | ⚠️ | — | — | — | `.idea/ai-assistant-rules/*.md` | `.idea/ai-assistant-rules/` flat | — |
+| **Cody** | ⚠️ | — | — | — | `.cody/prompts.md` | — | — |
+| **Devin** | ⚠️ | — | — | — | `.devin/rules.md` | — | — |
+| **Amazon Q** | ⚠️ | — | — | — | `.amazonq/rules/*.md` | `.amazonq/rules/` flat | — |
+| **Tabnine** | ⚠️ | — | — | — | `.tabnine/guidelines/*.md` | `.tabnine/guidelines/` flat | — |
+| **Codeium** | ⚠️ | — | — | — | `.codeium/system-prompt.md` | — | — |
+| **Copilot** | ⚠️ | — | — | — | `.github/copilot-instructions.md` | — | — |
+| **Aider** | ⚠️ | — | — | — | `CONVENTIONS.md` + `.aider.conf.yml` | — | Lint-cmd gate, architect mode |
+| **Codex** | ✅ | `codex_hooks` | — | — | `AGENTS.md` + `developer_instructions` | — | `approval_policy` |
+| **Kilo** | ✅ | — | — | — | `kilo.jsonc` `systemPrompt` + `instructions` | `~/.config/kilo/rules/` flat | `experimental.codebase_search` |
+| **OpenCode** | ✅ | — | — | `maru-research-gate` agent | `AGENTS.md` + `opencode.json` agents | — | — |
+| **AntiGravity** | ✅ | — | — | — | `~/.gemini/antigravity/config.json` | — | — |
+| **Hermes** | ✅ | Gateway + Shell hooks | — | `maru-research-gate` plugin + cron | `SOUL.md` + `config.yaml` | `~/.hermes/skills/` flat | Plugin system |
+| **Supermaven** | ⚠️ | — | — | — | `.supermaven/rules.md` | — | — |
+
+> **Legend:** ✅ = Full MCP support · ⚠️ = Rules only (no native MCP)
+>
+> **Hooks** = PreToolUse / PostToolUse / SessionStart / pre_write_code / pre_mcp_tool_use / pre_user_prompt / etc.  
+> **Commands** = Slash commands or custom commands registered in agent config  
+> **Agents/Cron/Plugins** = Custom agents, cron specs, or plugin systems  
+> **Skills** = `nested` = `skills/<name>/SKILL.md` · `flat` = `rules/<name>.md`
+
+---
+
+## 🏛️ Architecture
 
 ```
 MCP Client (Claude, Cursor, Kimi, Windsurf, ...)
         │ JSON-RPC 2.0 / stdio
         ▼
-┌──────────────────────────────────────┐
-│  maru-deep-pro-search MCP Server     │
-│  ├─ 10 Tools (search, fetch, cite)  │
-│  ├─ 9-Engine Failover Registry      │
-│  ├─ Hybrid Ranking (BM25+semantic)  │
-│  ├─ 3-Layer Enforcement             │
-│  └─ SQLite KnowledgeStore           │
-└──────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  maru-deep-pro-search MCP Server             │
+│  ├─ 10 Tools (search, fetch, cite, validate) │
+│  ├─ 9-Engine Failover Registry               │
+│  ├─ Hybrid Ranking (BM25+semantic)           │
+│  ├─ 3-Layer Enforcement                      │
+│  ├─ 72-Signature Sanitization                │
+│  └─ SQLite KnowledgeStore                    │
+└──────────────────────────────────────────────┘
 ```
+
+### 3-Layer Enforcement
+
+1. **MCP Prompt Injection** — `always_research_first()` prompt forces `deep_research` before any tool call
+2. **Session Gate** — `generate_code()` blocks code generation if no research was done in the session
+3. **Agent Rules** — Per-agent config files (`.cursorrules`, `CLAUDE.md`, etc.) inject mandatory research protocol
 
 The server contains **zero generative LLMs**. Your agent's LLM handles all reasoning and synthesis. The server focuses on search quality: multi-engine coverage, intelligent ranking, and clean content extraction.
 
-For deep technical details, see [`docs/engine_insights.md`](./docs/engine_insights.md) and [`docs/lessons_learned.md`](./docs/lessons_learned.md).  
-For execution-learned insights, see [`AGENTS.md`](./AGENTS.md).
+For deep technical details, see [`docs/engine_insights.md`](./docs/engine_insights.md) and [`docs/lessons_learned.md`](./docs/lessons_learned.md).
 
 ---
 
-## 10 Tools
-
-| Tool | Purpose |
-|------|---------|
-| `answer` | Quick answer with inline citations |
-| `web_search` | Scrape + rank + return cited results |
-| `search_with_citations` | Pre-numbered sources for academic writing |
-| `fetch_page` | Extract clean content from a single URL |
-| `fetch_bulk` | Parallel fetch with deduplication |
-| `deep_research` | Deep multi-engine search with ranked URLs + metadata |
-| `stealthy_fetch` | Anti-bot bypass for protected sites |
-| `parallel_search` | Run multiple searches simultaneously |
-
----
-
-## Security
+## 🔒 Security
 
 Fetched content is sanitized through a 72-pattern defense layer before reaching your LLM:
 
@@ -135,7 +169,7 @@ See [`SECURITY.md`](./SECURITY.md) for disclosure policy.
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
 All optional. Loaded via `pydantic-settings` with prefix `MARU_SEARCH_`.
 
@@ -149,13 +183,13 @@ All optional. Loaded via `pydantic-settings` with prefix `MARU_SEARCH_`.
 
 ---
 
-## CLI Commands
+## 💻 CLI Commands
 
 ```bash
 # MCP server (stdio transport)
 maru-deep-pro-search
 
-# Setup AI agents with MCP config
+# Setup AI agents with MCP config + skill files
 maru-deep-pro-search setup
 maru-deep-pro-search setup --list
 maru-deep-pro-search setup --restore
@@ -163,18 +197,18 @@ maru-deep-pro-search setup --restore
 # Initialize project harness
 maru-deep-pro-search init --agents cursor claude
 
-# Manage plugins
-maru-deep-pro-search-plugin list
-maru-deep-pro-search-plugin install <git-url>
-
 # Headless deep research (CI/CD friendly)
-python -m maru_deep_pro_search.server research "FastAPI vs Django 2025" \
+maru-deep-pro-search research "FastAPI vs Django 2025" \
   --output report.md --max-sources 8
+
+# Self-update
+maru-deep-pro-search update
+maru-deep-pro-search update --check
 ```
 
 ---
 
-## Docker
+## 🐳 Docker
 
 ```bash
 # Build
@@ -189,7 +223,7 @@ docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search
 
 ---
 
-## Troubleshooting
+## 🆘 Troubleshooting
 
 **No results from search engine**
 ```bash
@@ -198,8 +232,8 @@ MARU_SEARCH_ENGINE=bing maru-deep-pro-search
 
 **Agent not detected by setup wizard**
 ```bash
-maru-deep-pro-search setup --agent cursor
-maru-deep-pro-search setup --list-agents
+maru-deep-pro-search setup --agents cursor
+maru-deep-pro-search setup --list
 ```
 
 **High memory usage**
@@ -208,14 +242,17 @@ maru-deep-pro-search setup --list-agents
 MARU_SEARCH_MAX_RESULTS=5 maru-deep-pro-search
 ```
 
+**SKILL.md install shows "unsupported" for my agent**
+> That's expected for agents without a skill directory system (e.g., Copilot, JetBrains). Rules are still injected via their native config files. Only agents with official skill support (Cursor, Kimi, Claude, Cline, Continue, Windsurf, Kilo, Tabnine, Hermes) show ✓ for skills.
+
 ---
 
-## Contributing
+## 🤝 Contributing
 
 PRs welcome. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for development setup, adding engines, and agent adapters.
 
 ---
 
-## License
+## 📄 License
 
 MIT — see [`LICENSE`](./LICENSE).

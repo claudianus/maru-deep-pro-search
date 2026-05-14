@@ -84,7 +84,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     if not installed:
         print(yellow("  설치된 에이전트를 찾을 수 없습니다."))
         print(
-            "  지원하는 에이전트: Claude Code, Cursor, Kimi, AntiGravity, Kilo Code, OpenCode, Windsurf"
+            "  지원하는 에이전트: Claude Code, Cursor, Kimi, AntiGravity, Kilo Code, OpenCode, Windsurf, Aider, Copilot, Continue, Cline, Zed, JetBrains, Supermaven, Cody, Codeium, Amazon Q, Devin, Tabnine, Hermes, Codex"
         )
         return 1
 
@@ -120,10 +120,12 @@ def cmd_setup(args: argparse.Namespace) -> int:
             print("   ✓ 리서치 프로토콜 주입 완료")
         else:
             print(f"   {yellow('! 규칙 주입 실패 (수동 설정 필요)')}")
-        if result.get("skills_installed"):
+        if result.get("skills_installed") is True:
             print("   ✓ SKILL.md 규칙 파일 설치 완료")
         elif result.get("skills_installed") is False:
             print(f"   {yellow('! SKILL.md 규칙 파일 설치 실패 (수동 설정 필요)')}")
+        elif result.get("skills_supported") is False:
+            print("   ℹ SKILL.md 규칙 파일 미지원")
 
     # Semantic search recommendation
     import importlib.util
@@ -208,7 +210,7 @@ def main(argv: list[str] | None = None) -> int:
         prog="maru-deep-pro-search",
         description=(
             "Setup tool for maru-deep-pro-search — installs MCP config and "
-            "injects research-first rules into 20 supported AI agents."
+            "injects research-first rules into 21 supported AI agents."
         ),
         epilog=(
             "Examples:\n"

@@ -47,6 +47,13 @@ class ClaudeAdapter(AgentAdapter):
             return Path(".claude") / "commands"
         return Path.home() / ".claude" / "commands"
 
+    def _skills_dir(self, scope: str) -> Path | None:
+        if scope == "project":
+            return Path(".claude") / "skills"
+        return Path.home() / ".claude" / "skills"
+
+    skills_format = "nested"
+
     # ── backup ──────────────────────────────────────────────────
     def backup(self) -> list[Path]:
         paths = [

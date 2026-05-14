@@ -256,6 +256,16 @@ class AiderAdapter(AgentAdapter):
         if not has_auto_lint:
             lines.append("auto-lint: true")
 
+        # Enable architect mode (design-then-edit separation)
+        has_architect = any(line.strip().startswith("architect:") for line in lines)
+        if not has_architect:
+            lines.append("architect: true")
+
+        # Disable auto-accept so research gate can intercept
+        has_auto_accept = any(line.strip().startswith("auto-accept-architect:") for line in lines)
+        if not has_auto_accept:
+            lines.append("auto-accept-architect: false")
+
         # ── RESEARCH GATE: inject research verification into lint-cmd ──
         # Aider runs lint-cmd before accepting edits. We insert a gate
         # script that fails (exit 1) if research hasn't been completed

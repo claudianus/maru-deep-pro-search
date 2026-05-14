@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import os
 import sys
 
 from mcp.server.fastmcp import Context, FastMCP
@@ -9,7 +10,14 @@ from mcp.server.fastmcp import Context, FastMCP
 mcp = FastMCP("maru-search")
 
 _logger = logging.getLogger("maru_deep_pro_search")
-_logger.setLevel(logging.INFO)
+
+# MCP servers communicate over stdout/stdio.  Some clients (e.g. Kimi CLI)
+# forward stderr to the user terminal, so INFO logs are visible noise.
+# We default to WARNING and only go verbose when MARU_DEBUG=1.
+if os.environ.get("MARU_DEBUG") in ("1", "true", "yes"):
+    _logger.setLevel(logging.DEBUG)
+else:
+    _logger.setLevel(logging.WARNING)
 
 _stderr_handler = logging.StreamHandler(sys.stderr)
 _stderr_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
@@ -620,7 +628,9 @@ def run() -> None:
         notice = get_update_notice(result)
         if notice:
             _pending_update_notice = notice
-            _logger.warning(notice)
+            # Only log to stderr when debugging; most MCP clients surface
+            # stderr to the user terminal, so keep it quiet by default.
+            _logger.debug(notice)
     except Exception:
         pass  # Never block server startup for update checks
 

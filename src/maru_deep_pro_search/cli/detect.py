@@ -75,7 +75,8 @@ def _detect_copilot() -> bool:
 # ── Continue ─────────────────────────────────────────────────
 def _detect_continue() -> bool:
     return (
-        Path.home().joinpath(".continue", "config.json").exists()
+        Path.home().joinpath(".continue", "config.yaml").exists()
+        or Path.home().joinpath(".continue", "config.json").exists()
         or Path.home().joinpath(".config", "continue", "config.json").exists()
     )
 

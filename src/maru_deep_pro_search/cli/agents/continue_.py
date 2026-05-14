@@ -1,4 +1,11 @@
-"""Continue adapter — open-source AI coding assistant for VS Code / JetBrains."""
+"""Continue adapter — open-source AI coding assistant for VS Code / JetBrains.
+
+Official docs: https://docs.continue.dev/customize/deep-dives/configuration
+
+Continue migrated from config.json to config.yaml. We currently write to
+config.json for backwards compatibility (still read by Continue), with
+detection extended to the new config.yaml paths.
+"""
 
 from __future__ import annotations
 
@@ -17,6 +24,7 @@ class ContinueAdapter(AgentAdapter):
     def detect(self) -> bool:
         return (
             shutil.which("continue") is not None
+            or Path.home().joinpath(".continue", "config.yaml").exists()
             or Path.home().joinpath(".continue", "config.json").exists()
             or Path.home().joinpath(".config", "continue", "config.json").exists()
         )
@@ -25,12 +33,20 @@ class ContinueAdapter(AgentAdapter):
         if scope == "project":
             return Path(".continue", "config.json")
         # Continue uses ~/.continue/config.json on all platforms
+        # (config.yaml is the new standard but config.json still works)
         return Path.home() / ".continue" / "config.json"
 
     def _ignore_path(self, scope: str) -> Path:
         if scope == "project":
             return Path(".continueignore")
         return Path.home() / ".continueignore"
+
+    def _skills_dir(self, scope: str) -> Path | None:
+        if scope == "project":
+            return Path(".continue") / "rules"
+        return Path.home() / ".continue" / "rules"
+
+    skills_format = "flat"
 
     def backup(self) -> list[Path]:
         path = self._config_path("user")

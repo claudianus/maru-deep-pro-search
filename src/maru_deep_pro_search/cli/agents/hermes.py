@@ -61,6 +61,11 @@ class HermesAdapter(AgentAdapter):
             return Path(".hermes") / "hooks"
         return Path.home() / ".hermes" / "hooks"
 
+    def _soul_md_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path("SOUL.md")
+        return Path.home() / ".hermes" / "SOUL.md"
+
     def _skills_dir(self, scope: str) -> Path:
         if scope == "project":
             return Path(".hermes") / "skills"
@@ -98,7 +103,16 @@ class HermesAdapter(AgentAdapter):
 
     # ── inject rules ─────────────────────────────────────────────
     def inject_rules(self, scope: str = "user") -> bool:
-        # 1. config.yaml — enable plugin + shell hooks + skills
+        protocol = get_protocol_for_agent(self.name)
+
+        # 1. SOUL.md — Hermes primary agent identity (slot #1 in system prompt)
+        soul_path = self._soul_md_path(scope)
+        soul_content = read_text_safe(soul_path)
+        new_soul = inject_protocol(soul_content, protocol)
+        if new_soul != soul_content:
+            write_text_safe(soul_path, new_soul)
+
+        # 2. config.yaml — enable plugin + shell hooks + skills
         config_path = self._config_path(scope)
         content = read_text_safe(config_path) or ""
 
@@ -151,7 +165,7 @@ class HermesAdapter(AgentAdapter):
 
         write_text_safe(config_path, content)
 
-        # 2. Plugin directory — write plugin.yaml + __init__.py
+        # 3. Plugin directory — write plugin.yaml + __init__.py
         plugin_dir = self._plugins_dir(scope) / "maru-research-gate"
         plugin_dir.mkdir(parents=True, exist_ok=True)
 
@@ -185,7 +199,7 @@ class HermesAdapter(AgentAdapter):
                 '                           role="system")\n'
             )
 
-        # 3. Gateway hook — message filter
+        # 4. Gateway hook — message filter
         gateway_hook_dir = self._hooks_dir(scope) / "maru-research-gate"
         gateway_hook_dir.mkdir(parents=True, exist_ok=True)
 
@@ -207,7 +221,7 @@ class HermesAdapter(AgentAdapter):
                 "    return None\n"
             )
 
-        # 4. Skill registration
+        # 5. Skill registration
         skills_dir = self._skills_dir(scope)
         skills_dir.mkdir(parents=True, exist_ok=True)
 

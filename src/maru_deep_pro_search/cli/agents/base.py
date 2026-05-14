@@ -50,6 +50,7 @@ class AgentAdapter(ABC):
 
     name: str = ""
     display_name: str = ""
+    skills_format: str = "flat"  # "flat" (cursor, continue) or "nested" (kimi, claude, cline)
 
     @abstractmethod
     def detect(self) -> bool:
@@ -116,7 +117,12 @@ class AgentAdapter(ABC):
             if skill_dir.is_dir():
                 skill_file = skill_dir / "SKILL.md"
                 if skill_file.exists():
-                    dest = target / f"{skill_dir.name}.md"
+                    if self.skills_format == "nested":
+                        dest_dir = target / skill_dir.name
+                        dest_dir.mkdir(parents=True, exist_ok=True)
+                        dest = dest_dir / "SKILL.md"
+                    else:
+                        dest = target / f"{skill_dir.name}.md"
                     shutil.copy2(skill_file, dest)
                     copied += 1
         return copied > 0
@@ -126,11 +132,13 @@ class AgentAdapter(ABC):
         backups = self.backup()
         mcp_ok = self.install_mcp(scope)
         rules_ok = self.inject_rules(scope)
-        skills_ok = self.install_skills(scope)
+        skills_dir = self._skills_dir(scope)
+        skills_ok = self.install_skills(scope) if skills_dir is not None else None
         return {
             "backups": [str(b) for b in backups if b],
             "mcp_installed": mcp_ok,
             "rules_injected": rules_ok,
             "skills_installed": skills_ok,
+            "skills_supported": skills_dir is not None,
             "success": mcp_ok and rules_ok,
         }

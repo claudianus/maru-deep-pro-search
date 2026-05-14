@@ -1,4 +1,16 @@
-"""JetBrains AI adapter — supports .idea/ai-assistant.xml and prompts."""
+"""JetBrains AI adapter — supports .idea/ai-assistant.xml and project rules.
+
+Official docs:
+- https://www.jetbrains.com/help/ai-assistant/configure-project-rules.html
+- https://www.jetbrains.com/help/ai-assistant/settings-reference-rules.html
+
+JetBrains AI Assistant uses Markdown project rules that can be configured
+via IDE settings. Rules support frontmatter with types:
+- Always — applied to all chat sessions
+- Manually — invoked via @rule: or #rule:
+- By model decision — applied when model considers relevant
+- By file patterns — applied when matching file patterns
+"""
 
 from __future__ import annotations
 
@@ -7,10 +19,8 @@ from pathlib import Path
 
 from ..backup import (
     backup_file,
-    read_json_safe,
     read_text_safe,
     restore_file,
-    write_json_safe,
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
@@ -22,7 +32,6 @@ class JetBrainsAdapter(AgentAdapter):
     display_name = "JetBrains AI"
 
     def detect(self) -> bool:
-        # Look for JetBrains Toolbox or any IDE config directory
         home = Path.home()
         jetbrains_dirs = list(home.glob(".jetbrains*")) + list(
             home.glob("Library/Application Support/JetBrains*")
@@ -37,14 +46,19 @@ class JetBrainsAdapter(AgentAdapter):
     def _ai_assistant_path(self, scope: str) -> Path:
         if scope == "project":
             return Path(".idea") / "ai-assistant.xml"
-        # JetBrains does not have a global AI assistant config file;
+        # JetBrains does not have a documented global AI assistant config file;
         # we use a marker in the home directory.
         return Path.home() / ".jetbrains-ai" / "maru-protocol.md"
 
-    def _settings_path(self, scope: str) -> Path:
+    def _rules_dir(self, scope: str) -> Path:
         if scope == "project":
-            return Path(".idea") / "maru-settings.json"
-        return Path.home() / ".jetbrains-ai" / "maru-settings.json"
+            return Path(".idea") / "ai-assistant-rules"
+        return Path.home() / ".jetbrains-ai" / "rules"
+
+    def _skills_dir(self, scope: str) -> Path | None:
+        return self._rules_dir(scope)
+
+    skills_format = "flat"
 
     def backup(self) -> list[Path]:
         paths = [self._ai_assistant_path("user")]
@@ -61,28 +75,26 @@ class JetBrainsAdapter(AgentAdapter):
 
     def install_mcp(self, scope: str = "user") -> bool:
         # JetBrains AI does not natively support MCP servers yet.
-        # We inject rules via the ai-assistant.xml or markdown file.
         return self.inject_rules(scope)
 
     def inject_rules(self, scope: str = "user") -> bool:
-        # 1. ai-assistant.xml / maru-protocol.md
-        path = self._ai_assistant_path(scope)
         protocol = get_protocol_for_agent(self.name)
-        content = read_text_safe(path)
 
+        # 1. ai-assistant.xml / maru-protocol.md — legacy fallback
+        path = self._ai_assistant_path(scope)
+        content = read_text_safe(path)
         new_content = inject_protocol(content, protocol)
         if new_content != content:
             write_text_safe(path, new_content)
 
-        # 2. maru-settings.json — hint for future JetBrains AI versions
-        settings_path = self._settings_path(scope)
-        settings = read_json_safe(settings_path)
-        if "instructions" not in settings:
-            settings["instructions"] = {}
-        settings["instructions"]["research_first"] = (
-            "You MUST call deep_research before any code generation or file edits. "
-            "This is enforced by the maru-deep-pro-search MCP server."
-        )
-        write_json_safe(settings_path, settings)
+        # 2. .idea/ai-assistant-rules/*.md — JetBrains project rules format
+        rules_dir = self._rules_dir(scope)
+        rules_dir.mkdir(parents=True, exist_ok=True)
+
+        rule_file = rules_dir / "maru-research-protocol.md"
+        rule_content = read_text_safe(rule_file)
+        new_rule = inject_protocol(rule_content, protocol)
+        if new_rule != rule_content:
+            write_text_safe(rule_file, new_rule)
 
         return True

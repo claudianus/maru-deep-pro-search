@@ -1,4 +1,11 @@
-"""Tabnine adapter — privacy-focused AI coding assistant."""
+"""Tabnine adapter — privacy-focused AI coding assistant.
+
+Official docs: https://docs.tabnine.com/main/getting-started/tabnine-agent/guidelines
+
+Tabnine Agent uses Markdown guidelines stored in:
+- Project:  .tabnine/guidelines/*.md
+- Global:   ~/.tabnine/guidelines/*.md
+"""
 
 from __future__ import annotations
 
@@ -35,19 +42,24 @@ class TabnineAdapter(AgentAdapter):
             return Path(".tabnine") / "config.json"
         return Path.home() / ".tabnine" / "config.json"
 
-    def _prompts_path(self, scope: str) -> Path:
+    def _guidelines_dir(self, scope: str) -> Path:
         if scope == "project":
-            return Path(".tabnine") / "prompts.md"
-        return Path.home() / ".tabnine" / "prompts.md"
+            return Path(".tabnine") / "guidelines"
+        return Path.home() / ".tabnine" / "guidelines"
+
+    def _skills_dir(self, scope: str) -> Path | None:
+        return self._guidelines_dir(scope)
+
+    skills_format = "flat"
 
     def backup(self) -> list[Path]:
-        paths = [self._config_path("user"), self._prompts_path("user")]
+        paths = [self._config_path("user")]
         backups = [backup_file(p) for p in paths]
         return [b for b in backups if b is not None]
 
     def restore(self) -> bool:
         restored = False
-        for p in [self._config_path("user"), self._prompts_path("user")]:
+        for p in [self._config_path("user")]:
             backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
@@ -58,14 +70,17 @@ class TabnineAdapter(AgentAdapter):
         return self.inject_rules(scope)
 
     def inject_rules(self, scope: str = "user") -> bool:
-        # 1. prompts.md
-        path = self._prompts_path(scope)
-        protocol = get_protocol_for_agent(self.name)
-        content = read_text_safe(path)
+        # 1. .tabnine/guidelines/*.md — official Tabnine format
+        guidelines_dir = self._guidelines_dir(scope)
+        guidelines_dir.mkdir(parents=True, exist_ok=True)
 
+        rule_file = guidelines_dir / "maru-research-protocol.md"
+        protocol = get_protocol_for_agent(self.name)
+
+        content = read_text_safe(rule_file)
         new_content = inject_protocol(content, protocol)
         if new_content != content:
-            write_text_safe(path, new_content)
+            write_text_safe(rule_file, new_content)
 
         # 2. config.json — hint for future Tabnine versions
         config_path = self._config_path(scope)

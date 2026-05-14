@@ -1,4 +1,10 @@
-"""Cursor adapter — supports .cursorrules, .cursor/mcp.json, settings, commands."""
+"""Cursor adapter — supports .cursor/rules/*.md, .cursor/mcp.json, settings.json.
+
+Cursor 2026+ deprecates `.cursorrules` in favor of `.cursor/rules/*.md` (or `.mdc`)
+for project rules. User rules are managed via Cursor Settings → Rules UI.
+
+Official docs: https://cursor.com/docs/rules
+"""
 
 from __future__ import annotations
 
@@ -33,39 +39,35 @@ class CursorAdapter(AgentAdapter):
             return Path(".cursor") / "mcp.json"
         return Path.home() / ".cursor" / "mcp.json"
 
-    def _rules_path(self, scope: str) -> Path:
-        if scope == "project":
-            return Path(".cursorrules")
-        return Path.home() / ".cursorrules"
-
     def _settings_path(self, scope: str) -> Path:
         if scope == "project":
             return Path(".cursor") / "settings.json"
         return Path.home() / ".cursor" / "settings.json"
+
+    def _rules_dir(self, scope: str) -> Path:
+        """Cursor project rules directory — official since 2026."""
+        if scope == "project":
+            return Path(".cursor") / "rules"
+        return Path.home() / ".cursor" / "rules"
 
     def _commands_dir(self, scope: str) -> Path:
         if scope == "project":
             return Path(".cursor") / "commands"
         return Path.home() / ".cursor" / "commands"
 
-    def _hooks_dir(self, scope: str) -> Path:
-        if scope == "project":
-            return Path(".cursor") / "hooks"
-        return Path.home() / ".cursor" / "hooks"
-
     def _skills_dir(self, scope: str) -> Path | None:
-        if scope == "project":
-            return Path(".cursor") / "rules"
-        return Path.home() / ".cursor" / "rules"
+        # Re-use the official rules directory for skills too; Cursor loads
+        # every .md file in .cursor/rules/ as a rule.
+        return self._rules_dir(scope)
 
     def backup(self) -> list[Path]:
-        paths = [self._mcp_path("user"), self._rules_path("user"), self._settings_path("user")]
+        paths = [self._mcp_path("user"), self._settings_path("user")]
         backups = [backup_file(p) for p in paths]
         return [b for b in backups if b is not None]
 
     def restore(self) -> bool:
         restored = False
-        for p in [self._mcp_path("user"), self._rules_path("user"), self._settings_path("user")]:
+        for p in [self._mcp_path("user"), self._settings_path("user")]:
             backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
@@ -82,25 +84,19 @@ class CursorAdapter(AgentAdapter):
         return True
 
     def inject_rules(self, scope: str = "user") -> bool:
-        # 1. .cursorrules
-        rules_path = self._rules_path(scope)
-        content = read_text_safe(rules_path)
+        # 1. .cursor/rules/*.md — official rule format (2026+)
+        #    Always-write so the rule is present even if the file is new.
+        rules_dir = self._rules_dir(scope)
+        rules_dir.mkdir(parents=True, exist_ok=True)
+        rule_file = rules_dir / "maru-research-protocol.md"
         protocol = get_protocol_for_agent(self.name)
 
+        content = read_text_safe(rule_file)
         new_content = inject_protocol(content, protocol)
         if new_content != content:
-            write_text_safe(rules_path, new_content)
+            write_text_safe(rule_file, new_content)
 
-        # 2. .cursor/settings.json — enable MCP tools by default
-        settings_path = self._settings_path(scope)
-        settings = read_json_safe(settings_path)
-        if "mcp" not in settings:
-            settings["mcp"] = {}
-        if "autoEnableTools" not in settings["mcp"]:
-            settings["mcp"]["autoEnableTools"] = True
-        write_json_safe(settings_path, settings)
-
-        # 3. Cursor commands (0.45+ supports custom slash commands)
+        # 2. .cursor/commands/*.json — Cursor slash commands (official since 0.45+)
         cmds_dir = self._commands_dir(scope)
         cmds_dir.mkdir(parents=True, exist_ok=True)
 
@@ -124,60 +120,21 @@ class CursorAdapter(AgentAdapter):
             ),
         )
 
-        # 4. .cursor/settings.json — research enforcement hints
+        # 3. settings.json — single read/write for MCP auto-enable
         settings_path = self._settings_path(scope)
         settings = read_json_safe(settings_path)
-        if "agent" not in settings:
-            settings["agent"] = {}
-        # Hint to agent that it should always research first
-        settings["agent"]["defaultInstructions"] = (
-            "You MUST call deep_research before any code generation, file edit, "
-            "or architecture decision. This is enforced by the MCP server."
-        )
+        if "mcp" not in settings:
+            settings["mcp"] = {}
+        settings["mcp"]["autoEnableTools"] = True
         write_json_safe(settings_path, settings)
-
-        # 5. Cursor Hooks (2026+) — onPreEdit blocks un-researched edits
-        hooks_dir = self._hooks_dir(scope)
-        hooks_dir.mkdir(parents=True, exist_ok=True)
-
-        pre_edit_script = hooks_dir / "onPreEdit"
-        if not pre_edit_script.exists():
-            pre_edit_script.write_text(
-                "#!/usr/bin/env python3\n"
-                '"""Cursor onPreEdit hook — vetoes edits without research."""\n'
-                "import json, os, sys, time\n\n"
-                "def main() -> None:\n"
-                "    # Cursor hooks receive JSON via stdin (tool_name, file_path, etc.)\n"
-                "    try:\n"
-                "        data = json.load(sys.stdin)\n"
-                "    except Exception:\n"
-                "        sys.exit(0)\n"
-                '    marker = os.path.expanduser("~/.maru/last_research")\n'
-                "    if not os.path.exists(marker):\n"
-                '        print("[MARU] Research required before editing. Run /research first.", file=sys.stderr)\n'
-                "        sys.exit(2)\n"
-                "    elapsed = time.time() - os.path.getmtime(marker)\n"
-                "    if elapsed > 1800:\n"
-                '        print(f"[MARU] Research expired ({elapsed/60:.0f}min). Re-run /research.", file=sys.stderr)\n'
-                "        sys.exit(2)\n"
-                "    sys.exit(0)\n\n"
-                'if __name__ == "__main__":\n'
-                "    main()\n",
-                encoding="utf-8",
-            )
-            pre_edit_script.chmod(0o755)
 
         return True
 
 
 def _write_cursor_command(path: Path, name: str, description: str, prompt: str) -> None:
     """Write a Cursor custom slash command definition."""
-    cmd = {
-        "name": name,
-        "description": description,
-        "prompt": prompt,
-    }
-    import json
+    cmd = {"name": name, "description": description, "prompt": prompt}
+    import json as _json
 
-    if not path.exists() or json.loads(path.read_text()).get("prompt") != prompt:
-        path.write_text(json.dumps(cmd, indent=2) + "\n")
+    if not path.exists() or _json.loads(path.read_text()).get("prompt") != prompt:
+        path.write_text(_json.dumps(cmd, indent=2) + "\n")

@@ -22,6 +22,13 @@ class KiloAdapter(AgentAdapter):
             return Path("kilo.jsonc")
         return Path.home() / ".config" / "kilo" / "kilo.jsonc"
 
+    def _skills_dir(self, scope: str) -> Path | None:
+        if scope == "project":
+            return Path(".kilo") / "rules"
+        return Path.home() / ".config" / "kilo" / "rules"
+
+    skills_format = "flat"
+
     def backup(self) -> list[Path]:
         path = self._config_path("user")
         b = backup_file(path)
@@ -57,5 +64,23 @@ class KiloAdapter(AgentAdapter):
         new_prompt = inject_protocol(current, protocol)
         if new_prompt != current:
             config["systemPrompt"] = new_prompt
-            write_json_safe(path, config)
+
+        # Ensure .kilo/rules/*.md is referenced in instructions
+        if "instructions" not in config:
+            config["instructions"] = []
+        rules_glob = ".kilo/rules/*.md" if scope == "project" else (
+            str(Path.home() / ".config" / "kilo" / "rules" / "*.md")
+        )
+        if rules_glob not in config["instructions"]:
+            config["instructions"].append(rules_glob)
+
+        # Experimental features for better research integration
+        if "experimental" not in config:
+            config["experimental"] = {}
+        config["experimental"]["codebase_search"] = True
+
+        if "auto_collapse_reasoning" not in config:
+            config["auto_collapse_reasoning"] = True
+
+        write_json_safe(path, config)
         return True

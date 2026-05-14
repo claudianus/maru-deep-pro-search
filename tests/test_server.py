@@ -158,9 +158,11 @@ class TestWithEnforcement:
         async def dummy(*args, **kwargs):
             return "research result"
 
+        enforcer.get_or_create.return_value = MagicMock(research_id="RSCH-TEST123")
         wrapped = _with_enforcement("deep_research")(dummy)
         result = await wrapped("my query", ctx=None)
-        assert result == "research result"
+        assert result.startswith("research result")
+        assert "_research_id: RSCH-TEST123_" in result
         enforcer.mark_research_done.assert_awaited_once()
 
     @pytest.mark.asyncio

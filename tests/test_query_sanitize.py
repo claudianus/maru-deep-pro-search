@@ -13,19 +13,19 @@ class TestSanitizeQuery:
     def test_replaces_single_stale_year(self):
         assert (
             sanitize_query("React best practices 2024", current_year=2026)
-            == "React best practices latest"
+            == "React best practices 2026"
         )
 
     def test_replaces_stale_year_range(self):
         result = sanitize_query("AI regulation 2024 2025", current_year=2026)
         assert "2024" not in result
         assert "2025" not in result
-        assert "latest" in result
+        assert "2026" in result
 
     def test_replaces_in_phrase(self):
         result = sanitize_query("Python features in 2024", current_year=2026)
         assert "2024" not in result
-        assert "in latest" in result
+        assert "in 2026" in result
 
     def test_keeps_versions_in_comparison(self):
         result = sanitize_query("Next.js 14 vs 15 2023", current_year=2026)
@@ -47,12 +47,12 @@ class TestSanitizeQuery:
     def test_as_of_phrase(self):
         result = sanitize_query("Status as of 2024", current_year=2026)
         assert "2024" not in result
-        assert "as of latest" in result
+        assert "as of 2026" in result
 
-    def test_dedupes_latest(self):
-        result = sanitize_query("React latest 2024", current_year=2026)
-        # Should not produce "latest latest"
-        assert "latest latest" not in result
+    def test_dedupes_current_year(self):
+        result = sanitize_query("React 2025 2024", current_year=2026)
+        # Should not produce duplicate current year
+        assert "2026 2026" not in result
 
     def test_future_year_unchanged(self):
         result = sanitize_query("AI trends 2028", current_year=2026)
@@ -62,7 +62,7 @@ class TestSanitizeQuery:
         from maru_deep_pro_search.utils.query_sanitize import sanitize_queries
         queries = ["React 2024", "Python 2025"]
         results = sanitize_queries(queries, current_year=2026)
-        assert results[0] == "React latest"
+        assert results[0] == "React 2026"
         assert "2025" not in results[1]
 
     def test_whitespace_only_query(self):

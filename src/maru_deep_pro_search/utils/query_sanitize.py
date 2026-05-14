@@ -54,14 +54,14 @@ _STALE_PHRASES = [
 def sanitize_query(query: str, current_year: int | None = None) -> str:
     """Remove or replace stale years from a search query.
 
-    Stale years (older than current_year - 1) are replaced with "latest"
-    when they appear alone, or with the current year when part of a range.
+    Stale years (older than current_year - 1) are replaced with the current
+    year, which produces natural search queries.
 
     Examples:
-        "React best practices 2024" → "React best practices latest"
-        "Next.js 14 vs 15 2023" → "Next.js 14 vs 15 latest"
+        "React best practices 2024" → "React best practices 2025"
+        "Next.js 14 vs 15 2023" → "Next.js 14 vs 15 2025"
         "AI regulation 2024 2025" → "AI regulation 2025 2026"
-        "Python features in 2024" → "Python features in latest"
+        "Python features in 2024" → "Python features in 2025"
         "solid state battery latest 2026" → "solid state battery latest 2026" (unchanged)
     """
     if not query or not query.strip():
@@ -72,30 +72,31 @@ def sanitize_query(query: str, current_year: int | None = None) -> str:
 
     result = query.strip()
 
-    # Replace standalone stale years with "latest"
+    # Replace standalone stale years with the current year
     def _replace_year(match: re.Match) -> str:
         matched_year = int(match.group(1))
         if matched_year >= year:
             return str(match.group(0))  # Keep current/future years
-        return "latest"
+        return str(year)
 
     result = stale_pattern.sub(_replace_year, result)  # type: ignore[no-any-return]
 
-    # Clean up double "latest" occurrences
-    result = re.sub(r"\blatest\s+latest\b", "latest", result, flags=re.IGNORECASE)
-    result = re.sub(r"\blatest\s+(\d{4})\b", r"\1", result, flags=re.IGNORECASE)
-
-    # Replace stale phrases like "in 2024" → "in latest"
+    # Replace stale phrases like "in 2024" → "in 2025"
     for phrase_pattern in _STALE_PHRASES:
         result = re.sub(
             phrase_pattern,
-            lambda m: re.sub(r"\d{4}", "latest", m.group(0)),
+            lambda m: re.sub(r"\d{4}", str(year), m.group(0)),
             result,
             flags=re.IGNORECASE,
         )
 
-    # Final cleanup: dedupe spaces and duplicate "latest"
-    result = re.sub(r"\blatest\s+latest\b", "latest", result, flags=re.IGNORECASE)
+    # Final cleanup: dedupe spaces and duplicate current year
+    current_year_str = str(year)
+    result = re.sub(
+        rf"\b{current_year_str}\s+{current_year_str}\b",
+        current_year_str,
+        result,
+    )
     result = re.sub(r"\s+", " ", result).strip()
 
     return result

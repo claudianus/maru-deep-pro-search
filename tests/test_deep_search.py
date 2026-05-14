@@ -122,3 +122,86 @@ class TestDeepResearchIntegration:
         )
         # May return 0 or few results for nonsense query
         assert result.total_sources >= 0
+
+    @pytest.mark.asyncio
+    async def test_primary_sources_only(self):
+        result = await deep_research(
+            "Python asyncio",
+            max_sources=5,
+            expand_queries=False,
+            primary_sources_only=True,
+        )
+        assert result.total_sources >= 0
+
+    @pytest.mark.asyncio
+    async def test_unregistered_engine_fallback(self):
+        result = await deep_research(
+            "Python asyncio",
+            engine="nonexistent_engine_12345",
+            max_sources=3,
+            expand_queries=False,
+        )
+        assert result.total_sources >= 0
+
+
+class TestFormatForLLMEdgeCases:
+    def test_empty_snippet(self):
+        result = ResearchResult(
+            query="test",
+            engine="duckduckgo_lite",
+            total_sources=1,
+            sources=[
+                CitedSource(
+                    citation_id=1,
+                    url="https://example.com",
+                    title="Example",
+                    snippet="",
+                    quality="medium",
+                    relevance_score=5.0,
+                ),
+            ],
+        )
+        output = format_for_llm(result)
+        assert "Example" in output
+
+    def test_suggested_followups(self):
+        result = ResearchResult(
+            query="test",
+            engine="duckduckgo_lite",
+            total_sources=1,
+            sources=[
+                CitedSource(
+                    citation_id=1,
+                    url="https://example.com",
+                    title="Example",
+                    snippet="",
+                    quality="medium",
+                    relevance_score=5.0,
+                ),
+            ],
+            suggested_followups=["subquery 1", "subquery 2"],
+        )
+        output = format_for_llm(result)
+        assert "Suggested Follow-up Research" in output
+        assert "subquery 1" in output
+        assert "subquery 2" in output
+
+    def test_subqueries_in_output(self):
+        result = ResearchResult(
+            query="test",
+            engine="duckduckgo_lite",
+            total_sources=1,
+            sources=[
+                CitedSource(
+                    citation_id=1,
+                    url="https://example.com",
+                    title="Example",
+                    snippet="",
+                    quality="medium",
+                    relevance_score=5.0,
+                ),
+            ],
+            subqueries=["test", "test guide", "test tutorial"],
+        )
+        output = format_for_llm(result)
+        assert "subqueries:" in output

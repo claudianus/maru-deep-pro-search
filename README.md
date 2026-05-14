@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/v/maru-deep-pro-search?style=flat-square&color=blue" alt="PyPI"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/test.yml?style=flat-square&label=tests" alt="Tests"></a>
-  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/test.yml"><img src="https://img.shields.io/badge/coverage-77%25-green?style=flat-square" alt="Coverage"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/test.yml"><img src="https://img.shields.io/badge/coverage-80%25-green?style=flat-square" alt="Coverage"></a>
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/pyversions/maru-deep-pro-search?style=flat-square" alt="Python"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
 </p>
@@ -58,7 +58,61 @@ irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scrip
 pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 ```
 
+**Recommended (uv — fastest):**
+```bash
+uv tool install --python 3.12 git+https://github.com/claudianus/maru-deep-pro-search.git
+```
+
 The setup wizard auto-detects your AI agent, backs up existing configs, injects MCP settings, and enforces research-first rules.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Verify installation
+```bash
+maru-deep-pro-search --version
+# Expected: 0.11.3
+```
+
+### 2. Set up your agent
+```bash
+maru-deep-pro-search setup
+```
+This auto-detects installed agents (Claude, Cursor, etc.) and injects MCP configs.
+
+### 3. Example MCP config for Claude Code
+Add to your `~/.claude/settings.json`:
+```json
+{
+  "mcpServers": {
+    "maru-deep-pro-search": {
+      "command": "python3",
+      "args": ["-m", "maru_deep_pro_search.server"]
+    }
+  }
+}
+```
+
+### 4. First research
+Ask your agent: *"Research FastAPI vs Django 2025 and tell me which to choose."*
+
+The agent will automatically call `deep_research()` first, then synthesize an answer with real citations.
+
+---
+
+## 🏆 vs Alternatives
+
+| Feature | maru-deep-pro-search | Tavily MCP | Perplexity MCP |
+|---|---|---|---|
+| **Cost** | **$0 forever** | Free tier / $0.025 per search | $5/mo minimum |
+| **Engines** | **9 scrapers + failover** | 1 API | 1 API |
+| **Self-hosted** | **✅** | ❌ | ❌ |
+| **Offline capable** | **✅** (cached results) | ❌ | ❌ |
+| **Citations** | Native `[N]` | Yes | Yes |
+| **Enforces research** | **3-layer technical gate** | ❌ | ❌ |
+| **Prompt injection defense** | **72-pattern + semantic** | Basic | Basic |
+| **Agent adapters** | **21 agents** | Generic | Generic |
 
 ---
 
@@ -74,7 +128,7 @@ The setup wizard auto-detects your AI agent, backs up existing configs, injects 
 | `fetch_page` | Extract clean content from a single URL | Reading specific docs found during research |
 | `fetch_bulk` | Parallel fetch with deduplication | Reading 2–10 known URLs at once |
 | `stealthy_fetch` | Anti-bot bypass for protected sites | Cloudflare/DataDome blocked sites (last resort) |
-| `generate_code` | Validate code against research citations | After research — blocks un-researched code |
+| `generate_code` | **Code validation gate** — blocks un-researched code by checking for missing citations | After research — ensures code is backed by citations |
 | `version` | Check version & available updates | Verify installation health |
 
 **Tool decision tree:**
@@ -163,6 +217,65 @@ SQLite-backed research cache at `./.maru/knowledge.db`:
 Inspect with `maru-deep-pro-search stats`.
 
 For deep technical details, see [`docs/engine_insights.md`](./docs/engine_insights.md) and [`docs/lessons_learned.md`](./docs/lessons_learned.md).
+
+---
+
+## 📋 Example Outputs
+
+<details>
+<summary><b>deep_research</b> — Multi-engine ranked results</summary>
+
+```markdown
+## Research: FastAPI vs Django 2025
+_engines: duckduckgo_lite, bing, yahoo_
+### Sources
+#### [1] FastAPI Documentation — fastapi.tiangolo.com
+_score: 0.92 | [OFFICIAL-DOCS] | engines: 2 | relevance: 0.89
+FastAPI is a modern, fast (high-performance) web framework for building APIs...
+
+#### [2] Django 5.1 Release Notes — docs.djangoproject.com
+_score: 0.88 | [OFFICIAL-DOCS] | engines: 2 | relevance: 0.85
+Django 5.1 adds async ORM improvements, simplified field choices, and...
+```
+</details>
+
+<details>
+<summary><b>answer</b> — Perplexity-style direct answer</summary>
+
+```markdown
+## Answer: What is the best Python web framework in 2025?
+
+**FastAPI** is the dominant choice for API-first services, while **Django** remains king for full-stack applications with admin needs.
+
+**Key differences:**
+- Performance: FastAPI is ~3× faster due to async native design [1]
+- Ecosystem: Django has 15+ years of plugins and battle-tested ORM [2]
+- Learning curve: FastAPI is simpler for API developers; Django requires more upfront investment [3]
+
+**When to choose which:**
+- API / microservices → FastAPI
+- Full-stack with admin → Django
+```
+</details>
+
+<details>
+<summary><b>generate_code</b> — Validation gate (blocks un-researched code)</b></summary>
+
+```markdown
+❌ CODE GENERATION BLOCKED — Research validation failed
+
+Research query: Python asyncio best practices
+Research age: 42s
+
+Citations found in your code:
+  (none)
+
+ACTION REQUIRED:
+1. Run deep_research() on your topic
+2. Include [N] citations from research in your code
+3. Call generate_code() again with validated code
+```
+</details>
 
 ---
 

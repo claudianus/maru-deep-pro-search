@@ -26,7 +26,6 @@ def fake_home(tmp_path: Path, monkeypatch: Any) -> Path:
 def which_map(monkeypatch: Any) -> dict[str, str]:
     """Mock shutil.which with a configurable command -> path map."""
     mapping: dict[str, str] = {}
-    original = shutil.which
 
     def _which(cmd: str, mode: int = 1, path: str | None = None) -> str | None:
         return mapping.get(cmd)
@@ -151,6 +150,15 @@ class TestDetectorsPositive:
 
     def test_cline_via_claude_dev(self, fake_home: Path) -> None:
         fake_home.joinpath(".vscode", "extensions", "claude-dev").mkdir(parents=True)
+        assert AGENT_DETECTORS["cline"]()
+
+    def test_cline_via_home_dir(self, fake_home: Path) -> None:
+        fake_home.joinpath(".cline").mkdir()
+        assert AGENT_DETECTORS["cline"]()
+
+    def test_cline_via_project(self, tmp_path: Path, monkeypatch: Any) -> None:
+        monkeypatch.chdir(tmp_path)
+        tmp_path.joinpath(".cline").mkdir()
         assert AGENT_DETECTORS["cline"]()
 
     def test_zed_via_which(self, which_map: dict[str, str]) -> None:

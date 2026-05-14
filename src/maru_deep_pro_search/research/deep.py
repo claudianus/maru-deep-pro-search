@@ -65,7 +65,7 @@ class ResearchResult:
 async def deep_research(
     query: str,
     engine: str = "duckduckgo_lite",
-    max_sources: int = 8,
+    max_sources: int = 30,
     expand_queries: bool = True,
     primary_sources_only: bool = False,
 ) -> ResearchResult:
@@ -120,18 +120,27 @@ async def deep_research(
     engine_results: dict[str, list[SearchResult]] = {e: [] for e in engines}
     _search_semaphore = asyncio.Semaphore(4)
 
-    async def _search_one(eng_name: str, sq: str) -> tuple[str, list[SearchResult]]:
+    async def _search_one(
+        eng_name: str, sq: str, allow_fallback: bool = True
+    ) -> tuple[str, list[SearchResult]]:
         async with _search_semaphore:
             try:
                 search_engine = SearchEngineRegistry.create(eng_name)
                 results = await with_retry(
                     search_engine.search,
                     sq,
-                    max_results=max_sources * 2,
+                    max_results=max_sources * 3,
                     max_attempts=2,
                     retryable_exceptions=(NetworkError, ParseError),
                 )
                 return (eng_name, results)
+            except NetworkError as exc:
+                logger.warning("Search '%s' on %s failed: %s", sq[:40], eng_name, exc)
+                fallback = getattr(exc, "suggested_engine", None)
+                if fallback and fallback != eng_name and allow_fallback:
+                    logger.info("Engine fallback: %s -> %s", eng_name, fallback)
+                    return await _search_one(fallback, sq, allow_fallback=False)
+                return (eng_name, [])
             except Exception as exc:
                 logger.warning("Search '%s' on %s failed: %s", sq[:40], eng_name, exc)
                 return (eng_name, [])

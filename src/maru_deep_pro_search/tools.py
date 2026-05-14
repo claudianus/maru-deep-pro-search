@@ -143,7 +143,12 @@ async def tool_web_search(
 # ═══════════════════════════════════════════════════════════════
 
 
-async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 6000) -> str:
+async def tool_fetch_page(
+    url: str,
+    stealth: bool = False,
+    max_tokens: int = 6000,
+    auto_stealth_fallback: bool = True,
+) -> str:
     """Fetch a page via Scrapling and extract clean, LLM-optimized content.
 
     Use Cases:
@@ -179,6 +184,9 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
             timeout=20.0,
         )
     except asyncio.TimeoutError:
+        if auto_stealth_fallback and not stealth:
+            logger.info("fetch_page timeout for %s, auto-falling back to stealthy_fetch", url)
+            return await tool_stealthy_fetch(url, max_tokens)
         return (
             f"## [TIMEOUT] {url}\n"
             "_Fetch exceeded 20 seconds. The site may be too slow or blocked.\n"
@@ -206,9 +214,15 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
             guidance = (
                 "_Fetch blocked or failed. Try stealthy_fetch or fetch_page with stealth=True._"
             )
+        if auto_stealth_fallback and not stealth:
+            logger.info("fetch_page blocked for %s, auto-falling back to stealthy_fetch", url)
+            return await tool_stealthy_fetch(url, max_tokens)
         return f"## [BLOCKED] {url}\n{guidance}\nError: {page.error_message}"
 
     if page.content_length == 0:
+        if auto_stealth_fallback and not stealth:
+            logger.info("fetch_page empty for %s, auto-falling back to stealthy_fetch", url)
+            return await tool_stealthy_fetch(url, max_tokens)
         return f"## [EMPTY] {url}\n_No extractable content found._"
 
     content = page.markdown if page.markdown else page.text
@@ -350,7 +364,7 @@ async def tool_fetch_bulk(
 async def tool_deep_research(
     query: str,
     engine: str = "duckduckgo_lite",
-    max_sources: int = 8,
+    max_sources: int = 30,
     expand_queries: bool = True,
     primary_sources_only: bool = False,
 ) -> str:
@@ -432,7 +446,7 @@ async def tool_deep_research(
 async def tool_answer(
     query: str,
     engine: str = "duckduckgo_lite",
-    max_sources: int = 5,
+    max_sources: int = 10,
     max_tokens: int = 8000,
     primary_sources_only: bool = False,
 ) -> str:
@@ -592,7 +606,7 @@ async def tool_stealthy_fetch(url: str, max_tokens: int = 6000) -> str:
     Recommendation: Try fetch_page first, fall back to stealthy_fetch
     only if needed.
     """
-    return await tool_fetch_page(url, stealth=True, max_tokens=max_tokens)
+    return await tool_fetch_page(url, stealth=True, max_tokens=max_tokens, auto_stealth_fallback=False)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -789,7 +803,7 @@ TOOLS = {
             "properties": {
                 "query": {"type": "string", "description": "Question or topic to answer"},
                 "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
-                "max_sources": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
+                "max_sources": {"type": "integer", "default": 10, "minimum": 1, "maximum": 30},
                 "max_tokens": {
                     "type": "integer",
                     "default": 8000,
@@ -893,7 +907,7 @@ TOOLS = {
             "properties": {
                 "query": {"type": "string", "description": "Research question or topic"},
                 "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
-                "max_sources": {"type": "integer", "default": 8, "minimum": 1, "maximum": 15},
+                "max_sources": {"type": "integer", "default": 30, "minimum": 1, "maximum": 50},
                 "expand_queries": {"type": "boolean", "default": True},
                 "primary_sources_only": {
                     "type": "boolean",

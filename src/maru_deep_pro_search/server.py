@@ -393,7 +393,7 @@ When using fetch_bulk with multiple URLs:
 async def answer(
     query: str,
     engine: str = "duckduckgo_lite",
-    max_sources: int = 5,
+    max_sources: int = 10,
     max_tokens: int = 8000,
     primary_sources_only: bool = False,
     ctx: Context | None = None,
@@ -473,7 +473,7 @@ async def fetch_bulk(
 async def deep_research(
     query: str,
     engine: str = "duckduckgo_lite",
-    max_sources: int = 8,
+    max_sources: int = 30,
     expand_queries: bool = True,
     primary_sources_only: bool = False,
     ctx: Context | None = None,

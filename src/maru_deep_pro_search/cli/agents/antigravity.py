@@ -17,9 +17,13 @@ class AntiGravityAdapter(AgentAdapter):
         return Path.home().joinpath(".gemini", "antigravity").exists()
 
     def _mcp_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".gemini") / "antigravity" / "mcp_config.json"
         return Path.home() / ".gemini" / "antigravity" / "mcp_config.json"
 
     def _config_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".gemini") / "antigravity" / "config.json"
         return Path.home() / ".gemini" / "antigravity" / "config.json"
 
     def backup(self) -> list[Path]:

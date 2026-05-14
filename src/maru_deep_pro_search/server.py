@@ -101,6 +101,48 @@ def _with_enforcement(tool_name: str | None = None):
     return decorator
 
 
+def _with_audit(tool_name: str | None = None):
+    """Decorator that logs every MCP tool invocation to the audit database."""
+
+    def decorator(fn):
+        name = tool_name or fn.__name__
+
+        @functools.wraps(fn)
+        async def wrapper(*args, ctx: Context | None = None, **kwargs):
+            import time
+
+            from .harness.audit import AuditLogger
+
+            start = time.perf_counter()
+            params = {k: v for k, v in kwargs.items() if k != "ctx"}
+            try:
+                result = await fn(*args, ctx=ctx, **kwargs)
+            except Exception as exc:
+                duration_ms = (time.perf_counter() - start) * 1000
+                AuditLogger().log_tool_call(
+                    tool_name=name,
+                    parameters=params,
+                    result_preview=f"ERROR: {exc}",
+                    session_id=_get_session_id(ctx),
+                    duration_ms=duration_ms,
+                )
+                raise
+
+            duration_ms = (time.perf_counter() - start) * 1000
+            AuditLogger().log_tool_call(
+                tool_name=name,
+                parameters=params,
+                result_preview=str(result)[:500] if result else "",
+                session_id=_get_session_id(ctx),
+                duration_ms=duration_ms,
+            )
+            return result
+
+        return wrapper
+
+    return decorator
+
+
 # ═══════════════════════════════════════════════════════════════
 # MCP Prompts — Force Research-First Behavior
 # ═══════════════════════════════════════════════════════════════
@@ -319,6 +361,7 @@ When using fetch_bulk with multiple URLs:
 
 
 @mcp.tool()
+@_with_audit()
 async def answer(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -335,6 +378,7 @@ async def answer(
 
 
 @mcp.tool()
+@_with_audit()
 async def web_search(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -348,6 +392,7 @@ async def web_search(
 
 
 @mcp.tool()
+@_with_audit()
 async def search_with_citations(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -361,6 +406,7 @@ async def search_with_citations(
 
 
 @mcp.tool()
+@_with_audit()
 async def fetch_page(
     url: str,
     stealth: bool = False,
@@ -374,6 +420,7 @@ async def fetch_page(
 
 
 @mcp.tool()
+@_with_audit()
 async def fetch_bulk(
     urls: list[str],
     stealth: bool = False,
@@ -389,6 +436,7 @@ async def fetch_bulk(
 
 @mcp.tool()
 @_with_enforcement("deep_research")
+@_with_audit("deep_research")
 async def deep_research(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -419,6 +467,7 @@ async def deep_research(
 
 
 @mcp.tool()
+@_with_audit()
 async def stealthy_fetch(
     url: str,
     max_tokens: int = 6000,
@@ -431,6 +480,7 @@ async def stealthy_fetch(
 
 
 @mcp.tool()
+@_with_audit()
 async def parallel_search(
     queries: list[str],
     engine: str = "duckduckgo_lite",
@@ -445,6 +495,7 @@ async def parallel_search(
 
 
 @mcp.tool()
+@_with_audit()
 async def version(
     ctx: Context | None = None,
 ) -> str:
@@ -472,6 +523,7 @@ async def version(
 
 
 @mcp.tool()
+@_with_audit()
 async def generate_code(
     task_description: str,
     proposed_code: str,

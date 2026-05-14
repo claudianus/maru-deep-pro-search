@@ -181,7 +181,7 @@ class StartpageEngine(SearchEngine):
         """Reset the browser session if it becomes corrupted."""
         if self._session is not None and self._session_started:
             try:
-                await self._session.stop()
+                await self._session.close()
             except Exception as exc:
                 logger.warning("Error stopping Startpage session: %s", exc)
         self._session = None

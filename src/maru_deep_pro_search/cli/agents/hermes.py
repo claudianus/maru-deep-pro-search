@@ -66,7 +66,7 @@ class HermesAdapter(AgentAdapter):
             return Path("SOUL.md")
         return Path.home() / ".hermes" / "SOUL.md"
 
-    def _skills_dir(self, scope: str) -> Path:
+    def _skills_dir(self, scope: str) -> Path | None:
         if scope == "project":
             return Path(".hermes") / "skills"
         return Path.home() / ".hermes" / "skills"
@@ -223,6 +223,8 @@ class HermesAdapter(AgentAdapter):
 
         # 5. Skill registration
         skills_dir = self._skills_dir(scope)
+        if skills_dir is None:
+            return False
         skills_dir.mkdir(parents=True, exist_ok=True)
 
         skill_file = skills_dir / "research-first.md"

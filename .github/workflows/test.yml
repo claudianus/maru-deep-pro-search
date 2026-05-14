@@ -32,6 +32,9 @@ jobs:
       - name: Run tests
         run: uv run pytest tests/ -v --tb=short
 
+      - name: Coverage report
+        run: uv run pytest tests/ -q --cov=src/maru_deep_pro_search --cov-report=term --cov-fail-under=50
+
       # NOTE: Type check and lint are handled by the dedicated lint.yml workflow.
       # Do NOT add them here — running them with `|| true` wastes CI time
       # while silently ignoring failures.

@@ -20,7 +20,7 @@ uv run pytest tests/ -q
 - [ ] `ruff check .` passes
 - [ ] `ruff format --check .` passes
 - [ ] `mypy src/` passes (0 errors)
-- [ ] `pytest tests/ -q` passes (271 tests)
+- [ ] `pytest tests/ -q` passes (376 tests)
 - [ ] `__version__` synced with `pyproject.toml`
 - [ ] Direct push to `main` is **PROHIBITED** — open a PR
 
@@ -62,7 +62,7 @@ assert hasattr(engine, '_circuit_breaker')
 ## Testing
 
 ```bash
-uv run pytest tests/ -v        # All (273)
+uv run pytest tests/ -v        # All (376)
 uv run pytest tests/test_engines.py -v  # Specific
 ```
 

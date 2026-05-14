@@ -233,6 +233,7 @@ def _fuzzy_dedupe(results: list[SearchResult], threshold: float = 0.72) -> list[
     except Exception:
         pass
 
+    unique_indices: list[int] = []
     for i, r in enumerate(results):
         is_dup = False
         for j, u in enumerate(unique):
@@ -241,7 +242,9 @@ def _fuzzy_dedupe(results: list[SearchResult], threshold: float = 0.72) -> list[
             # Snippet similarity (check first 200 chars)
             snippet_sim = _jaccard_similarity(r.snippet[:200], u.snippet[:200])
             # Semantic similarity (catches paraphrased duplicates)
-            sem_sim = semantic_sims.get((j, i), 0.0)
+            # Use original result index, not position in unique list
+            orig_j = unique_indices[j]
+            sem_sim = semantic_sims.get((orig_j, i), 0.0)
 
             # Duplicates: Jaccard high OR semantic very high
             if title_sim > threshold or snippet_sim > threshold or sem_sim > 0.95:
@@ -253,6 +256,7 @@ def _fuzzy_dedupe(results: list[SearchResult], threshold: float = 0.72) -> list[
 
         if not is_dup:
             unique.append(r)
+            unique_indices.append(i)
 
     logger.debug("Hybrid dedupe: %d -> %d results", len(results), len(unique))
     return unique

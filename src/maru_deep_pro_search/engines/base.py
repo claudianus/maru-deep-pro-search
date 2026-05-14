@@ -178,13 +178,13 @@ class SearchEngine(ABC):
             return False
         return True
 
-    def _record_success(self) -> None:
+    async def _record_success(self) -> None:
         """Record a successful request for circuit breaker tracking."""
-        asyncio.create_task(self._circuit_breaker.record_success())
+        await self._circuit_breaker.record_success()
 
-    def _record_failure(self) -> None:
+    async def _record_failure(self) -> None:
         """Record a failed request for circuit breaker tracking."""
-        asyncio.create_task(self._circuit_breaker.record_failure())
+        await self._circuit_breaker.record_failure()
 
     def __init_subclass__(cls, **kwargs):
         """Wrap subclass ``search()`` with rate-limit + circuit-breaker logic."""
@@ -203,10 +203,10 @@ class SearchEngine(ABC):
                 )
             try:
                 results = await original_search(self, query, max_results)
-                self._record_success()
+                await self._record_success()
                 return results  # type: ignore[no-any-return]
             except Exception:
-                self._record_failure()
+                await self._record_failure()
                 raise
 
         cls.search = _wrapped_search  # type: ignore[method-assign]

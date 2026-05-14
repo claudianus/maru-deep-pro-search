@@ -706,6 +706,56 @@ async def generate_code(
     )
 
 
+@mcp.tool()
+@_with_validation()
+@_with_audit()
+async def query_knowledge(
+    query: str,
+    limit: int = 3,
+    ctx: Context | None = None,
+) -> str:
+    """Search the persisted knowledge base for past research results.
+
+    BEST FOR:
+    - Reusing research you already did in this or previous sessions
+    - Checking if a topic has been researched before
+    - Building on prior knowledge without re-searching the web
+
+    Args:
+        query: The topic to look up in the knowledge base.
+        limit: Maximum number of past results to return (default 3).
+    """
+    from .harness.persistence import KnowledgeStore
+
+    store = KnowledgeStore()
+    entries = store.query(query, max_results=limit)
+
+    if not entries:
+        return (
+            f"## No prior research found for: '{query}'\n\n"
+            "This topic hasn't been researched in the knowledge base yet. "
+            "Run `deep_research(query=...) first to populate it."
+        )
+
+    lines = [f"## Prior Research Results ({len(entries)} found)", ""]
+    for i, entry in enumerate(entries, 1):
+        lines.append(f"### [{i}] {entry.query}")
+        lines.append(f"_Sources: {len(entry.sources)} | Saved: {entry.created_at}_")
+        lines.append("")
+        # Truncate answer to first 800 chars to stay within token budget
+        preview = entry.answer[:800] if len(entry.answer) > 800 else entry.answer
+        lines.append(preview)
+        if len(entry.answer) > 800:
+            lines.append("\n... (truncated)")
+        lines.append("")
+
+    lines.append(
+        "💡 Tip: These results are from prior research sessions. "
+        "If the information is stale, run `deep_research()` again to refresh."
+    )
+    return "\n".join(lines)
+
+
 def _research_main(argv: list[str] | None = None) -> int:
     """CLI entry point for running deep research from the command line."""
     import argparse

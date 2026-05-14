@@ -423,6 +423,26 @@ async def tool_deep_research(
         result_text, source_url="deep-research:multiple-sources", report=report
     )
     cache.set(key, result_text)
+
+    # Persist to knowledge store for future retrieval
+    try:
+        from .harness.persistence import KnowledgeStore
+
+        sources = [
+            {
+                "url": s.url,
+                "title": s.title,
+                "snippet": s.snippet,
+                "quality": s.quality,
+                "engines_found": s.engines_found,
+                "relevance_score": s.relevance_score,
+            }
+            for s in result.sources
+        ]
+        KnowledgeStore().save(query=result.query, answer=result_text, sources=sources)
+    except Exception:
+        logger.debug("KnowledgeStore save failed (non-critical)", exc_info=True)
+
     return result_text
 
 

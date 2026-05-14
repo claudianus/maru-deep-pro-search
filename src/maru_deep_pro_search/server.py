@@ -97,7 +97,14 @@ def _with_enforcement(tool_name: str | None = None):
 
             # All other tools must pass the research gate
             await enforcer.check_research(session_id, name)
-            return await fn(*args, ctx=ctx, **kwargs)
+            result = await fn(*args, ctx=ctx, **kwargs)
+            # Record tool call and check for mid-task research warnings
+            state = enforcer.get_or_create(session_id)
+            state.record_tool(name)
+            warning = enforcer.should_research(session_id, name)
+            if warning:
+                result += warning
+            return result
 
         return wrapper
 

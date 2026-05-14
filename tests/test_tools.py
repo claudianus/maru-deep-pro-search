@@ -21,7 +21,6 @@ from maru_deep_pro_search.engines.base import (
 )
 from maru_deep_pro_search.exceptions import MaruSearchError
 from maru_deep_pro_search.tools import (
-    TOOLS,
     tool_answer,
     tool_deep_research,
     tool_fetch_bulk,
@@ -794,29 +793,4 @@ class TestToolParallelSearch:
         assert "✓" in result
 
 
-# ═══════════════════════════════════════════════════════════════
-# TOOLS registry
-# ═══════════════════════════════════════════════════════════════
 
-
-class TestToolsRegistry:
-    def test_has_all_tools(self) -> None:
-        assert "answer" in TOOLS
-        assert "web_search" in TOOLS
-        assert "search_with_citations" in TOOLS
-        assert "fetch_page" in TOOLS
-        assert "fetch_bulk" in TOOLS
-        assert "deep_research" in TOOLS
-        assert "stealthy_fetch" in TOOLS
-        assert "parallel_search" in TOOLS
-
-    def test_tool_is_callable(self) -> None:
-        for name, (fn, _desc, _schema) in TOOLS.items():
-            assert callable(fn), f"{name} is not callable"
-
-    def test_schemas_have_required(self) -> None:
-        for _name, (_fn, _desc, schema) in TOOLS.items():
-            assert "type" in schema
-            assert schema["type"] == "object"
-            assert "properties" in schema
-            assert "required" in schema

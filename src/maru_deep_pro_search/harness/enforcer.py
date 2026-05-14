@@ -92,14 +92,17 @@ class SessionEnforcer:
     """Tracks every MCP session and enforces research-before-action policies."""
 
     # Tools that REQUIRE deep_research to have been called first.
-    # Previously gated all search tools; now only code generation is gated
-    # via validate_code_generation() in the generate_code tool itself.
-    RESEARCH_DEPENDENT_TOOLS: set[str] = set()
-
     # Tools that can be called WITHOUT prior research.
     RESEARCH_EXEMPT_TOOLS: set[str] = {
         "deep_research",
+        "version",
+        "list_engines",
+        "engine_health",
+        "session_state",
     }
+
+    # Mid-task enforcement: warn after N non-research tools without fresh research
+    MAX_TOOLS_WITHOUT_RESEARCH: int = 5
 
     def __init__(self) -> None:
         self._sessions: dict[str, SessionState] = {}
@@ -167,6 +170,31 @@ class SessionEnforcer:
             )
 
         return state
+
+    def should_research(self, session_id: str, tool_name: str) -> str | None:
+        """Return a warning if the agent should re-research before continuing.
+
+        Returns None if no warning is needed, or a markdown string with the warning.
+        """
+        state = self.get_or_create(session_id)
+
+        if tool_name in self.RESEARCH_EXEMPT_TOOLS:
+            return None
+
+        if not state.research_done:
+            return None  # check_research will block anyway
+
+        non_research_tools = [
+            t for t in state.tools_called if t not in self.RESEARCH_EXEMPT_TOOLS
+        ]
+        if len(non_research_tools) >= self.MAX_TOOLS_WITHOUT_RESEARCH:
+            return (
+                f"\n\n🟡 **Mid-task warning**: You have called {len(non_research_tools)} tools "
+                f"since your last research. Consider re-running `deep_research()` to refresh "
+                f"your knowledge before continuing."
+            )
+
+        return None
 
     async def validate_code_generation(
         self,

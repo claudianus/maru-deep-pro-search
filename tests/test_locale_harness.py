@@ -39,3 +39,18 @@ class TestLocaleHarness:
         assert "Chinese" in get_locale_hint("baidu")
         assert "Korean" in get_locale_hint("naver")
         assert get_locale_hint("google") == "English"
+
+    def test_no_matching_terms_gets_suffix(self):
+        # "python" has no tech-term mapping, so suffix is appended
+        result = optimize_for_engine("python", "baidu")
+        assert result.endswith("教程")
+        result = optimize_for_engine("python", "naver")
+        assert result.endswith("강의")
+
+    def test_has_script_unknown_engine(self):
+        from maru_deep_pro_search.utils.locale_harness import _has_script
+        assert _has_script("hello", "unknown") is False
+
+    def test_get_locale_hint_unknown_engine(self):
+        assert get_locale_hint("startpage") == "English"
+        assert get_locale_hint("ECOSIA") == "English"

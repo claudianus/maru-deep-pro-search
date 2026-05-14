@@ -146,7 +146,10 @@ class TestWithAudit:
 class TestWithEnforcement:
     @pytest.mark.asyncio
     async def test_deep_research_marks_done(self, monkeypatch: Any) -> None:
+        from unittest.mock import AsyncMock
+
         enforcer = MagicMock()
+        enforcer.mark_research_done = AsyncMock()
         monkeypatch.setattr(
             "maru_deep_pro_search.harness.enforcer.get_enforcer",
             lambda: enforcer,
@@ -158,11 +161,14 @@ class TestWithEnforcement:
         wrapped = _with_enforcement("deep_research")(dummy)
         result = await wrapped("my query", ctx=None)
         assert result == "research result"
-        enforcer.mark_research_done.assert_called_once()
+        enforcer.mark_research_done.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_other_tools_check_research(self, monkeypatch: Any) -> None:
+        from unittest.mock import AsyncMock
+
         enforcer = MagicMock()
+        enforcer.check_research = AsyncMock()
         monkeypatch.setattr(
             "maru_deep_pro_search.harness.enforcer.get_enforcer",
             lambda: enforcer,
@@ -173,7 +179,7 @@ class TestWithEnforcement:
 
         wrapped = _with_enforcement("fetch_page")(dummy)
         await wrapped(ctx=None)
-        enforcer.check_research.assert_called_once()
+        enforcer.check_research.assert_awaited_once()
 
 
 # ── always_research_first prompt ────────────────────────────────

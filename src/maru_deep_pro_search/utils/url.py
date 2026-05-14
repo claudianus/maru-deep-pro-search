@@ -246,7 +246,7 @@ def should_skip_url(url: str) -> bool:
 def is_authority_domain(url: str) -> bool:
     """Check if URL is from a known high-authority domain."""
     domain = urlparse(url).netloc.lower()
-    return any(auth in domain for auth in _AUTHORITY_DOMAINS)
+    return any(domain == auth or domain.endswith("." + auth) for auth in _AUTHORITY_DOMAINS)
 
 
 def deduplicate_urls(urls: list[str]) -> list[str]:

@@ -222,36 +222,36 @@ class TestBM25EdgeCases:
     def test_bm25_import_error(self, monkeypatch):
         import sys
         monkeypatch.setitem(sys.modules, "rank_bm25", None)
-        from maru_deep_pro_search.research.ranker import _compute_bm25_scores
         from maru_deep_pro_search.engines.base import SearchResult
+        from maru_deep_pro_search.research.ranker import _compute_bm25_scores
 
         results = [SearchResult(title="Test", url="https://example.com", engine="ddg")]
         scores = _compute_bm25_scores("test", results)
         assert scores == {"https://example.com": 0.0}
 
     def test_bm25_scoring_exception(self, monkeypatch):
-        from unittest.mock import MagicMock
         import sys
+        from unittest.mock import MagicMock
         mock_bm25 = MagicMock()
         mock_bm25.BM25Okapi.side_effect = RuntimeError("BM25 fail")
         monkeypatch.setitem(sys.modules, "rank_bm25", mock_bm25)
-        from maru_deep_pro_search.research.ranker import _compute_bm25_scores
         from maru_deep_pro_search.engines.base import SearchResult
+        from maru_deep_pro_search.research.ranker import _compute_bm25_scores
 
         results = [SearchResult(title="Test", url="https://example.com", engine="ddg")]
         scores = _compute_bm25_scores("test", results)
         assert scores == {"https://example.com": 0.0}
 
     def test_bm25_empty_query_tokens(self, monkeypatch):
-        from unittest.mock import MagicMock
         import sys
+        from unittest.mock import MagicMock
         mock_bm25 = MagicMock()
         mock_instance = MagicMock()
         mock_instance.get_scores.return_value = [1.5]
         mock_bm25.BM25Okapi.return_value = mock_instance
         monkeypatch.setitem(sys.modules, "rank_bm25", mock_bm25)
-        from maru_deep_pro_search.research.ranker import _compute_bm25_scores
         from maru_deep_pro_search.engines.base import SearchResult
+        from maru_deep_pro_search.research.ranker import _compute_bm25_scores
 
         # extract_keywords returns empty for punctuation-only query
         results = [SearchResult(title="Test", url="https://example.com", engine="ddg", snippet="test")]

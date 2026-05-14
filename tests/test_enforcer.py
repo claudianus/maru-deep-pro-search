@@ -75,8 +75,9 @@ class TestSessionEnforcer:
         assert state1 is state2
         assert state1.session_id == "sess-a"
 
-    def test_mark_research_done(self, enforcer: SessionEnforcer) -> None:
-        state = enforcer.mark_research_done("sess-a", "query", "result [1]")
+    @pytest.mark.asyncio
+    async def test_mark_research_done(self, enforcer: SessionEnforcer) -> None:
+        state = await enforcer.mark_research_done("sess-a", "query", "result [1]")
         assert state.research_done is True
         assert state.research_query == "query"
         assert state.citations_found == ["1"]
@@ -84,88 +85,105 @@ class TestSessionEnforcer:
         assert (Path.home() / ".maru" / "last_research").exists()
         assert (Path.home() / ".maru" / "session_research.json").exists()
 
-    def test_check_research_exempt_tool(self, enforcer: SessionEnforcer) -> None:
-        state = enforcer.check_research("sess-a", "deep_research")
+    @pytest.mark.asyncio
+    async def test_check_research_exempt_tool(self, enforcer: SessionEnforcer) -> None:
+        state = await enforcer.check_research("sess-a", "deep_research")
         assert state.session_id == "sess-a"
 
-    def test_check_research_blocks_when_not_done(self, enforcer: SessionEnforcer) -> None:
+    @pytest.mark.asyncio
+    async def test_check_research_blocks_when_not_done(self, enforcer: SessionEnforcer) -> None:
         with pytest.raises(ResearchRequiredError):
-            enforcer.check_research("sess-a", "generate_code")
+            await enforcer.check_research("sess-a", "generate_code")
 
-    def test_check_research_blocks_when_stale(self, enforcer: SessionEnforcer) -> None:
-        state = enforcer.mark_research_done("sess-a", "q", "r")
+    @pytest.mark.asyncio
+    async def test_check_research_blocks_when_stale(self, enforcer: SessionEnforcer) -> None:
+        state = await enforcer.mark_research_done("sess-a", "q", "r")
         state.research_timestamp = time.time() - 1860
         with pytest.raises(ResearchRequiredError) as exc:
-            enforcer.check_research("sess-a", "generate_code")
+            await enforcer.check_research("sess-a", "generate_code")
         assert "expired" in str(exc.value)
 
-    def test_check_research_allows_when_fresh(self, enforcer: SessionEnforcer) -> None:
-        enforcer.mark_research_done("sess-a", "q", "r")
-        state = enforcer.check_research("sess-a", "generate_code")
+    @pytest.mark.asyncio
+    async def test_check_research_allows_when_fresh(self, enforcer: SessionEnforcer) -> None:
+        await enforcer.mark_research_done("sess-a", "q", "r")
+        state = await enforcer.check_research("sess-a", "generate_code")
         assert state.session_id == "sess-a"
 
-    def test_validate_code_generation_no_research(self, enforcer: SessionEnforcer) -> None:
+    @pytest.mark.asyncio
+    async def test_validate_code_generation_no_research(self, enforcer: SessionEnforcer) -> None:
         with pytest.raises(CodeGenerationBlockedError) as exc:
-            enforcer.validate_code_generation("sess-a", "RSCH-123", "code")
+            await enforcer.validate_code_generation("sess-a", "RSCH-123", "code")
         assert "no research" in str(exc.value)
 
-    def test_validate_code_generation_stale(self, enforcer: SessionEnforcer) -> None:
-        state = enforcer.mark_research_done("sess-a", "q", "r [1]")
+    @pytest.mark.asyncio
+    async def test_validate_code_generation_stale(self, enforcer: SessionEnforcer) -> None:
+        state = await enforcer.mark_research_done("sess-a", "q", "r [1]")
         state.research_timestamp = time.time() - 1860
         with pytest.raises(CodeGenerationBlockedError) as exc:
-            enforcer.validate_code_generation("sess-a", state.research_id, "code")
+            await enforcer.validate_code_generation("sess-a", state.research_id, "code")
         assert "stale" in str(exc.value)
 
-    def test_validate_code_generation_wrong_id(self, enforcer: SessionEnforcer) -> None:
-        enforcer.mark_research_done("sess-a", "q", "r [1]")
+    @pytest.mark.asyncio
+    async def test_validate_code_generation_wrong_id(self, enforcer: SessionEnforcer) -> None:
+        await enforcer.mark_research_done("sess-a", "q", "r [1]")
         with pytest.raises(CodeGenerationBlockedError) as exc:
-            enforcer.validate_code_generation("sess-a", "WRONG-ID", "code")
+            await enforcer.validate_code_generation("sess-a", "WRONG-ID", "code")
         assert "mismatch" in str(exc.value)
 
-    def test_validate_code_generation_no_citations(self, enforcer: SessionEnforcer) -> None:
-        state = enforcer.mark_research_done("sess-a", "q", "r [1]")
-        report = enforcer.validate_code_generation(
+    @pytest.mark.asyncio
+    async def test_validate_code_generation_no_citations(self, enforcer: SessionEnforcer) -> None:
+        state = await enforcer.mark_research_done("sess-a", "q", "r [1]")
+        report = await enforcer.validate_code_generation(
             "sess-a", state.research_id, "code without citations"
         )
         assert report["passed"] is False
         assert report["code_citations"] == []
 
-    def test_validate_code_generation_valid(self, enforcer: SessionEnforcer) -> None:
-        state = enforcer.mark_research_done("sess-a", "q", "r [1] [2]")
-        report = enforcer.validate_code_generation("sess-a", state.research_id, "code [1]")
+    @pytest.mark.asyncio
+    async def test_validate_code_generation_valid(self, enforcer: SessionEnforcer) -> None:
+        state = await enforcer.mark_research_done("sess-a", "q", "r [1] [2]")
+        report = await enforcer.validate_code_generation("sess-a", state.research_id, "code [1]")
         assert report["passed"] is True
         assert report["code_citations"] == ["1"]
         assert report["research_citations"] == ["1", "2"]
         assert report["missing_citations"] == []
 
-    def test_validate_code_generation_missing_citation(self, enforcer: SessionEnforcer) -> None:
-        state = enforcer.mark_research_done("sess-a", "q", "r [1]")
-        report = enforcer.validate_code_generation("sess-a", state.research_id, "code [1] [99]")
+    @pytest.mark.asyncio
+    async def test_validate_code_generation_missing_citation(
+        self, enforcer: SessionEnforcer
+    ) -> None:
+        state = await enforcer.mark_research_done("sess-a", "q", "r [1]")
+        report = await enforcer.validate_code_generation(
+            "sess-a", state.research_id, "code [1] [99]"
+        )
         assert report["passed"] is False
         assert report["missing_citations"] == ["99"]
 
-    def test_session_summary(self, enforcer: SessionEnforcer) -> None:
-        enforcer.mark_research_done("sess-a", "q", "r")
-        summary = enforcer.session_summary("sess-a")
+    @pytest.mark.asyncio
+    async def test_session_summary(self, enforcer: SessionEnforcer) -> None:
+        await enforcer.mark_research_done("sess-a", "q", "r")
+        summary = await enforcer.session_summary("sess-a")
         assert summary["session_id"] == "sess-a"
         assert summary["research_done"] is True
         assert summary["research_query"] == "q"
         assert summary["is_fresh"] is True
         assert "research_id" in summary
 
-    def test_prune_stale_sessions(self, enforcer: SessionEnforcer) -> None:
+    @pytest.mark.asyncio
+    async def test_prune_stale_sessions(self, enforcer: SessionEnforcer) -> None:
         enforcer.get_or_create("fresh")
         enforcer.get_or_create("stale")
         # Make stale session old
         enforcer._sessions["stale"].created_at = time.time() - 7200
-        removed = enforcer.prune_stale_sessions(max_age_seconds=3600)
+        removed = await enforcer.prune_stale_sessions(max_age_seconds=3600)
         assert removed == 1
         assert "stale" not in enforcer._sessions
         assert "fresh" in enforcer._sessions
 
-    def test_prune_keeps_fresh(self, enforcer: SessionEnforcer) -> None:
+    @pytest.mark.asyncio
+    async def test_prune_keeps_fresh(self, enforcer: SessionEnforcer) -> None:
         enforcer.get_or_create("fresh")
-        removed = enforcer.prune_stale_sessions()
+        removed = await enforcer.prune_stale_sessions()
         assert removed == 0
         assert "fresh" in enforcer._sessions
 

@@ -110,7 +110,7 @@ class TestGetInstalledVersion:
         monkeypatch.setattr(
             tomllib,
             "load",
-            lambda f: (_ for _ in ()).throw(IOError("no pyproject")),
+            lambda f: (_ for _ in ()).throw(OSError("no pyproject")),
         )
         from maru_deep_pro_search.utils.updater import _get_installed_version
         result = _get_installed_version()
@@ -119,8 +119,8 @@ class TestGetInstalledVersion:
 
 class TestGetLatestVersion:
     def test_success(self, monkeypatch):
-        from io import BytesIO
         from unittest.mock import MagicMock
+
         from maru_deep_pro_search.utils.updater import _get_latest_version
 
         mock_resp = MagicMock()
@@ -139,7 +139,7 @@ class TestGetLatestVersion:
         from maru_deep_pro_search.utils.updater import _get_latest_version
         monkeypatch.setattr(
             "maru_deep_pro_search.utils.updater.urlopen",
-            lambda req, timeout: (_ for _ in ()).throw(IOError("network down")),
+            lambda req, timeout: (_ for _ in ()).throw(OSError("network down")),
         )
         assert _get_latest_version() is None
 
@@ -228,6 +228,7 @@ class TestPerformUpdate:
 
     def test_uv_update_success(self, monkeypatch):
         from unittest.mock import MagicMock
+
         from maru_deep_pro_search.utils.updater import perform_update
         monkeypatch.setattr(
             "maru_deep_pro_search.utils.updater._get_installed_version",
@@ -253,6 +254,7 @@ class TestPerformUpdate:
 
     def test_all_commands_fail(self, monkeypatch):
         from unittest.mock import MagicMock
+
         from maru_deep_pro_search.utils.updater import perform_update
         monkeypatch.setattr(
             "maru_deep_pro_search.utils.updater._get_installed_version",
@@ -279,6 +281,7 @@ class TestPerformUpdate:
 
     def test_pipx_path(self, monkeypatch):
         from unittest.mock import MagicMock
+
         from maru_deep_pro_search.utils.updater import perform_update
         monkeypatch.setattr(
             "maru_deep_pro_search.utils.updater._get_installed_version",

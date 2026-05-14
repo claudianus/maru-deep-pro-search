@@ -85,7 +85,7 @@ def _with_enforcement(tool_name: str | None = None):
                 # deep_research is exempt — it *is* the research step
                 result = await fn(*args, ctx=ctx, **kwargs)
                 # Mark session as researched with the result
-                enforcer.mark_research_done(
+                await enforcer.mark_research_done(
                     session_id,
                     query=kwargs.get("query", args[0] if args else ""),
                     result=result,
@@ -93,7 +93,7 @@ def _with_enforcement(tool_name: str | None = None):
                 return result
 
             # All other tools must pass the research gate
-            enforcer.check_research(session_id, name)
+            await enforcer.check_research(session_id, name)
             return await fn(*args, ctx=ctx, **kwargs)
 
         return wrapper
@@ -542,9 +542,15 @@ async def version(
     - Getting update instructions
     - Verifying the MCP server is running correctly
     """
+    from functools import lru_cache
+
     from .utils.updater import check_for_update
 
-    result = check_for_update()
+    @lru_cache(maxsize=1)
+    def _cached_check():
+        return check_for_update()
+
+    result = _cached_check()
     lines = [
         f"maru-deep-pro-search v{result.current_version}",
         "",
@@ -564,6 +570,7 @@ async def version(
 async def generate_code(
     task_description: str,
     proposed_code: str,
+    research_id: str,
     language: str = "python",
     ctx: Context | None = None,
 ) -> str:
@@ -572,6 +579,9 @@ async def generate_code(
     This tool validates that your code is backed by research citations.
     If validation fails, it returns a detailed report telling you exactly
     what citations are missing or what research needs to be re-done.
+
+    Args:
+        research_id: The research_id returned by deep_research().
     """
     from .harness.enforcer import CodeGenerationBlockedError, get_enforcer
 
@@ -579,7 +589,7 @@ async def generate_code(
     enforcer = get_enforcer()
 
     try:
-        report = enforcer.validate_code_generation(session_id, task_description, proposed_code)
+        report = await enforcer.validate_code_generation(session_id, research_id, proposed_code)
     except CodeGenerationBlockedError as exc:
         return str(exc)
 

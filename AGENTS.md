@@ -34,6 +34,19 @@ uv run pytest tests/ -q
 - **Naming**: snake_case (functions), PascalCase (classes)
 - **Docstrings**: Google style for public APIs
 
+## Anti-Waste Policy (CTO Directive)
+
+> **Coverage-only tests are BANNED.** If a test cannot plausibly catch a real bug, do not write it.
+
+| Allowed | Banned |
+|---------|--------|
+| Tests that verify non-trivial logic, edge cases, or regression fixes | Tests that mock every dependency and assert `x == x` |
+| Integration tests that expose real behavior changes | Boilerplate adapter tests whose only failure mode is the test itself |
+| Tests for complex conditional branches (error handling, state machines) | Path getter tests that merely mirror the source code |
+| Benchmark / performance regression tests | "23 tests for 100% coverage" where 20 are worthless |
+
+**Rule of thumb**: Before writing a test, ask "If I intentionally break this logic, will this test fail?" If no → skip it. Use the time for architecture work instead.
+
 ### Inheritance Safety (MANDATORY)
 
 **ALL subclasses overriding `__init__` MUST call `super().__init__()` as the FIRST statement.**

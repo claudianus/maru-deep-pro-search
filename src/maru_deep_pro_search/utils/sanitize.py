@@ -351,7 +351,6 @@ def analyze_content(text: str) -> RiskReport:
     if not text:
         return RiskReport(risk_level="LOW", sanitized_content="")
 
-    len(text)
     warnings: list[str] = []
 
     # Layer 1: Character analysis

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 from maru_deep_pro_search.cli.backup import (
     backup_dir,

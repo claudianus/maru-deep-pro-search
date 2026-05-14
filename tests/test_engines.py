@@ -103,7 +103,6 @@ class TestSearchEngineRegistry:
 class TestBaseEngine:
     @pytest.mark.asyncio
     async def test_cooldown_wait(self):
-        from maru_deep_pro_search.engines.base import SearchEngine
         engine = SearchEngineRegistry.create("duckduckgo")
         engine.min_request_interval = 0.1
         engine._last_request_time = 0
@@ -116,7 +115,7 @@ class TestBaseEngine:
 
     @pytest.mark.asyncio
     async def test_circuit_breaker_open(self, monkeypatch):
-        from maru_deep_pro_search.engines.base import SearchEngine, NetworkError
+        from maru_deep_pro_search.engines.base import NetworkError
         engine = SearchEngineRegistry.create("duckduckgo")
         monkeypatch.setattr(
             engine._circuit_breaker,
@@ -132,6 +131,7 @@ class TestBaseEngine:
 
     def test_text_helper_get_all_text(self):
         from unittest.mock import MagicMock
+
         from maru_deep_pro_search.engines.base import _text
         el = MagicMock()
         el.text = None
@@ -150,6 +150,7 @@ class TestBaseEngine:
 
     def test_text_helper_with_text(self):
         from unittest.mock import MagicMock
+
         from maru_deep_pro_search.engines.base import _text
         el = MagicMock()
         el.text = "  hello world  "
@@ -157,7 +158,7 @@ class TestBaseEngine:
 
     @pytest.mark.asyncio
     async def test_circuit_breaker_blocks_search(self, monkeypatch):
-        from maru_deep_pro_search.engines.base import SearchEngine, NetworkError
+        from maru_deep_pro_search.engines.base import NetworkError
         engine = SearchEngineRegistry.create("duckduckgo")
 
         async def _false():

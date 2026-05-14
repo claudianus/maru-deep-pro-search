@@ -70,6 +70,7 @@ class TestSanitizeQuery:
 
     def test_defensive_future_year_in_match(self, monkeypatch):
         import re
+
         from maru_deep_pro_search.utils import query_sanitize
         # Patch the stale pattern to include a future year so the defensive
         # check in _replace_year is exercised.

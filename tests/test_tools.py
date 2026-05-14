@@ -22,7 +22,6 @@ from maru_deep_pro_search.engines.base import (
 from maru_deep_pro_search.exceptions import MaruSearchError
 from maru_deep_pro_search.tools import (
     TOOLS,
-    _clean_urls,
     tool_answer,
     tool_deep_research,
     tool_fetch_bulk,
@@ -32,35 +31,6 @@ from maru_deep_pro_search.tools import (
     tool_stealthy_fetch,
     tool_web_search,
 )
-
-# ═══════════════════════════════════════════════════════════════
-# _clean_urls
-# ═══════════════════════════════════════════════════════════════
-
-
-class TestCleanUrls:
-    def test_newline_separated(self) -> None:
-        raw = "https://a.com\nhttps://b.com\n"
-        assert _clean_urls(raw) == ["https://a.com", "https://b.com"]
-
-    def test_json_array(self) -> None:
-        raw = '["https://a.com", "https://b.com"]'
-        assert _clean_urls(raw) == ["https://a.com", "https://b.com"]
-
-    def test_json_decode_error_fallback(self) -> None:
-        raw = "[invalid json"
-        assert _clean_urls(raw) == []
-
-    def test_filters_non_http(self) -> None:
-        raw = "ftp://a.com\nhttps://b.com"
-        assert _clean_urls(raw) == ["https://b.com"]
-
-    def test_strips_whitespace(self) -> None:
-        # _clean_urls checks u.startswith('http') BEFORE strip,
-        # so leading-space lines are filtered out
-        raw = "https://a.com\n  https://b.com  "
-        assert _clean_urls(raw) == ["https://a.com"]
-
 
 # ═══════════════════════════════════════════════════════════════
 # Fixtures

@@ -7,6 +7,7 @@ configs (`.claude/settings.json`, `.aider.conf.yml`, `.cursorrules`, etc.).
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -103,7 +104,7 @@ class HarnessSpec:
         return cls(
             mcp_servers={
                 "maru-deep-pro-search": {
-                    "command": "python3",
+                    "command": sys.executable,
                     "args": ["-m", "maru_deep_pro_search.server"],
                 }
             },

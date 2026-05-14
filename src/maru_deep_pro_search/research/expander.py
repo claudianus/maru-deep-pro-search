@@ -13,7 +13,11 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-_CURRENT_YEAR = datetime.now().year
+
+def _current_year() -> int:
+    """Return the current year, evaluated dynamically for long-running processes."""
+    return datetime.now().year
+
 
 # ---------------------------------------------------------------------------
 # Intent-aware query expansion templates
@@ -23,26 +27,26 @@ _CURRENT_YEAR = datetime.now().year
 _QUERY_TEMPLATES = {
     # ── Trends / Landscape (default for broad tech queries) ──
     "trends_survey": [
-        "{domain} {_CURRENT_YEAR} developer survey popularity",
+        "{domain} {_current_year} developer survey popularity",
     ],
     "trends_benchmark": [
-        "{domain} benchmark comparison {_CURRENT_YEAR}",
-        "{domain} performance test {_CURRENT_YEAR}",
+        "{domain} benchmark comparison {_current_year}",
+        "{domain} performance test {_current_year}",
     ],
     "trends_official": [
         "{domain} official documentation latest",
-        "{domain} {_CURRENT_YEAR} new features changelog",
+        "{domain} {_current_year} new features changelog",
     ],
     "trends_authority": [
-        "{domain} {_CURRENT_YEAR} architecture best practices",
+        "{domain} {_current_year} architecture best practices",
     ],
     "trends_community": [
-        "{domain} Reddit discussion experiences {_CURRENT_YEAR}",
-        "{domain} Hacker News thread {_CURRENT_YEAR}",
+        "{domain} Reddit discussion experiences {_current_year}",
+        "{domain} Hacker News thread {_current_year}",
     ],
     # ── How-To / Tutorial ──
     "howto_install": [
-        "{domain} install setup getting started {_CURRENT_YEAR}",
+        "{domain} install setup getting started {_current_year}",
         "{domain} official quickstart guide",
     ],
     "howto_examples": [
@@ -55,15 +59,15 @@ _QUERY_TEMPLATES = {
     ],
     # ── Comparison ──
     "compare_alternative": [
-        "{domain} vs best alternative {_CURRENT_YEAR} comparison",
+        "{domain} vs best alternative {_current_year} comparison",
         "{domain} versus when to choose which",
     ],
     "compare_benchmark": [
-        "{domain} benchmark performance latency memory {_CURRENT_YEAR}",
+        "{domain} benchmark performance latency memory {_current_year}",
         "{domain} load test scalability comparison",
     ],
     "compare_ecosystem": [
-        "{domain} ecosystem plugins libraries {_CURRENT_YEAR}",
+        "{domain} ecosystem plugins libraries {_current_year}",
         "{domain} community size adoption rate",
     ],
     # ── Debug / Problem-Solving ──
@@ -72,7 +76,7 @@ _QUERY_TEMPLATES = {
         "{domain} troubleshooting stackoverflow",
     ],
     "debug_issues": [
-        "{domain} github issues open bugs {_CURRENT_YEAR}",
+        "{domain} github issues open bugs {_current_year}",
         "{domain} deprecated removed migration guide",
     ],
     # ── Definition / Concept ──
@@ -86,11 +90,11 @@ _QUERY_TEMPLATES = {
     ],
     # ── News / Recent ──
     "news_latest": [
-        "{domain} latest news {_CURRENT_YEAR} release",
-        "{domain} announcement blog post {_CURRENT_YEAR}",
+        "{domain} latest news {_current_year} release",
+        "{domain} announcement blog post {_current_year}",
     ],
     "news_release": [
-        "{domain} release notes changelog {_CURRENT_YEAR}",
+        "{domain} release notes changelog {_current_year}",
         "{domain} version latest stable",
     ],
 }
@@ -211,7 +215,7 @@ def expand_query(query: str, max_subqueries: int = 8) -> list[str]:
             subquery = template.format(
                 query=query,
                 domain=domain,
-                _CURRENT_YEAR=_CURRENT_YEAR,
+                _current_year=_current_year(),
             )
             if subquery not in subqueries:
                 subqueries.append(subquery)
@@ -384,7 +388,7 @@ def _extract_domain(query: str) -> str:
     for p in prefixes:
         domain = re.sub(p, "", domain, flags=re.IGNORECASE)
 
-    # Remove years (2020–2029) to prevent duplication with template {_CURRENT_YEAR}
+    # Remove years (2020–2029) to prevent duplication with template {_current_year}
     domain = re.sub(r"\b20\d{2}\b", "", domain)
 
     # Remove trailing context words (features, practices, patterns, etc.)

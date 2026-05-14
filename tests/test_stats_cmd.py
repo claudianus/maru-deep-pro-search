@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
-
 from maru_deep_pro_search.cli.stats_cmd import cmd_stats, main
 
 

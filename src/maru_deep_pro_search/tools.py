@@ -6,7 +6,6 @@ citations, link maps) so the host LLM can make informed decisions."""
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import re
 
@@ -24,17 +23,6 @@ logger = logging.getLogger(__name__)
 
 # All registered engines
 SEARCH_ENGINES = SearchEngineRegistry.list_engines()
-
-
-def _clean_urls(raw: str) -> list[str]:
-    """Parse URLs from a string (newline-separated or JSON array)."""
-    raw = raw.strip()
-    if raw.startswith("["):
-        try:
-            return [str(u) for u in json.loads(raw)]
-        except json.JSONDecodeError:
-            pass
-    return [u.strip() for u in raw.split("\n") if u.strip() and u.startswith("http")]
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -482,7 +470,7 @@ async def tool_answer(
         )
     except asyncio.TimeoutError:
         return (
-            f"## [TIMEOUT] Answer generation exceeded 60 seconds.\n\n"
+            f"## [TIMEOUT] Answer generation exceeded 30 seconds.\n\n"
             f"_Query: {query}_\n\n"
             "Try a more specific question or use web_search instead."
         )
@@ -606,7 +594,9 @@ async def tool_stealthy_fetch(url: str, max_tokens: int = 6000) -> str:
     Recommendation: Try fetch_page first, fall back to stealthy_fetch
     only if needed.
     """
-    return await tool_fetch_page(url, stealth=True, max_tokens=max_tokens, auto_stealth_fallback=False)
+    return await tool_fetch_page(
+        url, stealth=True, max_tokens=max_tokens, auto_stealth_fallback=False
+    )
 
 
 # ═══════════════════════════════════════════════════════════════

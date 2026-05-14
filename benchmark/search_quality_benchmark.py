@@ -29,7 +29,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from maru_deep_pro_search.engines.registry import SearchEngineRegistry
 
-
 # ── Ground Truth Dataset ──────────────────────────────────────────
 # Each query has a list of relevant domain patterns.
 # A result URL is "relevant" if it matches ANY pattern.
@@ -165,7 +164,7 @@ async def run_single_query_web_search(query: str, engine_name: str = "duckduckgo
             }
             for r in raw_results
         ]
-    except Exception as exc:
+    except Exception:
         fallback_used = True
         try:
             fallback = SearchEngineRegistry.recommend_engines(query, exclude=[engine_name])[0]

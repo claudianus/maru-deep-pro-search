@@ -3,7 +3,6 @@
 import sys
 
 import numpy as np
-import pytest
 
 from maru_deep_pro_search.utils.sanitize import (
     RiskReport,
@@ -170,8 +169,9 @@ class TestAnalyzeContentEdgeCases:
         assert len(sigs) > 10
 
     def test_mixed_scripts_unicodedata_error(self, monkeypatch):
-        from maru_deep_pro_search.utils.sanitize import _detect_mixed_scripts
         import unicodedata
+
+        from maru_deep_pro_search.utils.sanitize import _detect_mixed_scripts
         original_name = unicodedata.name
 
         def bad_name(char):
@@ -201,8 +201,10 @@ class TestAnalyzeContentEdgeCases:
         assert detector is None
 
     def test_embedding_detector_mock_model(self, monkeypatch):
-        import numpy as np
         from unittest.mock import MagicMock
+
+        import numpy as np
+
         from maru_deep_pro_search.utils.sanitize import _try_load_embedding_detector
 
         # Create a mock SentenceTransformer
@@ -237,8 +239,10 @@ class TestAnalyzeContentEdgeCases:
         assert score > 0.5
 
     def test_embedding_detector_short_chunk_skipped(self, monkeypatch):
-        import numpy as np
         from unittest.mock import MagicMock
+
+        import numpy as np
+
         from maru_deep_pro_search.utils.sanitize import _try_load_embedding_detector
 
         mock_model = MagicMock()
@@ -263,6 +267,7 @@ class TestAnalyzeContentEdgeCases:
     def test_embedding_detector_model_load_failure(self, monkeypatch):
         import sys
         from unittest.mock import MagicMock
+
         from maru_deep_pro_search.utils.sanitize import _try_load_embedding_detector
 
         mock_st = MagicMock()
@@ -275,10 +280,10 @@ class TestAnalyzeContentEdgeCases:
     def test_get_embedding_detector_caches(self, monkeypatch):
         import sys
         from unittest.mock import MagicMock
-        from maru_deep_pro_search.utils.sanitize import _get_embedding_detector
 
         # Reset global cache
         import maru_deep_pro_search.utils.sanitize as sanitize_mod
+        from maru_deep_pro_search.utils.sanitize import _get_embedding_detector
         monkeypatch.setattr(sanitize_mod, "_embedding_detector", None)
 
         mock_st = MagicMock()

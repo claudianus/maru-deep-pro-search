@@ -10,8 +10,6 @@ from unittest.mock import MagicMock
 import pytest
 
 from maru_deep_pro_search.harness.spec import (
-    AgentCommand,
-    AgentRule,
     HarnessSpec,
     LifecycleHook,
     QualityGate,
@@ -100,7 +98,9 @@ plugins:
         assert "commands" in cfg
         assert "rules" in cfg
         assert "claude_md" in cfg
-        assert cfg["mcpServers"]["maru-deep-pro-search"]["command"] == "python3"
+        import sys
+
+        assert cfg["mcpServers"]["maru-deep-pro-search"]["command"] == sys.executable
 
     def test_to_agent_config_aider(self):
         spec = HarnessSpec.default()

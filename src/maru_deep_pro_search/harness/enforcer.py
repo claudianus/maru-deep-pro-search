@@ -8,7 +8,7 @@ has been successfully completed.
 
 from __future__ import annotations
 
-import threading
+import asyncio
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -103,16 +103,15 @@ class SessionEnforcer:
 
     def __init__(self) -> None:
         self._sessions: dict[str, SessionState] = {}
-        self._lock = threading.RLock()
+        self._lock = asyncio.Lock()
 
     def get_or_create(self, session_id: str) -> SessionState:
-        with self._lock:
-            if session_id not in self._sessions:
-                self._sessions[session_id] = SessionState(session_id=session_id)
-            return self._sessions[session_id]
+        if session_id not in self._sessions:
+            self._sessions[session_id] = SessionState(session_id=session_id)
+        return self._sessions[session_id]
 
-    def mark_research_done(self, session_id: str, query: str, result: str) -> SessionState:
-        with self._lock:
+    async def mark_research_done(self, session_id: str, query: str, result: str) -> SessionState:
+        async with self._lock:
             state = self.get_or_create(session_id)
             state.mark_research(query, result)
             # Also update filesystem markers so client-side hooks can check it
@@ -149,7 +148,7 @@ class SessionEnforcer:
         }
         marker.write_text(json.dumps(data, indent=2))
 
-    def check_research(self, session_id: str, tool_name: str) -> SessionState:
+    async def check_research(self, session_id: str, tool_name: str) -> SessionState:
         """Verify that research was done before allowing a dependent tool.
 
         Raises ResearchRequiredError if research has not been completed.
@@ -169,7 +168,7 @@ class SessionEnforcer:
 
         return state
 
-    def validate_code_generation(
+    async def validate_code_generation(
         self,
         session_id: str,
         research_id: str,
@@ -216,7 +215,7 @@ class SessionEnforcer:
         }
         return validation
 
-    def session_summary(self, session_id: str) -> dict[str, Any]:
+    async def session_summary(self, session_id: str) -> dict[str, Any]:
         state = self.get_or_create(session_id)
         return {
             "session_id": state.session_id,
@@ -230,10 +229,10 @@ class SessionEnforcer:
             "code_generated": state.code_generated,
         }
 
-    def prune_stale_sessions(self, max_age_seconds: float = 3600) -> int:
+    async def prune_stale_sessions(self, max_age_seconds: float = 3600) -> int:
         """Remove sessions older than max_age_seconds. Returns count removed."""
         now = time.time()
-        with self._lock:
+        async with self._lock:
             stale = [
                 sid for sid, s in self._sessions.items() if now - s.created_at > max_age_seconds
             ]

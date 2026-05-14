@@ -69,8 +69,8 @@ class SearchEngineRegistry:
 
         for name in engines:
             try:
-                engine = cls.create(name)
-                scored.append((name, engine.quality_tier, engine.reliability_score))
+                eng_cls = cls.get(name)
+                scored.append((name, eng_cls.quality_tier, eng_cls.reliability_score))
             except Exception:
                 continue
 

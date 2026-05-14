@@ -165,7 +165,9 @@ async def tool_fetch_page(
         logger.debug("Cache hit for fetch: %s", url)
         return cached  # type: ignore[no-any-return]
 
-    engine = SearchEngineRegistry.create("duckduckgo")
+    # Use duckduckgo_lite as the canonical fetch engine so that fetch and
+    # search share the same circuit breaker and cooldown state.
+    engine = SearchEngineRegistry.create("duckduckgo_lite")
     try:
         page = await asyncio.wait_for(
             engine.fetch(url, stealth=stealth),
@@ -278,12 +280,22 @@ async def tool_fetch_bulk(
     sem = asyncio.Semaphore(max_concurrent)
 
     async def _fetch_one(u: str):
+        # Check cache before fetching
+        cache = get_fetch_cache()
+        key = cache_key("fetch", u, str(stealth))
+        cached = cache.get(key)
+        if cached is not None:
+            logger.debug("Cache hit for fetch_bulk: %s", u)
+            return cached
+
         async with sem:
             try:
-                return await asyncio.wait_for(
+                page = await asyncio.wait_for(
                     engine.fetch(u, stealth=stealth),
                     timeout=20.0,
                 )
+                cache.set(key, page)
+                return page
             except asyncio.TimeoutError:
                 from .engines.base import ExtractionQuality, PageContent
 

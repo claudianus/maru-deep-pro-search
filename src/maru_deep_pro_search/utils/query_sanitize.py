@@ -16,16 +16,27 @@ def _current_year() -> int:
     return datetime.datetime.now().year
 
 
+# Module-level cache: (year, compiled_pattern)
+_stale_year_pattern_cache: tuple[int, re.Pattern | None] = (0, None)
+
+
 def _stale_year_pattern(current_year: int) -> re.Pattern:
     """Build a regex that matches years older than current_year - 1.
 
     For 2026, stale years are 2024 and earlier.
+    Result is cached and refreshed when the year changes.
     """
+    global _stale_year_pattern_cache
+    cached_year, cached_pattern = _stale_year_pattern_cache
+    if cached_year == current_year and cached_pattern is not None:
+        return cached_pattern
+
     stale_threshold = current_year - 1  # 2025 is still acceptable in 2026
     # Match 4-digit years from 1900 up to stale_threshold
-    # We use a negative lookahead to avoid matching current_year or later
     stale_years = "|".join(str(y) for y in range(1900, stale_threshold + 1))
-    return re.compile(rf"\b({stale_years})\b")
+    pattern = re.compile(rf"\b({stale_years})\b")
+    _stale_year_pattern_cache = (current_year, pattern)
+    return pattern
 
 
 # Common phrases that indicate a stale year reference

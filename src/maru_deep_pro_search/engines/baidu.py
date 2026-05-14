@@ -11,6 +11,7 @@ from ..exceptions import NetworkError, ParseError
 from ..utils.retry import with_retry
 from ..utils.url import get_domain, should_skip_url
 from .base import (
+    DOCS_DOMAINS,
     PageContent,
     SearchEngine,
     SearchResult,
@@ -27,36 +28,6 @@ _SERP_SELECTORS = {
     "url": ["h3 a"],
     "snippet": [".c-abstract", ".content-right_8Zs40", ".c-span9"],
 }
-
-_DOCS_DOMAINS = {
-    "docs.python.org",
-    "python.org",
-    "developer.mozilla.org",
-    "mdn.io",
-    "react.dev",
-    "nextjs.org",
-    "nodejs.org",
-    "deno.com",
-    "go.dev",
-    "pkg.go.dev",
-    "doc.rust-lang.org",
-    "docs.rs",
-    "api.rubyonrails.org",
-    "guides.rubyonrails.org",
-    "learn.microsoft.com",
-    "docs.microsoft.com",
-    "postgresql.org/docs",
-    "dev.mysql.com/doc",
-    "kubernetes.io/docs",
-    "helm.sh/docs",
-    "terraform.io/docs",
-    "fastapi.tiangolo.com",
-    "flask.palletsprojects.com",
-    "docs.djangoproject.com",
-    "vuejs.org",
-    "svelte.dev",
-}
-
 
 class BaiduEngine(SearchEngine):
     """Baidu Search engine with direct HTML scraping.
@@ -149,7 +120,7 @@ class BaiduEngine(SearchEngine):
                     position=len(results) + 1,
                     likely_content_type=_guess_content_type(href, snippet),
                     domain=domain,
-                    url_suggests_docs=any(d in domain for d in _DOCS_DOMAINS),
+                    url_suggests_docs=any(d in domain for d in DOCS_DOMAINS),
                     engine=self.name,
                     source_type=source_type,
                     is_primary=is_primary,

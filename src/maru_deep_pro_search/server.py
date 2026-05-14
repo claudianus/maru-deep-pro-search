@@ -756,6 +756,59 @@ async def query_knowledge(
     return "\n".join(lines)
 
 
+@mcp.tool()
+@_with_validation()
+@_with_audit()
+async def session_state(
+    ctx: Context | None = None,
+) -> str:
+    """Return the current session state: research status, citations, tools called.
+
+    BEST FOR:
+    - Checking if research is fresh before calling a dependent tool
+    - Understanding what has been done in the current session
+    - Debugging why a tool was blocked
+    """
+    from .harness.enforcer import get_enforcer
+
+    session_id = _get_session_id(ctx)
+    enforcer = get_enforcer()
+    state = enforcer.get_or_create(session_id)
+
+    freshness = "✅ Fresh" if state.is_fresh else "❌ Stale / expired"
+    research_status = "✅ Done" if state.research_done else "❌ Not done"
+
+    lines = [
+        "## Session State",
+        "",
+        f"**Session ID**: `{state.session_id}`",
+        f"**Research**: {research_status} — {state.research_query or '(none)'}",
+        f"**Freshness**: {freshness} ({state.research_age_seconds:.0f}s since last research)",
+        f"**Code generated**: {'✅ Yes' if state.code_generated else '❌ No'}",
+        f"**Tools called**: {len(state.tools_called)}",
+    ]
+
+    if state.tools_called:
+        lines.append("")
+        lines.append("**Tool call history**:")
+        for t in state.tools_called:
+            lines.append(f"  • {t}")
+
+    if state.citations_found:
+        lines.append("")
+        lines.append(f"**Citations available**: {', '.join(f'[{c}]' for c in state.citations_found)}")
+
+    lines.append("")
+    if not state.research_done:
+        lines.append("🔴 **No research in this session.** Call `deep_research(query=...) first.")
+    elif not state.is_fresh:
+        lines.append("🟡 **Research is stale.** Re-run `deep_research()` before dependent tools.")
+    else:
+        lines.append("🟢 **Session is research-ready.** You may call dependent tools.")
+
+    return "\n".join(lines)
+
+
 def _research_main(argv: list[str] | None = None) -> int:
     """CLI entry point for running deep research from the command line."""
     import argparse

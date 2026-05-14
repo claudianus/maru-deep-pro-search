@@ -309,3 +309,36 @@ def guess_source_type_and_primary(url: str, snippet: str = "") -> tuple[SourceTy
         st = SourceType.UNKNOWN
 
     return st, is_prim
+
+# Shared documentation domain whitelist — used by all engines for
+# url_suggests_docs classification.
+DOCS_DOMAINS: frozenset[str] = frozenset({
+    "docs.python.org",
+    "python.org",
+    "developer.mozilla.org",
+    "mdn.io",
+    "react.dev",
+    "nextjs.org",
+    "nodejs.org",
+    "deno.com",
+    "go.dev",
+    "pkg.go.dev",
+    "doc.rust-lang.org",
+    "docs.rs",
+    "api.rubyonrails.org",
+    "guides.rubyonrails.org",
+    "learn.microsoft.com",
+    "docs.microsoft.com",
+    "postgresql.org/docs",
+    "dev.mysql.com/doc",
+    "kubernetes.io/docs",
+    "helm.sh/docs",
+    "terraform.io/docs",
+    "fastapi.tiangolo.com",
+    "flask.palletsprojects.com",
+    "docs.djangoproject.com",
+    "vuejs.org",
+    "svelte.dev",
+    "developers.google.com",
+    "cloud.google.com",
+})

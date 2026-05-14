@@ -12,6 +12,7 @@ from urllib.parse import quote_plus, urljoin
 from ..exceptions import NetworkError, ParseError
 from ..utils.url import get_domain, resolve_canonical_url, resolve_redirect, should_skip_url
 from .base import (
+    DOCS_DOMAINS,
     ExtractionQuality,
     PageContent,
     SearchEngine,
@@ -60,36 +61,6 @@ _SERP_SELECTORS = {
         "snippet": ["td.result__snippet", "td:last-child", ".snippet", "p"],
     },
 }
-
-_DOCS_DOMAINS = {
-    "docs.python.org",
-    "python.org",
-    "developer.mozilla.org",
-    "mdn.io",
-    "react.dev",
-    "nextjs.org",
-    "nodejs.org",
-    "deno.com",
-    "go.dev",
-    "pkg.go.dev",
-    "doc.rust-lang.org",
-    "docs.rs",
-    "api.rubyonrails.org",
-    "guides.rubyonrails.org",
-    "learn.microsoft.com",
-    "docs.microsoft.com",
-    "postgresql.org/docs",
-    "dev.mysql.com/doc",
-    "kubernetes.io/docs",
-    "helm.sh/docs",
-    "terraform.io/docs",
-    "fastapi.tiangolo.com",
-    "flask.palletsprojects.com",
-    "docs.djangoproject.com",
-    "vuejs.org",
-    "svelte.dev",
-}
-
 _STRIP_SELECTORS = [
     "script",
     "style",
@@ -248,7 +219,7 @@ class DuckDuckGoEngine(SearchEngine):
                     source_type=source_type,
                     is_primary=is_primary,
                     domain=domain,
-                    url_suggests_docs=any(d in domain for d in _DOCS_DOMAINS),
+                    url_suggests_docs=any(d in domain for d in DOCS_DOMAINS),
                     engine=self.variant,
                 )
             )

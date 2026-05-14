@@ -48,6 +48,29 @@ class TestResolveRedirect:
     def test_empty_url(self):
         assert resolve_redirect("", "https://google.com") == ""
 
+    def test_bing_base64_decode_failure(self):
+        # Invalid base64 payload should fall through to relative URL resolution
+        url = "/ck/a?u=!!!INVALID!!!"
+        result = resolve_redirect(url, "https://bing.com")
+        # Falls through to relative URL join
+        assert result == "https://bing.com/ck/a?u=!!!INVALID!!!"
+
+    def test_baidu_redirect(self):
+        url = "https://baidu.com/link?url=https%3A%2F%2Fexample.com"
+        result = resolve_redirect(url, "https://baidu.com")
+        assert result == "https://example.com"
+
+    def test_baidu_search_redirect(self):
+        url = "https://baidu.com/s?url=https%3A%2F%2Fexample.com"
+        result = resolve_redirect(url, "https://baidu.com")
+        assert result == "https://example.com"
+
+    def test_generic_redirect_no_match(self):
+        # Generic redirect with non-http target — should return original
+        url = "https://example.com/page?redirect=/local/path"
+        result = resolve_redirect(url, "https://example.com")
+        assert result == url
+
 
 class TestResolveCanonicalUrl:
     def test_strips_tracking_params(self):
@@ -93,6 +116,15 @@ class TestClassifySourceType:
             classify_source_type("https://example.com/guide", snippet="getting started tutorial")
             == "tutorial"
         )
+
+    def test_official_docs_with_pattern(self):
+        # docs pattern in primary source domain (e.g., /docs/ or /api/)
+        assert classify_source_type("https://react.dev/docs/thinking-in-react") == "official_docs"
+        assert classify_source_type("https://fastapi.tiangolo.com/tutorial/") == "official_docs"
+
+    def test_news_classification(self):
+        assert classify_source_type("https://news.ycombinator.com/item?id=123") == "news"
+        assert classify_source_type("https://techcrunch.com/2024/01/01/article") == "news"
 
     def test_unknown_fallback(self):
         assert classify_source_type("https://random-site.com/page") == "unknown"

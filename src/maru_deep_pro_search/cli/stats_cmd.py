@@ -23,7 +23,7 @@ def cmd_stats(args: argparse.Namespace) -> int:
     print(f"\n{bold('📊 Knowledge Store Stats')}")
     print(f"  Database: {db_path}")
     print(f"  Total entries: {green(str(stats.get('total_entries', 0)))}")
-    print(f"  Recent (7d): {cyan(str(stats.get('recent_entries', 0)))}")
+    print(f"  Recent (7d): {cyan(str(stats.get('last_7_days', 0)))}")
 
     top = stats.get("top_queries", [])
     if top:

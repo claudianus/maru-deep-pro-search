@@ -150,6 +150,17 @@ MCP Client (Claude, Cursor, Kimi, Windsurf, ...)
 
 The server contains **zero generative LLMs**. Your agent's LLM handles all reasoning and synthesis. The server focuses on search quality: multi-engine coverage, intelligent ranking, and clean content extraction.
 
+### KnowledgeStore
+
+SQLite-backed research cache at `./.maru/knowledge.db`:
+
+- **Deduplication** — Same query hashes to the same entry (UPSERT with access counter)
+- **3-tier retrieval** — Exact match → FTS5 full-text → Semantic similarity (optional, local `intfloat/multilingual-e5-small`)
+- **Domain stats** — Per-domain success rate and average response time tracking
+- **Pruning** — Auto-remove entries older than 30 days
+
+Inspect with `maru-deep-pro-search stats`.
+
 For deep technical details, see [`docs/engine_insights.md`](./docs/engine_insights.md) and [`docs/lessons_learned.md`](./docs/lessons_learned.md).
 
 ---

@@ -101,6 +101,33 @@ def _with_enforcement(tool_name: str | None = None):
     return decorator
 
 
+def _with_validation(tool_name: str | None = None):
+    """Decorator that validates MCP tool input parameters to prevent DoS."""
+
+    def decorator(fn):
+        @functools.wraps(fn)
+        async def wrapper(*args, ctx: Context | None = None, **kwargs):
+            if "query" in kwargs:
+                q = kwargs["query"]
+                if isinstance(q, str) and len(q) > 4096:
+                    raise ValueError(
+                        f"Query exceeds maximum length of 4096 characters (got {len(q)})"
+                    )
+            if "urls" in kwargs:
+                urls = kwargs["urls"]
+                if isinstance(urls, list) and len(urls) > 50:
+                    raise ValueError(f"Maximum 50 URLs allowed per call (got {len(urls)})")
+            if "queries" in kwargs:
+                queries = kwargs["queries"]
+                if isinstance(queries, list) and len(queries) > 10:
+                    raise ValueError(f"Maximum 10 queries allowed per call (got {len(queries)})")
+            return await fn(*args, ctx=ctx, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 def _with_audit(tool_name: str | None = None):
     """Decorator that logs every MCP tool invocation to the audit database."""
 
@@ -361,6 +388,7 @@ When using fetch_bulk with multiple URLs:
 
 
 @mcp.tool()
+@_with_validation()
 @_with_audit()
 async def answer(
     query: str,
@@ -378,6 +406,7 @@ async def answer(
 
 
 @mcp.tool()
+@_with_validation()
 @_with_audit()
 async def web_search(
     query: str,
@@ -392,6 +421,7 @@ async def web_search(
 
 
 @mcp.tool()
+@_with_validation()
 @_with_audit()
 async def search_with_citations(
     query: str,
@@ -406,6 +436,7 @@ async def search_with_citations(
 
 
 @mcp.tool()
+@_with_validation()
 @_with_audit()
 async def fetch_page(
     url: str,
@@ -420,6 +451,7 @@ async def fetch_page(
 
 
 @mcp.tool()
+@_with_validation()
 @_with_audit()
 async def fetch_bulk(
     urls: list[str],
@@ -435,6 +467,7 @@ async def fetch_bulk(
 
 
 @mcp.tool()
+@_with_validation()
 @_with_enforcement("deep_research")
 @_with_audit("deep_research")
 async def deep_research(
@@ -467,6 +500,7 @@ async def deep_research(
 
 
 @mcp.tool()
+@_with_validation()
 @_with_audit()
 async def stealthy_fetch(
     url: str,
@@ -480,6 +514,7 @@ async def stealthy_fetch(
 
 
 @mcp.tool()
+@_with_validation()
 @_with_audit()
 async def parallel_search(
     queries: list[str],
@@ -495,6 +530,7 @@ async def parallel_search(
 
 
 @mcp.tool()
+@_with_validation()
 @_with_audit()
 async def version(
     ctx: Context | None = None,
@@ -523,6 +559,7 @@ async def version(
 
 
 @mcp.tool()
+@_with_validation()
 @_with_audit()
 async def generate_code(
     task_description: str,

@@ -62,8 +62,16 @@ class SessionState:
         self.research_query = query
         self.research_result = result
         self.research_timestamp = time.time()
-        self.research_id = self._generate_research_id()
+        extracted = self._extract_research_id(result)
+        self.research_id = extracted or self._generate_research_id()
         self._extract_citations(result)
+
+    @staticmethod
+    def _extract_research_id(text: str) -> str:
+        import re
+
+        match = re.search(r"_research_id:\s*(RSCH-[A-F0-9]+)_", text, re.I)
+        return match.group(1).upper() if match else ""
 
     @staticmethod
     def _generate_research_id() -> str:

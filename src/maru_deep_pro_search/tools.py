@@ -13,6 +13,8 @@ from .engines.registry import SearchEngineRegistry
 from .exceptions import MaruSearchError
 from .extraction.content import truncate_for_llm
 from .research.deep import deep_research, format_for_llm
+from .research.fetch_planner import plan_reads
+from .research.receipt import generate_research_id, write_receipt
 from .utils.cache import cache_key, get_fetch_cache, get_search_cache
 from .utils.locale_harness import optimize_for_engine
 from .utils.query_sanitize import sanitize_query
@@ -485,11 +487,26 @@ async def tool_deep_research(
             "- Use web_search for faster results\n"
             "- Try a more specific query_"
         )
-    result_text = format_for_llm(result)
+    research_id = generate_research_id()
+    planned = plan_reads(query, result.sources)
+    result_text = format_for_llm(result, planned_reads=planned)
+
+    try:
+        receipt_path = write_receipt(research_id, result, result_text, planned)
+        result_text += f"\n\n_research_id: {research_id}_\n_receipt: {receipt_path}_"
+    except OSError as exc:
+        logger.debug("Receipt write failed (non-critical): %s", exc)
+        result_text += f"\n\n_research_id: {research_id}_"
 
     # Auto-fetch top results if requested (saves agent from separate fetch_page calls)
     if auto_fetch > 0 and result.sources:
         top_sources = result.sources[: min(auto_fetch, 3)]
+        if planned:
+            top_sources = [
+                s
+                for s in result.sources
+                if s.citation_id in {p.citation_id for p in planned[: min(auto_fetch, 3)]}
+            ] or result.sources[: min(auto_fetch, 3)]
         fetch_lines = ["\n### Auto-Fetched Content", ""]
         for src in top_sources:
             try:

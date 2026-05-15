@@ -190,9 +190,9 @@ def _with_enforcement(tool_name: str | None = None):
                     query=kwargs.get("query", args[0] if args else ""),
                     result=result,
                 )
-                # Inject research_id so the agent can pass it to generate_code()
                 state = enforcer.get_or_create(session_id)
-                result += f"\n\n_research_id: {state.research_id}_"
+                if "_research_id:" not in result:
+                    result += f"\n\n_research_id: {state.research_id}_"
                 return result
 
             # All other tools must pass the research gate

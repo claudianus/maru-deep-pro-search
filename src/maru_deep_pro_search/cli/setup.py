@@ -205,6 +205,44 @@ def cmd_check(args: argparse.Namespace) -> int:
     return 0 if all_ok else 1
 
 
+def cmd_sync(args: argparse.Namespace) -> int:
+    """Re-apply harness.yaml to all configured agents."""
+    from ..harness.spec import HarnessSpec
+
+    print("\n🔄 Harness 설정 동기화 중...\n")
+    try:
+        HarnessSpec.from_project()
+    except FileNotFoundError:
+        print(red("프로젝트 루트에서 harness.yaml 파일을 찾을 수 없습니다."))
+        return 1
+
+    scope = args.scope  # type: ignore[attr-defined]
+    ok_count = 0
+    fail_count = 0
+
+    for _name, adapter_cls in ADAPTER_REGISTRY.items():
+        adapter = adapter_cls()  # type: ignore[abstract]
+        if not adapter.detect():
+            continue
+        try:
+            result = adapter.configure(scope)
+            if result:
+                print(f"   ✓ {adapter.display_name} 동기화 완료")
+                ok_count += 1
+            else:
+                print(f"   ⚠ {adapter.display_name} 변경 사항 없음")
+        except Exception as exc:
+            print(f"   ✗ {adapter.display_name} 실패: {exc}")
+            fail_count += 1
+
+    print()
+    if fail_count:
+        print(red(f"총 {fail_count}개 에이전트 동기화 실패."))
+    if ok_count:
+        print(green(f"총 {ok_count}개 에이전트 동기화 완료."))
+    return 1 if fail_count else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search",
@@ -260,6 +298,22 @@ def main(argv: list[str] | None = None) -> int:
         help="Check if MCP configs are correctly installed",
     )
 
+    # sync command
+    sync_parser = subparsers.add_parser(
+        "sync",
+        help="Re-apply harness.yaml configs to all configured agents",
+        description=(
+            "Reads .maru/harness.yaml and re-runs adapter configuration for "
+            "all agents listed in the spec. Use this after editing harness.yaml."
+        ),
+    )
+    sync_parser.add_argument(
+        "--scope",
+        choices=["user", "project"],
+        default="project",
+        help="Configuration scope to sync (default: project)",
+    )
+
     args = parser.parse_args(argv)
 
     # Always validate Python version first — never let the user stumble
@@ -275,6 +329,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.check:
             return cmd_check(args)
         return cmd_setup(args)
+
+    if args.command == "sync":
+        return cmd_sync(args)
 
     # Default: run setup if no subcommand given
     return cmd_setup(args)

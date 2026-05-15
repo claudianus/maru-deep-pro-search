@@ -11,8 +11,8 @@
 
 <p align="center">
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/v/maru-deep-pro-search?style=flat-square&color=blue" alt="PyPI"></a>
-  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/test.yml?style=flat-square&label=tests" alt="Tests"></a>
-  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/test.yml"><img src="https://img.shields.io/badge/coverage-77%25-green?style=flat-square" alt="Coverage"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/validate.yml"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/validate.yml?style=flat-square&label=validate" alt="Validate"></a>
+  
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/pyversions/maru-deep-pro-search?style=flat-square" alt="Python"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
 </p>
@@ -62,29 +62,52 @@ pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 
 ---
 
-## 🛠️ 10개 MCP 툴
+## 🛠️ 17개 MCP 툴
 
+### 리서치 코어
 | 툴 | 용도 | 언제 사용 |
 |------|---------|-------------|
-| `deep_research` | 쿼리 확장 + 다중 엔진 + BM25 랭킹 심층 검색 | **🔴 항상 먼저** — 코드, 아키텍처, 기술 결정 전 |
+| `deep_research` | 쿼리 확장 + 다중 엔진 + BM25 랭킹 + **품질 점수** + **자동 페치** | **🔴 항상 먼저** — 코드, 아키텍처, 기술 결정 전 |
 | `answer` | Perplexity 스타일 직접 답변 + 인라인 인용 | 리서치 후 빠른 사실 확인 |
 | `parallel_search` | 동시 다각도 검색 + 비교 모드 | 다각도 분석 (예: "A vs B") |
 | `web_search` | 스크래핑 + 랭킹 + 인용 결과 반환 | 추가 타겟 소스 수집 |
 | `search_with_citations` | 학술 작성용 사전 번호 소스 | 논문, 엄격한 인용 필요 시 |
-| `fetch_page` | 단일 URL에서 깨끗한 콘텐츠 추출 | 리서치로 찾은 문서 읽기 |
+
+### 페치 & 추출
+| 툴 | 용도 | 언제 사용 |
+|------|---------|-------------|
+| `fetch_page` | 단일 URL에서 깨끗한 콘텐츠 추출 (403 자동 스텔스 폭백) | 리서치로 찾은 문서 읽기 |
 | `fetch_bulk` | 중복 제거가 포함된 병렬 페치 | 2–10개 URL 동시 읽기 |
 | `stealthy_fetch` | 보호된 사이트용 안티봇 우회 | Cloudflare/DataDome 차단 시 (최후 수단) |
-| `generate_code` | 연구 인용 대비 코드 검증 | 리서치 후 — 미검증 코드 차단 |
+
+### 검증 & 강제
+| 툴 | 용도 | 언제 사용 |
+|------|---------|-------------|
+| `generate_code` | **코드 검증 게이트** — 인용 없는 코드 차단 | 리서치 후 — 코드가 인용에 기반하는지 확인 |
+| `session_state` | 세션 리서치 상태, 툴 기록, 인용 확인 | 툴이 차단된 이유 디버깅 |
+| `query_knowledge` | 지식 저장소에서 과거 리서치 검색 | 웹 재검색 없이 리서치 재사용 |
+| `export_research` | 현재 세션 리서치를 마크다운 파일로 납볍 | 리서치 결과 저장/공유 |
+
+### 엔진 & 인프라
+| 툴 | 용도 | 언제 사용 |
+|------|---------|-------------|
+| `list_engines` | 신뢰도 및 지연 시간 메타데이터와 함께 모든 검색 엔진 나열 | 적합한 엔진 선택 |
+| `engine_health` | 실시간 서킷 브레이커 상태 | 검색 실패 진단 |
+| `cache_stats` | 인메모리 캐시 적중/실패 통계 | 성능 모니터링 |
+| `clear_caches` | 모든 인메모리 캐시 초기화 | 신선한 결과 강제 |
 | `version` | 버전 및 업데이트 확인 | 설치 상태 확인 |
 
 **툴 선택 가이드:**
 ```
 기술적 요청이 있음?
-└── deep_research(query) 먼저
+└── deep_research(query, auto_fetch=3) 먼저
     ├── 빠른 확인 필요? → answer
     ├── 다각도 분석? → parallel_search
     ├── 특정 URL 읽기? → fetch_page / fetch_bulk
-    └── 사이트 차단? → stealthy_fetch (최후 수단)
+    ├── 사이트 차단? → stealthy_fetch (최후 수단)
+    ├── 과거 리서치 재사용? → query_knowledge
+    ├── 리서치 신선도 확인? → session_state
+    └── 느린 검색 진단? → cache_stats / engine_health
 ```
 
 ---
@@ -132,15 +155,17 @@ pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 MCP 클라이언트 (Claude, Cursor, Kimi, Windsurf, ...)
         │ JSON-RPC 2.0 / stdio
         ▼
-┌──────────────────────────────────────────────┐
-│  maru-deep-pro-search MCP 서버               │
-│  ├─ 10개 툴 (검색, 페치, 인용, 검증)         │
-│  ├─ 9엔진 폴오버 레지스트리                  │
-│  ├─ 하이브리드 랭킹 (BM25+시맨틱)            │
-│  ├─ 3계층 강제 아키텍처                      │
-│  ├─ 72시그니처 정제                          │
-│  └─ SQLite 지식 저장소                       │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  maru-deep-pro-search MCP 서버                               │
+│  ├─ 17개 툴 (검색, 페치, 인용, 검증, 인트로스펙션)         │
+│  ├─ 9엔진 폴오버 레지스트리 (쿼리 인식 선택)               │
+│  ├─ 하이브리드 랭킹 (BM25 + 시맨틱 + 권위/신선도)          │
+│  ├─ 3계층 강제 + 리서치 품질 점수 (A-F)                    │
+│  ├─ 72시그니처 정제 + 제로폭 문자 방어                     │
+│  ├─ SQLite 지식 저장소 (정확일치 → FTS → 시맨틱)         │
+│  ├─ 인메모리 TTL 캐시 (검색 5분 / 페치 10분)               │
+│  └─ 자동 세션 정리 + 감사 로깅                             │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### 3계층 강제 아키텍처

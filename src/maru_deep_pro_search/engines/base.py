@@ -151,6 +151,7 @@ class SearchEngine(ABC):
 
     def __init__(self) -> None:
         self._last_request_time: float = 0.0
+        self._cooldown_lock = asyncio.Lock()
         self._circuit_breaker = CircuitBreaker(
             failure_threshold=3,
             recovery_seconds=60.0,
@@ -164,12 +165,13 @@ class SearchEngine(ABC):
         """Wait until ``min_request_interval`` has elapsed since the last request."""
         if self.min_request_interval <= 0:
             return
-        elapsed = time.monotonic() - self._last_request_time
-        if elapsed < self.min_request_interval:
-            delay = self.min_request_interval - elapsed
-            logger.debug("[%s] Cooling down for %.2fs", self.name, delay)
-            await asyncio.sleep(delay)
-        self._last_request_time = time.monotonic()
+        async with self._cooldown_lock:
+            elapsed = time.monotonic() - self._last_request_time
+            if elapsed < self.min_request_interval:
+                delay = self.min_request_interval - elapsed
+                logger.debug("[%s] Cooling down for %.2fs", self.name, delay)
+                await asyncio.sleep(delay)
+            self._last_request_time = time.monotonic()
 
     async def _check_circuit(self) -> bool:
         """Return True if the circuit breaker allows execution."""
@@ -187,7 +189,7 @@ class SearchEngine(ABC):
         await self._circuit_breaker.record_failure()
 
     def __init_subclass__(cls, **kwargs):
-        """Wrap subclass ``search()`` with rate-limit + circuit-breaker logic."""
+        """Wrap subclass ``search()`` and ``fetch()`` with rate-limit + circuit-breaker logic."""
         super().__init_subclass__(**kwargs)
         original_search = cls.search
 
@@ -210,6 +212,30 @@ class SearchEngine(ABC):
                 raise
 
         cls.search = _wrapped_search  # type: ignore[method-assign]
+
+        original_fetch = cls.fetch
+
+        @wraps(original_fetch)
+        async def _wrapped_fetch(
+            self, url: str, stealth: bool = False, timeout: float = 15.0
+        ) -> PageContent:
+            await self._rate_limiter.acquire()
+            await self._ensure_cooldown()
+            if not await self._check_circuit():
+                return PageContent(
+                    url=url,
+                    error_message=f"{self.name} circuit breaker is open",
+                    quality=ExtractionQuality.BLOCKED,
+                )
+            try:
+                result = await original_fetch(self, url, stealth, timeout)
+                await self._record_success()
+                return result  # type: ignore[no-any-return]
+            except Exception:
+                await self._record_failure()
+                raise
+
+        cls.fetch = _wrapped_fetch  # type: ignore[method-assign]
 
     @abstractmethod
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
@@ -310,35 +336,38 @@ def guess_source_type_and_primary(url: str, snippet: str = "") -> tuple[SourceTy
 
     return st, is_prim
 
+
 # Shared documentation domain whitelist — used by all engines for
 # url_suggests_docs classification.
-DOCS_DOMAINS: frozenset[str] = frozenset({
-    "docs.python.org",
-    "python.org",
-    "developer.mozilla.org",
-    "mdn.io",
-    "react.dev",
-    "nextjs.org",
-    "nodejs.org",
-    "deno.com",
-    "go.dev",
-    "pkg.go.dev",
-    "doc.rust-lang.org",
-    "docs.rs",
-    "api.rubyonrails.org",
-    "guides.rubyonrails.org",
-    "learn.microsoft.com",
-    "docs.microsoft.com",
-    "postgresql.org/docs",
-    "dev.mysql.com/doc",
-    "kubernetes.io/docs",
-    "helm.sh/docs",
-    "terraform.io/docs",
-    "fastapi.tiangolo.com",
-    "flask.palletsprojects.com",
-    "docs.djangoproject.com",
-    "vuejs.org",
-    "svelte.dev",
-    "developers.google.com",
-    "cloud.google.com",
-})
+DOCS_DOMAINS: frozenset[str] = frozenset(
+    {
+        "docs.python.org",
+        "python.org",
+        "developer.mozilla.org",
+        "mdn.io",
+        "react.dev",
+        "nextjs.org",
+        "nodejs.org",
+        "deno.com",
+        "go.dev",
+        "pkg.go.dev",
+        "doc.rust-lang.org",
+        "docs.rs",
+        "api.rubyonrails.org",
+        "guides.rubyonrails.org",
+        "learn.microsoft.com",
+        "docs.microsoft.com",
+        "postgresql.org/docs",
+        "dev.mysql.com/doc",
+        "kubernetes.io/docs",
+        "helm.sh/docs",
+        "terraform.io/docs",
+        "fastapi.tiangolo.com",
+        "flask.palletsprojects.com",
+        "docs.djangoproject.com",
+        "vuejs.org",
+        "svelte.dev",
+        "developers.google.com",
+        "cloud.google.com",
+    }
+)

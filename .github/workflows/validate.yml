@@ -1,0 +1,39 @@
+name: Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install dependencies
+        run: uv pip install -e ".[dev,semantic]" --system
+
+      - name: Run ruff
+        run: ruff check src/
+
+      - name: Run ruff format check
+        run: ruff format --check src/
+
+      - name: Run mypy
+        run: mypy src/ --ignore-missing-imports

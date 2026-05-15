@@ -29,6 +29,7 @@ _SERP_SELECTORS = {
     "snippet": [".c-abstract", ".content-right_8Zs40", ".c-span9"],
 }
 
+
 class BaiduEngine(SearchEngine):
     """Baidu Search engine with direct HTML scraping.
 

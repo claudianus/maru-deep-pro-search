@@ -191,7 +191,7 @@ class HermesAdapter(AgentAdapter):
                 "    from maru_deep_pro_search.cli.agents.hermes_plugin import register\n"
                 "except Exception as exc:\n"
                 "    import warnings\n"
-                '    warnings.warn(f"maru plugin import failed: {exc}")\n'
+                '    warnings.warn(f"maru plugin import failed: {exc}", stacklevel=2)\n'
                 "\n"
                 "    def register(ctx):\n"
                 '        ctx.inject_message("[MARU] Plugin import failed. "\n'

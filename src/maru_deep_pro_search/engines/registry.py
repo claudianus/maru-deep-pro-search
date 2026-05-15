@@ -52,31 +52,46 @@ class SearchEngineRegistry:
 
     @classmethod
     def recommend_engines(cls, query: str = "", count: int = 3) -> list[str]:
-        """Recommend optimal engine combination based on metadata.
+        """Recommend optimal engine combination based on metadata and query locale.
 
-        TIER 1 engines are always preferred. TIER 3 (e.g. Google) is only
-        included if we need more engines and TIER 1/2 are exhausted.
+        TIER 1 engines are always preferred. Locale-aware boosts ensure Korean
+        queries hit Naver, Chinese queries hit Baidu, and English queries stay
+        on Western engines for best results.
 
         Args:
-            query: Optional query hint (for future locale-aware selection).
+            query: Optional query hint for locale-aware engine selection.
             count: Number of engines to recommend (default: 3).
 
         Returns:
             List of engine names sorted by quality tier and reliability.
         """
         engines = cls.list_engines()
-        scored: list[tuple[str, int, float]] = []
+        scored: list[tuple[str, int, float, float]] = []
+
+        # Locale detection for query-aware boosting
+        locale_boosts: dict[str, float] = {}
+        if query:
+            import re
+
+            if re.search(r"[\uac00-\ud7af]", query):  # Hangul
+                locale_boosts["naver"] = 2.0
+            if re.search(r"[\u4e00-\u9fff]", query):  # CJK
+                locale_boosts["baidu"] = 2.0
 
         for name in engines:
             try:
                 eng_cls = cls.get(name)
-                scored.append((name, eng_cls.quality_tier, eng_cls.reliability_score))
+                reliability = eng_cls.reliability_score + locale_boosts.get(name, 0.0)
+                scored.append(
+                    (name, eng_cls.quality_tier, reliability, locale_boosts.get(name, 0.0))
+                )
             except Exception:
                 continue
 
-        # Sort by tier ascending (1 is best), then reliability descending
-        scored.sort(key=lambda x: (x[1], -x[2]))
-        return [name for name, _, _ in scored[:count]]
+        # Sort by tier ascending (1 is best), then reliability descending,
+        # then locale boost descending (prefer locale-matched engines)
+        scored.sort(key=lambda x: (x[1], -x[2], -x[3]))
+        return [name for name, _, _, _ in scored[:count]]
 
 
 # Auto-register built-in engines

@@ -13,10 +13,9 @@
 - [ ] Performance improvement
 - [ ] Security enhancement
 
-## Testing
-<!-- Describe the tests you ran and how -->
-- [ ] All existing tests pass (`pytest`)
-- [ ] Added new tests for new functionality
+## Verification
+<!-- Describe how you verified the change works -->
+- [ ] Quality gates pass (`ruff check . && ruff format --check . && mypy src/`)
 - [ ] Tested manually with real search queries
 
 ## Checklist

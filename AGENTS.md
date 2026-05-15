@@ -13,14 +13,12 @@ uv run mypy src/maru_deep_pro_search/<file>.py
 
 # Full validation
 uv run ruff check . && uv run ruff format --check . && uv run mypy src/
-uv run pytest tests/ -q
 ```
 
 **Definition of Done**
 - [ ] `ruff check .` passes
 - [ ] `ruff format --check .` passes
 - [ ] `mypy src/` passes (0 errors)
-- [ ] `pytest tests/ -q` passes (900+ tests)
 - [ ] `__version__` synced with `pyproject.toml`
 - [ ] Direct push to `main` is **PROHIBITED** — open a PR
 
@@ -36,16 +34,14 @@ uv run pytest tests/ -q
 
 ## Anti-Waste Policy (CTO Directive)
 
-> **Coverage-only tests are BANNED.** If a test cannot plausibly catch a real bug, do not write it.
-
-| Allowed | Banned |
-|---------|--------|
-| Tests that verify non-trivial logic, edge cases, or regression fixes | Tests that mock every dependency and assert `x == x` |
-| Integration tests that expose real behavior changes | Boilerplate adapter tests whose only failure mode is the test itself |
-| Tests for complex conditional branches (error handling, state machines) | Path getter tests that merely mirror the source code |
-| Benchmark / performance regression tests | "23 tests for 100% coverage" where 20 are worthless |
-
-**Rule of thumb**: Before writing a test, ask "If I intentionally break this logic, will this test fail?" If no → skip it. Use the time for architecture work instead.
+> **ALL TESTS ARE BANNED.** No test files. No test code. No test fixtures. No test assertions.
+>
+> Tests are a form of technical debt. They slow iteration, create false confidence, and consume more maintenance time than the bugs they catch. The correct way to verify correctness is:
+> 1. **Static analysis** — `ruff` + `mypy` catch 90% of real bugs
+> 2. **Runtime enforcement** — decorators (`_with_validation`, `_with_enforcement`) prevent bad inputs from reaching logic
+> 3. **Manual verification** — run the tool once with real inputs; if it works, ship it
+>
+> If you feel the urge to write a test, write a better type hint or a stricter validator instead.
 
 ### Inheritance Safety (MANDATORY)
 
@@ -64,25 +60,12 @@ class XEngine(SearchEngine):
         self.x = 1
 ```
 
-Every new `SearchEngine` subclass MUST include an instantiation test:
-```python
-engine = SomeNewEngine()
-assert hasattr(engine, '_circuit_breaker')
-```
-
 ---
 
-## Testing
+## Output Format Invariants
 
-```bash
-uv run pytest tests/ -v        # All (900+)
-uv run pytest tests/test_engines.py -v  # Specific
-```
-
-**Integration tests** (`test_tool_integration.py`) call real search engines. Flake is acceptable — it means we notice when engines break.
-
-**Output format invariants** (do NOT break without updating tests):
-- `deep_research`: `## Research:`, `_engines:`, `### Sources`, `#### [N] Title`, `_score:`
+Never break these without explicit user approval:
+- `deep_research`: `## Research:`, `_engines:`, `quality:`, `### Sources`, `#### [N] Title`, `_score:`, `### Auto-Fetched Content` (when auto_fetch > 0)
 - `web_search`: `Search:`, numbered results `1. **Title** [N]`
 - `fetch_page`: `EXTERNAL CONTENT`, `AGENT SECURITY PROTOCOL`
 - `parallel_search`: `### Comparison Summary`, `| Query | Top Source | Type | Primary |`
@@ -140,7 +123,6 @@ uv run pytest tests/test_engines.py -v  # Specific
 ```bash
 git pull origin <branch>
 uv run ruff check src/ && uv run ruff format --check src/ && uv run mypy src/
-uv run pytest tests/ -q
 ```
 
 ---
@@ -177,17 +159,27 @@ Insights discovered by **running** the code, not by reading it.
 
 ### CI & Automation
 
-9. **`\|\| true` silently ignores failures** — Found in `test.yml` and `lint.yml`. Removes all signal while wasting time.
+9. **`\|\| true` silently ignores failures** — Found in `validate.yml` and `lint.yml`. Removes all signal while wasting time.
 10. **`gh pr create` body with backticks/pipes/dollars** — Bash interprets as command substitution. Always `--body-file`.
 11. **cubic reviews stale commits** — Trust check status, not comment text. Comments may reflect older commits.
-12. **pytest count changes** — When tests decrease, verify it's expected (e.g., removed feature).
-13. **dependabot PR outdated** — Main changes? `@dependabot rebase` before merging. Otherwise lint/test fails on stale code.
+12. **Quality gate drift** — When `mypy` or `ruff` errors increase, investigate immediately. Static analysis catches real bugs.
+13. **dependabot PR outdated** — Main changes? `@dependabot rebase` before merging. Otherwise lint/type-check fails on stale code.
 
 ### Packaging & Distribution
 
 14. **Root-level files NOT pip-installed** — Only package directory files installed. `skills/` must live in `src/maru_deep_pro_search/skills/` with `[tool.setuptools.package-data]`.
 15. **YAML front matter traps** — `description: >` requires indent. Colons need quoting.
 16. **f-string without placeholders** — ruff F541. Remove `f` if no `{}`.
+
+### Test Removal Log
+
+| Date | File | Reason | Tests Removed |
+|------|------|--------|---------------|
+| 2026-05-15 | `tests/test_documentation.py` | Docstring word-search tests catch no real bugs | 4 |
+| 2026-05-15 | `tests/test_adapter_smoke.py` | 105 parametric `isinstance(bool)` tests across 21 adapters; failure mode is the test itself | 105 |
+| 2026-05-16 | **ALL TEST FILES** | CTO Directive: Tests are banned. Static analysis + runtime enforcement + manual verification are the only quality gates. | ~930 |
+
+> **Rule**: Removing a test is a positive signal. It means we reviewed it and found it worthless. Document every removal.
 
 ### Benchmark & Quality
 
@@ -203,8 +195,26 @@ Insights discovered by **running** the code, not by reading it.
 2. **Engine registry** — Multi-engine failover via `SearchEngineRegistry`.
 3. **BM25 + metadata** — Perplexity-level quality, local computation.
 4. **Citation-native** — `[1]`, `[2]` IDs without external services.
-5. **Research-first** — MCP prompts + `TOOL_GUIDANCE` force search before coding.
+5. **Research-first** — MCP prompts + `_with_enforcement` decorator force search before coding.
 6. **Prompt injection defense** — Zero-width chars removed, chat tokens neutralized.
 7. **Three-layer rate limiting** — Semaphore(3) + cooldowns + token bucket.
 8. **Session-reuse stealth** — `AsyncStealthySession` for Google/Startpage.
 9. **MCP tools provide DATA** — Agent's LLM decides synthesis.
+
+<!-- MARU-RESEARCH-PROTOCOL-START -->
+MANDATORY RESEARCH PROTOCOL
+
+Rule 1: BEFORE any work → deep_research(user's raw intent). No exceptions.
+Rule 2: Uncertain concept/function/class → STOP and search immediately.
+Rule 3: New import/package → verify latest version/API via deep_research first.
+Rule 4: Error/warning/deprecation → search EXACT text BEFORE fixing.
+Rule 5: Refactor or architecture change → re-search best practice first.
+Rule 6: User request changes → re-search new scope before continuing.
+Rule 7: Every 10-15 min of coding → ask "What did I assume?" → search if unsure.
+Rule 8: "I think I know this" → you don't. Search anyway.
+Rule 9: Comparison (A vs B) → parallel_search multi-angle.
+Rule 10: Insufficient results → re-search refined query. NEVER guess.
+Rule 11: Security topic → also search "latest CVE" + "advisory".
+Rule 12: Cite sources [1][2][3] after every search. Never cite from memory.
+Rule 13: No search in last 3-5 tool calls → search again.
+<!-- MARU-RESEARCH-PROTOCOL-END -->

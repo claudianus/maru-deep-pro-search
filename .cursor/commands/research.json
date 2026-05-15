@@ -1,0 +1,5 @@
+{
+  "name": "research",
+  "description": "Run deep research before any code change",
+  "prompt": "Before writing or modifying any code, you MUST run deep_research with the user's request as the query. Summarize findings and wait for user confirmation before proceeding."
+}

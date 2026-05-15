@@ -42,7 +42,7 @@ class AgentRule:
 
 @dataclass
 class QualityGate:
-    """Quality gate configuration (lint/test/format)."""
+    """Quality gate configuration (lint/format/type-check)."""
 
     language: str  # e.g. "python", "typescript"
     lint_cmd: str = ""

@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>maru-deep-pro-search — Perplexity급 웹 리서치, 0 API 키</title>
-<meta name="description" content="AI 코딩 에이전트를 위한 Perplexity급 웹 리서치 MCP 서버. 9엔진 폴오버, BM25+시맨틱 랭킹, 네이티브 인용, 프롬프트 인젝션 방어. 100% 물방아.">
+<meta name="description" content="AI 코딩 에이전트를 위한 Perplexity급 웹 리서치 MCP 서버. 17개 툴, 9엔진 폴오버, BM25+시맨틱 랭킹, 리서치 품질 점수, 자동 페치, 네이티브 인용, 프롬프트 인젝션 방어. 100% 물방아.">
 <meta property="og:title" content="maru-deep-pro-search — Perplexity-grade AI research, zero API keys">
-<meta property="og:description" content="Universal AI search MCP server — Perplexity-level quality with zero API keys. 9-engine failover, BM25+semantic ranking, native citations, and 72-layer prompt injection defense.">
+<meta property="og:description" content="Universal AI search MCP server — Perplexity-level quality with zero API keys. 17 tools, 9-engine failover, BM25+semantic ranking, research quality scores, auto-fetch, native citations, and 72-layer prompt injection defense.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://claudianus.github.io/maru-deep-pro-search/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="maru-deep-pro-search — Force your AI agent to research first">
-<meta name="twitter:description" content="Universal AI search MCP server — Perplexity-level quality with zero API keys. 9-engine failover, BM25+semantic ranking, native citations. Docker sandbox. Audit logging.">
+<meta name="twitter:description" content="Universal AI search MCP server — Perplexity-level quality with zero API keys. 17 tools, 9-engine failover, BM25+semantic ranking, research quality scores, auto-fetch, native citations. Docker sandbox. Audit logging.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔍%3C/text%3E%3C/svg%3E">
 <script type="application/ld+json">
 {
@@ -27,14 +27,17 @@
   "codeRepository": "https://github.com/claudianus/maru-deep-pro-search",
   "downloadUrl": "https://pypi.org/project/maru-deep-pro-search/",
   "featureList": [
-    "9-engine failover search",
+    "17 MCP tools (search, fetch, validate, introspect)",
+    "9-engine failover search with query-aware selection",
     "BM25 + semantic ranking",
     "Native citations",
     "72-layer prompt injection defense",
     "MCP audit logging",
     "Docker sandbox support",
     "21 AI agent adapters with skill injection",
-    "3-layer real research enforcement",
+    "3-layer real research enforcement with quality score",
+    "Auto-fetch top results in deep_research",
+    "SQLite KnowledgeStore with semantic search",
     "Code generation validation (generate_code)",
     "Self-update system"
   ],
@@ -172,7 +175,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
     <div class="mb-10">
       <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-maru-500/10 border border-maru-500/20 text-maru-300 text-sm font-mono">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        v0.11.3 — 9 engines · 21 adapters · 72 security signatures · 3-layer enforcement
+        v0.11.3 — 17 tools · 9 engines · 21 adapters · 72 security signatures · 3-layer enforcement · quality scores · auto-fetch
       </span>
     </div>
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -541,7 +544,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="border border-maru-500/30 rounded-xl p-4 bg-maru-950/30 mb-4">
         <div class="text-center text-maru-300 font-bold mb-2 ko">maru-deep-pro-search MCP 서버</div>
         <div class="text-center text-maru-300 font-bold mb-2 en hidden">maru-deep-pro-search MCP Server</div>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-xs">
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">deep_research</div>
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">answer</div>
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">web_search</div>
@@ -551,6 +554,13 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">parallel_search</div>
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">search_with_citations</div>
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">generate_code</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">session_state</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">query_knowledge</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">list_engines</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">engine_health</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">cache_stats</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">clear_caches</div>
+          <div class="text-center p-2 rounded bg-white/5 text-gray-300">export_research</div>
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">version</div>
         </div>
       </div>
@@ -885,7 +895,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
             <h4 class="text-white font-semibold text-sm ko">1000+개 테스트 통과</h4>
             <h4 class="text-white font-semibold text-sm en hidden">1000+ Tests Passing</h4>
             <p class="text-gray-400 text-xs mt-1 ko">레이트 리밋, 엔진 스크래핑, 랭킹 알고리즘, 어댑터 멱등성 전체 커버리지</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">Full coverage for rate limiting, engine scraping, ranking, and adapter idempotency</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">Runtime enforcement for rate limiting, engine scraping, ranking, and adapter idempotency</p>
           </div>
         </div>
       </div>

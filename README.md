@@ -11,8 +11,8 @@
 
 <p align="center">
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/v/maru-deep-pro-search?style=flat-square&color=blue" alt="PyPI"></a>
-  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/test.yml?style=flat-square&label=tests" alt="Tests"></a>
-  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/test.yml"><img src="https://img.shields.io/badge/coverage-80%25-green?style=flat-square" alt="Coverage"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/validate.yml"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/validate.yml?style=flat-square&label=validate" alt="Validate"></a>
+  
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/pyversions/maru-deep-pro-search?style=flat-square" alt="Python"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
 </p>
@@ -116,29 +116,52 @@ The agent will automatically call `deep_research()` first, then synthesize an an
 
 ---
 
-## 🛠️ 10 MCP Tools
+## 🛠️ 17 MCP Tools
 
+### Research Core
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
-| `deep_research` | Multi-engine deep search with query expansion & BM25 ranking | **🔴 ALWAYS FIRST** — before any code, architecture, or technical decision |
+| `deep_research` | Multi-engine deep search with query expansion, BM25 ranking, **quality score**, and **auto-fetch** | **🔴 ALWAYS FIRST** — before any code, architecture, or technical decision |
 | `answer` | Perplexity-style direct answer with inline citations | Quick factual check after research |
 | `parallel_search` | Run multiple searches simultaneously with comparison mode | Multi-angle analysis (e.g., "vs" comparisons) |
 | `web_search` | Scrape + rank + return cited results | Additional targeted sources |
 | `search_with_citations` | Pre-numbered sources for academic writing | Papers, documentation requiring strict attribution |
-| `fetch_page` | Extract clean content from a single URL | Reading specific docs found during research |
+
+### Fetch & Extract
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `fetch_page` | Extract clean content from a single URL (with 403 auto-stealth fallback) | Reading specific docs found during research |
 | `fetch_bulk` | Parallel fetch with deduplication | Reading 2–10 known URLs at once |
 | `stealthy_fetch` | Anti-bot bypass for protected sites | Cloudflare/DataDome blocked sites (last resort) |
+
+### Validation & Enforcement
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
 | `generate_code` | **Code validation gate** — blocks un-researched code by checking for missing citations | After research — ensures code is backed by citations |
+| `session_state` | Check session research status, tool history, citations | Debugging why a tool was blocked |
+| `query_knowledge` | Search persisted knowledge base for prior research | Reusing research without re-searching the web |
+| `export_research` | Export current session research to a markdown file | Saving/sharing research results |
+
+### Engine & Infrastructure
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `list_engines` | List all search engines with reliability & latency metadata | Choosing the right engine |
+| `engine_health` | Real-time circuit breaker status per engine | Diagnosing search failures |
+| `cache_stats` | In-memory cache hit/miss statistics | Monitoring performance |
+| `clear_caches` | Clear all in-memory caches | Forcing fresh results |
 | `version` | Check version & available updates | Verify installation health |
 
 **Tool decision tree:**
 ```
 Any technical request?
-└── deep_research(query) FIRST
+└── deep_research(query, auto_fetch=3) FIRST
     ├── Need quick fact? → answer
     ├── Multiple angles? → parallel_search
     ├── Specific URLs? → fetch_page / fetch_bulk
-    └── Blocked site? → stealthy_fetch (last resort)
+    ├── Blocked site? → stealthy_fetch (last resort)
+    ├── Reuse prior research? → query_knowledge
+    ├── Check research freshness? → session_state
+    └── Diagnose slow searches? → cache_stats / engine_health
 ```
 
 ---
@@ -186,15 +209,17 @@ One setup injects research-first rules via **every extension surface** each agen
 MCP Client (Claude, Cursor, Kimi, Windsurf, ...)
         │ JSON-RPC 2.0 / stdio
         ▼
-┌──────────────────────────────────────────────┐
-│  maru-deep-pro-search MCP Server             │
-│  ├─ 10 Tools (search, fetch, cite, validate) │
-│  ├─ 9-Engine Failover Registry               │
-│  ├─ Hybrid Ranking (BM25+semantic)           │
-│  ├─ 3-Layer Enforcement                      │
-│  ├─ 72-Signature Sanitization                │
-│  └─ SQLite KnowledgeStore                    │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  maru-deep-pro-search MCP Server                             │
+│  ├─ 17 Tools (search, fetch, cite, validate, introspect)     │
+│  ├─ 9-Engine Failover Registry (query-aware selection)       │
+│  ├─ Hybrid Ranking (BM25 + semantic + authority/freshness)   │
+│  ├─ 3-Layer Enforcement + Research Quality Score (A-F)       │
+│  ├─ 72-Signature Sanitization + Zero-Width Char Defense      │
+│  ├─ SQLite KnowledgeStore (exact → FTS → semantic search)    │
+│  ├─ In-Memory TTL Cache (search 5min / fetch 10min)          │
+│  └─ Auto Session Pruning + Audit Logging                     │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### 3-Layer Enforcement

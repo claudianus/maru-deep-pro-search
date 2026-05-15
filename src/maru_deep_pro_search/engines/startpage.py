@@ -29,6 +29,7 @@ _SERP_SELECTORS = {
     "snippet": [".description", "p.description", "p"],
 }
 
+
 class StartpageEngine(SearchEngine):
     """Startpage search engine with session-based stealth.
 

@@ -29,6 +29,7 @@ _SERP_SELECTORS = {
     "snippet": [".b_caption p", ".b_snippet", ".b_paractl p", "p"],
 }
 
+
 class BingEngine(SearchEngine):
     """Bing search engine with direct HTML scraping."""
 

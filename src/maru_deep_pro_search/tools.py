@@ -16,7 +16,6 @@ from .research.deep import deep_research, format_for_llm
 from .utils.cache import cache_key, get_fetch_cache, get_search_cache
 from .utils.locale_harness import optimize_for_engine
 from .utils.query_sanitize import sanitize_query
-from .utils.retry import with_retry
 from .utils.sanitize import analyze_content, wrap_external_content
 
 logger = logging.getLogger(__name__)
@@ -59,12 +58,7 @@ async def tool_web_search(
         # Locale-aware query optimization for region-specific engines
         optimized_query = optimize_for_engine(query, engine)
         results = await asyncio.wait_for(
-            with_retry(
-                search_engine.search,
-                optimized_query,
-                max_results=max_results,
-                max_attempts=3,
-            ),
+            search_engine.search(optimized_query, max_results=max_results),
             timeout=30.0,
         )
     except asyncio.TimeoutError:
@@ -157,12 +151,17 @@ async def tool_fetch_page(
     Returns structured markdown with quality signals, content type,
     and link suggestions for follow-up.
     """
+    # Normalize URL for consistent cache keys (strip tracking params, fragments)
+    from .utils.url import normalize_url
+
+    norm_url = normalize_url(url)
+
     # Check cache
     cache = get_fetch_cache()
-    key = cache_key("fetch", url, str(stealth))
+    key = cache_key("fetch", norm_url, str(stealth))
     cached = cache.get(key)
     if cached is not None:
-        logger.debug("Cache hit for fetch: %s", url)
+        logger.debug("Cache hit for fetch: %s", norm_url)
         return cached  # type: ignore[no-any-return]
 
     # Use duckduckgo_lite as the canonical fetch engine so that fetch and
@@ -183,8 +182,27 @@ async def tool_fetch_page(
             "Try stealthy_fetch() or a different URL._"
         )
 
+    # Prevent memory exhaustion from unexpectedly large pages
+    MAX_FETCH_BYTES = 5_000_000  # 5 MB
+    raw_size = len(page.html) + len(page.text) + len(page.markdown)
+    if raw_size > MAX_FETCH_BYTES:
+        return (
+            f"## [TOO LARGE] {url}\n"
+            f"_Page content exceeds {MAX_FETCH_BYTES:,} bytes ({raw_size:,} bytes).\n"
+            "The site returned an unexpectedly large response. Try a different URL._"
+        )
+
     if page.quality.value == "blocked":
         err = page.error_message or ""
+        # Auto-fallback to stealth for 403/CAPTCHA when auto_stealth_fallback is enabled
+        if (
+            auto_stealth_fallback
+            and not stealth
+            and ("403" in err or "forbidden" in err.lower() or "blocked" in err.lower())
+        ):
+            logger.info("fetch_page blocked for %s, auto-falling back to stealthy_fetch", url)
+            return await tool_stealthy_fetch(url, max_tokens)
+
         # Give precise guidance based on error classification
         if "timeout" in err.lower():
             guidance = "_Server timed out. The site may be slow or overloaded. Try again later or increase timeout._"
@@ -204,9 +222,6 @@ async def tool_fetch_page(
             guidance = (
                 "_Fetch blocked or failed. Try stealthy_fetch or fetch_page with stealth=True._"
             )
-        if auto_stealth_fallback and not stealth:
-            logger.info("fetch_page blocked for %s, auto-falling back to stealthy_fetch", url)
-            return await tool_stealthy_fetch(url, max_tokens)
         return f"## [BLOCKED] {url}\n{guidance}\nError: {page.error_message}"
 
     if page.content_length == 0:
@@ -276,7 +291,9 @@ async def tool_fetch_bulk(
 
     Each result includes quality signals so the LLM can prioritize reading.
     """
-    engine = SearchEngineRegistry.create("duckduckgo")
+    # Use duckduckgo_lite as the canonical fetch engine so that bulk and single
+    # fetch share the same circuit breaker and cooldown state.
+    engine = SearchEngineRegistry.create("duckduckgo_lite")
     sem = asyncio.Semaphore(max_concurrent)
 
     async def _fetch_one(u: str):
@@ -294,6 +311,18 @@ async def tool_fetch_bulk(
                     engine.fetch(u, stealth=stealth),
                     timeout=20.0,
                 )
+                # Prevent memory exhaustion from unexpectedly large pages
+                MAX_FETCH_BYTES = 5_000_000  # 5 MB per page
+                raw_size = len(page.html) + len(page.text) + len(page.markdown)
+                if raw_size > MAX_FETCH_BYTES:
+                    from .engines.base import ExtractionQuality, PageContent
+
+                    return PageContent(
+                        url=u,
+                        error_message=f"Page content exceeds {MAX_FETCH_BYTES:,} bytes",
+                        quality=ExtractionQuality.BLOCKED,
+                        fetch_duration_ms=0,
+                    )
                 cache.set(key, page)
                 return page
             except asyncio.TimeoutError:
@@ -367,6 +396,7 @@ async def tool_deep_research(
     max_sources: int = 30,
     expand_queries: bool = True,
     primary_sources_only: bool = False,
+    auto_fetch: int = 0,
 ) -> str:
     """Deep multi-engine search with query expansion and intelligent ranking.
 
@@ -394,7 +424,7 @@ async def tool_deep_research(
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
-    # Check cache
+    # Check in-memory cache first (exact match, fast)
     cache = get_search_cache()
     key = cache_key(
         "deep_research",
@@ -402,12 +432,38 @@ async def tool_deep_research(
         str(max_sources),
         str(expand_queries),
         str(primary_sources_only),
+        str(auto_fetch),
         query,
     )
     cached = cache.get(key)
     if cached is not None:
         logger.debug("Cache hit for deep_research: %s", query)
         return cached  # type: ignore[no-any-return]
+
+    # Check persisted knowledge store for similar prior research (semantic match)
+    try:
+        from .harness.persistence import KnowledgeStore
+
+        store = KnowledgeStore()
+        prior = store.query(query, max_results=1, semantic_threshold=0.88)
+        if prior:
+            entry = prior[0]
+            # Verify the prior research isn't too stale (> 24 hours for exact reuse)
+            from datetime import datetime, timezone
+
+            try:
+                saved = datetime.fromisoformat(entry.created_at.replace("Z", "+00:00"))
+                age_hours = (datetime.now(timezone.utc) - saved).total_seconds() / 3600
+                if age_hours < 24:
+                    logger.info(
+                        "KnowledgeStore hit for deep_research: %s (%.1fh old)", query, age_hours
+                    )
+                    cache.set(key, entry.answer)
+                    return entry.answer
+            except Exception:
+                pass
+    except Exception:
+        pass  # Non-critical: fall through to live search
 
     try:
         result = await asyncio.wait_for(
@@ -430,6 +486,32 @@ async def tool_deep_research(
             "- Try a more specific query_"
         )
     result_text = format_for_llm(result)
+
+    # Auto-fetch top results if requested (saves agent from separate fetch_page calls)
+    if auto_fetch > 0 and result.sources:
+        top_sources = result.sources[: min(auto_fetch, 3)]
+        fetch_lines = ["\n### Auto-Fetched Content", ""]
+        for src in top_sources:
+            try:
+                page = await asyncio.wait_for(
+                    tool_fetch_page(src.url, max_tokens=2000),
+                    timeout=8.0,
+                )
+                # Truncate to first 800 chars to stay within token budget
+                preview = page[:800] if len(page) > 800 else page
+                fetch_lines.append(f"**From [{src.citation_id}] {src.title}**")
+                fetch_lines.append(f"<{src.url}>")
+                fetch_lines.append("")
+                fetch_lines.append(preview)
+                if len(page) > 800:
+                    fetch_lines.append("\n... (truncated)")
+                fetch_lines.append("")
+            except Exception as exc:
+                logger.debug("Auto-fetch failed for %s: %s", src.url, exc)
+                fetch_lines.append(f"**From [{src.citation_id}] {src.title}** — fetch failed")
+                fetch_lines.append("")
+        result_text += "\n" + "\n".join(fetch_lines)
+
     report = analyze_content(result_text)
     result_text = wrap_external_content(
         result_text, source_url="deep-research:multiple-sources", report=report
@@ -541,12 +623,7 @@ async def tool_search_with_citations(
     try:
         search_engine = SearchEngineRegistry.create(engine)
         results = await asyncio.wait_for(
-            with_retry(
-                search_engine.search,
-                query,
-                max_results=max_results,
-                max_attempts=3,
-            ),
+            search_engine.search(query, max_results=max_results),
             timeout=30.0,
         )
     except asyncio.TimeoutError:
@@ -746,4 +823,3 @@ async def tool_parallel_search(
 # ═══════════════════════════════════════════════════════════════
 # Tool Guidance
 # ═══════════════════════════════════════════════════════════════
-

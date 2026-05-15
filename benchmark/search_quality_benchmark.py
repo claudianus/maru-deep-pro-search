@@ -148,7 +148,9 @@ def compute_mrr(results: list[dict], query: str) -> float:
     return 0.0
 
 
-async def run_single_query_web_search(query: str, engine_name: str = "duckduckgo_lite", max_results: int = 10) -> QueryResult:
+async def run_single_query_web_search(
+    query: str, engine_name: str = "duckduckgo_lite", max_results: int = 10
+) -> QueryResult:
     start = time.monotonic()
     fallback_used = False
     results: list[dict] = []
@@ -197,6 +199,7 @@ async def run_single_query_deep_research(query: str, max_results: int = 10) -> Q
 
     try:
         from maru_deep_pro_search.research.deep import deep_research
+
         result = await deep_research(
             query=query,
             engine="duckduckgo_lite",
@@ -212,7 +215,7 @@ async def run_single_query_deep_research(query: str, max_results: int = 10) -> Q
                 unique_urls.append(src.url)
         results = [
             {
-                "title": getattr(result.sources[i], "title", f"Result {i+1}"),
+                "title": getattr(result.sources[i], "title", f"Result {i + 1}"),
                 "url": url,
                 "score": getattr(result.sources[i], "relevance_score", 0.0),
             }
@@ -246,7 +249,9 @@ def evaluate_query(result: QueryResult) -> MetricResult:
         mrr=compute_mrr(all_results, result.query),
         duration_ms=result.duration_ms,
         fallback_used=result.fallback_used,
-        relevant_found=sum(1 for r in all_results[:10] if is_relevant(r.get("url", ""), result.query)),
+        relevant_found=sum(
+            1 for r in all_results[:10] if is_relevant(r.get("url", ""), result.query)
+        ),
         total_relevant=total_relevant,
     )
 
@@ -278,14 +283,20 @@ def print_report(metrics: list[MetricResult]) -> None:
     print(f"{'NDCG@5':<25} {avg_ndcg5:>10.3f} {'0.500':>10} {status(avg_ndcg5, 0.5):>8}")
     print(f"{'NDCG@10':<25} {avg_ndcg10:>10.3f} {'0.450':>10} {status(avg_ndcg10, 0.45):>8}")
     print(f"{'MRR':<25} {avg_mrr:>10.3f} {'0.500':>10} {status(avg_mrr, 0.5):>8}")
-    print(f"{'Avg Response Time (ms)':<25} {avg_time:>10.0f} {'3000':>10} {status(3000/avg_time if avg_time else 1, 1):>8}")
-    print(f"{'Fallback Rate (%)':<25} {fallback_rate:>10.1f} {'20.0':>10} {status(20/fallback_rate if fallback_rate else 1, 1):>8}")
+    print(
+        f"{'Avg Response Time (ms)':<25} {avg_time:>10.0f} {'3000':>10} {status(3000 / avg_time if avg_time else 1, 1):>8}"
+    )
+    print(
+        f"{'Fallback Rate (%)':<25} {fallback_rate:>10.1f} {'20.0':>10} {status(20 / fallback_rate if fallback_rate else 1, 1):>8}"
+    )
 
     print(f"\n{'Query':<45} {'P@5':>6} {'NDCG@5':>8} {'MRR':>6} {'ms':>6} {'FB':>3}")
     print("-" * 80)
     for m in metrics:
         fb = "Y" if m.fallback_used else "N"
-        print(f"{m.query[:44]:<45} {m.precision_at_5:>6.2f} {m.ndcg_at_5:>8.3f} {m.mrr:>6.2f} {m.duration_ms:>6.0f} {fb:>3}")
+        print(
+            f"{m.query[:44]:<45} {m.precision_at_5:>6.2f} {m.ndcg_at_5:>8.3f} {m.mrr:>6.2f} {m.duration_ms:>6.0f} {fb:>3}"
+        )
 
     # Save JSON
     report_path = Path("benchmark/search_quality_report.json")
@@ -312,9 +323,9 @@ def print_report(metrics: list[MetricResult]) -> None:
 
 
 async def run_benchmark_mode(queries: list[str], mode: str) -> list[MetricResult]:
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"MODE: {mode.upper()}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     query_results: list[QueryResult] = []
     for i, query in enumerate(queries, 1):

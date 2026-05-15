@@ -88,11 +88,6 @@ def _detect_quality_tools(root: Path = Path(".")) -> dict[str, str]:
         elif shutil.which("pylint"):
             tools["python_lint"] = "pylint"
 
-        if ((root / "pytest.ini").exists() or (root / "pyproject.toml").exists()) and shutil.which(
-            "pytest"
-        ):
-            tools["python_test"] = "pytest"
-
     # JavaScript / TypeScript
     if (root / "package.json").exists():
         pkg = root / "package.json"

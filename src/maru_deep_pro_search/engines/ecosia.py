@@ -29,6 +29,7 @@ _SERP_SELECTORS = {
     "snippet": [".web-result__description", ".result__description", ".result__columns"],
 }
 
+
 class EcosiaEngine(SearchEngine):
     """Ecosia Search engine with direct HTML scraping."""
 

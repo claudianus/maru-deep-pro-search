@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "maru-deep-pro-search": {
+      "command": "/Users/modumaru/Desktop/code/clco-deep-research-mcp/.venv/bin/maru-deep-pro-search",
+      "args": []
+    }
+  },
+  "_maru_deep_pro_search_notes": {
+    "research_protocol": "<!-- MARU-RESEARCH-PROTOCOL-START -->\nMANDATORY RESEARCH PROTOCOL\n\nRule 1: BEFORE any work → deep_research(user's raw intent). No exceptions.\nRule 2: Uncertain concept/function/class → STOP and search immediately.\nRule 3: New import/package → verify latest version/API via deep_research first.\nRule 4: Error/warning/deprecation → search EXACT text BEFORE fixing.\nRule 5: Refactor or architecture change → re-search best practice first.\nRule 6: User request changes → re-search new scope before continuing.\nRule 7: Every 10-15 min of coding → ask \"What did I assume?\" → search if unsure.\nRule 8: \"I think I know this\" → you don't. Search anyway.\nRule 9: Comparison (A vs B) → parallel_search multi-angle.\nRule 10: Insufficient results → re-search refined query. NEVER guess.\nRule 11: Security topic → also search \"latest CVE\" + \"advisory\".\nRule 12: Cite sources [1][2][3] after every search. Never cite from memory.\nRule 13: No search in last 3-5 tool calls → search again.\n<!-- MARU-RESEARCH-PROTOCOL-END -->"
+  }
+}

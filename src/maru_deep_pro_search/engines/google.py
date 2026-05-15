@@ -30,6 +30,7 @@ _SERP_SELECTORS = {
     "snippet": ["div.VwiC3b", "span.aCOpRe", "div.s"],
 }
 
+
 class GoogleEngine(SearchEngine):
     """Google search engine with session-based stealth.
 
@@ -52,6 +53,7 @@ class GoogleEngine(SearchEngine):
         self._session_started = False
         StealthyFetcher.configure(adaptive=True, adaptive_domain="google.com")
         import atexit
+
         atexit.register(self._sync_close_session)
 
     def _sync_close_session(self) -> None:
@@ -59,6 +61,7 @@ class GoogleEngine(SearchEngine):
         if self._session is not None and self._session_started:
             try:
                 import asyncio
+
                 asyncio.run(self._session.close())
             except Exception:
                 pass

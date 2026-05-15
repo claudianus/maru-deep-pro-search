@@ -1,15 +1,59 @@
 from __future__ import annotations
 
 import functools
+import ipaddress
 import logging
 import os
+import socket
 import sys
+import time
+from urllib.parse import urlparse
 
 from mcp.server.fastmcp import Context, FastMCP
 
 mcp = FastMCP("maru-search")
 
 _logger = logging.getLogger("maru_deep_pro_search")
+
+
+def _is_private_host(hostname: str | None) -> bool:
+    """Return True if hostname resolves to a private/loopback/internal IP.
+
+    Handles: dotted decimal, integer, octal/hex (via inet_aton), IPv6,
+    and well-known private domain suffixes.
+    """
+    if hostname is None:
+        return True
+    lower = hostname.lower()
+    if lower in ("localhost", "localhost.localdomain"):
+        return True
+    if lower.endswith((".local", ".internal", ".lan")):
+        return True
+
+    # Direct IP address check
+    try:
+        addr = ipaddress.ip_address(hostname)
+        return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved
+    except ValueError:
+        pass
+
+    # Integer IP (e.g., 2130706433 → 127.0.0.1)
+    try:
+        addr = ipaddress.ip_address(int(hostname))
+        return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved
+    except (ValueError, OverflowError):
+        pass
+
+    # Octal / hex variants (e.g., 0177.0.0.1, 0x7f.0.0.1)
+    try:
+        packed = socket.inet_aton(hostname)
+        addr = ipaddress.ip_address(socket.inet_ntoa(packed))
+        return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved
+    except (OSError, ValueError):
+        pass
+
+    return False
+
 
 # MCP servers communicate over stdout/stdio.  Some clients (e.g. Kimi CLI)
 # forward stderr to the user terminal, so INFO logs are visible noise.
@@ -50,9 +94,65 @@ def _inject_notice_into_response(response: str) -> str:
     return f"{notice}\n\n{response}"
 
 
+def _with_notice():
+    """Decorator that injects a one-time update notice into tool responses."""
+
+    def decorator(fn):
+        @functools.wraps(fn)
+        async def wrapper(*args, **kwargs):
+            result = await fn(*args, **kwargs)
+            return _inject_notice_into_response(result)
+
+        return wrapper
+
+    return decorator
+
+
 # ═══════════════════════════════════════════════════════════════
 # Enforcement Layer — Session-level research gates
 # ═══════════════════════════════════════════════════════════════
+
+
+_last_prune_time: float = 0.0
+_PRUNE_INTERVAL_SECONDS: float = 600.0  # 10 minutes
+
+
+async def _maybe_prune_sessions(enforcer) -> None:
+    """Periodically prune stale sessions to prevent memory leaks."""
+    global _last_prune_time
+    now = time.time()
+    if now - _last_prune_time < _PRUNE_INTERVAL_SECONDS:
+        return
+    _last_prune_time = now
+    try:
+        removed = await enforcer.prune_stale_sessions(max_age_seconds=3600)
+        if removed:
+            _logger.debug("Pruned %d stale sessions", removed)
+    except Exception:
+        pass  # Never block tool execution for cleanup
+
+
+def _format_time_ago(iso_timestamp: str) -> str:
+    """Convert an ISO timestamp to a human-readable relative time."""
+    try:
+        from datetime import datetime, timezone
+
+        dt = datetime.fromisoformat(iso_timestamp.replace("Z", "+00:00"))
+        now = datetime.now(timezone.utc)
+        delta = now - dt
+        if delta.days > 30:
+            return f"{delta.days // 30} months ago"
+        if delta.days > 0:
+            return f"{delta.days} days ago"
+        hours = delta.seconds // 3600
+        if hours > 0:
+            return f"{hours} hours ago"
+        minutes = delta.seconds // 60
+        if minutes > 0:
+            return f"{minutes} minutes ago"
+        return "just now"
+    except Exception:
+        return iso_timestamp
 
 
 def _get_session_id(ctx: Context | None) -> str:
@@ -101,6 +201,8 @@ def _with_enforcement(tool_name: str | None = None):
             # Record tool call and check for mid-task research warnings
             state = enforcer.get_or_create(session_id)
             state.record_tool(name)
+            # Periodic session cleanup to prevent memory leaks
+            await _maybe_prune_sessions(enforcer)
             warning = enforcer.should_research(session_id, name)
             if warning:
                 result += warning
@@ -119,18 +221,73 @@ def _with_validation(tool_name: str | None = None):
         async def wrapper(*args, ctx: Context | None = None, **kwargs):
             if "query" in kwargs:
                 q = kwargs["query"]
-                if isinstance(q, str) and len(q) > 4096:
-                    raise ValueError(
-                        f"Query exceeds maximum length of 4096 characters (got {len(q)})"
-                    )
+                if isinstance(q, str):
+                    if not q.strip():
+                        raise ValueError("Query cannot be empty or whitespace-only.")
+                    if len(q) > 4096:
+                        raise ValueError(
+                            f"Query exceeds maximum length of 4096 characters (got {len(q)})"
+                        )
             if "urls" in kwargs:
                 urls = kwargs["urls"]
-                if isinstance(urls, list) and len(urls) > 50:
-                    raise ValueError(f"Maximum 50 URLs allowed per call (got {len(urls)})")
+                if isinstance(urls, list):
+                    if len(urls) > 50:
+                        raise ValueError(f"Maximum 50 URLs allowed per call (got {len(urls)})")
+                    if any(not isinstance(u, str) or not u.strip() for u in urls):
+                        raise ValueError("All URLs must be non-empty strings.")
             if "queries" in kwargs:
                 queries = kwargs["queries"]
-                if isinstance(queries, list) and len(queries) > 10:
-                    raise ValueError(f"Maximum 10 queries allowed per call (got {len(queries)})")
+                if isinstance(queries, list):
+                    if len(queries) > 10:
+                        raise ValueError(
+                            f"Maximum 10 queries allowed per call (got {len(queries)})"
+                        )
+                    if any(not isinstance(q, str) or not q.strip() for q in queries):
+                        raise ValueError("All queries must be non-empty strings.")
+            if "max_sources" in kwargs:
+                ms = kwargs["max_sources"]
+                if isinstance(ms, int) and (ms < 1 or ms > 100):
+                    raise ValueError(f"max_sources must be between 1 and 100 (got {ms})")
+            if "max_tokens" in kwargs:
+                mt = kwargs["max_tokens"]
+                if isinstance(mt, int) and (mt < 100 or mt > 32000):
+                    raise ValueError(f"max_tokens must be between 100 and 32000 (got {mt})")
+            if "limit" in kwargs:
+                lim = kwargs["limit"]
+                if isinstance(lim, int) and (lim < 1 or lim > 100):
+                    raise ValueError(f"limit must be between 1 and 100 (got {lim})")
+            if "max_results" in kwargs:
+                mr = kwargs["max_results"]
+                if isinstance(mr, int) and (mr < 1 or mr > 100):
+                    raise ValueError(f"max_results must be between 1 and 100 (got {mr})")
+            if "max_age_days" in kwargs:
+                mad = kwargs["max_age_days"]
+                if isinstance(mad, int) and (mad < 1 or mad > 365):
+                    raise ValueError(f"max_age_days must be between 1 and 365 (got {mad})")
+            if "auto_fetch" in kwargs:
+                af = kwargs["auto_fetch"]
+                if isinstance(af, int) and (af < 0 or af > 10):
+                    raise ValueError(f"auto_fetch must be between 0 and 10 (got {af})")
+            # URL scheme validation — prevent file://, localhost, and internal IPs
+            for url_key in ("url", "urls"):
+                if url_key in kwargs:
+                    urls = kwargs[url_key]
+                    to_check = urls if isinstance(urls, list) else [urls]
+                    for u in to_check:
+                        if not isinstance(u, str):
+                            continue
+                        if not u.startswith(("http://", "https://")):
+                            raise ValueError(
+                                f"URL must use http:// or https:// scheme (got: {u[:60]})"
+                            )
+                        # Block localhost and common internal IPs (SSRF protection)
+                        parsed = urlparse(u)
+                        if parsed.hostname is None:
+                            raise ValueError(f"Invalid URL (no hostname): {u[:60]}")
+                        if _is_private_host(parsed.hostname):
+                            raise ValueError(
+                                f"URL points to internal/private address (SSRF protection): {u[:60]}"
+                            )
             return await fn(*args, ctx=ctx, **kwargs)
 
         return wrapper
@@ -400,6 +557,7 @@ When using fetch_bulk with multiple URLs:
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def answer(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -411,13 +569,13 @@ async def answer(
     """Quick answer with inline citations for simple factual questions."""
     from .tools import tool_answer
 
-    result = await tool_answer(query, engine, max_sources, max_tokens, primary_sources_only)
-    return _inject_notice_into_response(result)
+    return await tool_answer(query, engine, max_sources, max_tokens, primary_sources_only)
 
 
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def web_search(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -433,6 +591,7 @@ async def web_search(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def search_with_citations(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -448,6 +607,7 @@ async def search_with_citations(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def fetch_page(
     url: str,
     stealth: bool = False,
@@ -463,6 +623,7 @@ async def fetch_page(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def fetch_bulk(
     urls: list[str],
     stealth: bool = False,
@@ -480,12 +641,14 @@ async def fetch_bulk(
 @_with_validation()
 @_with_enforcement("deep_research")
 @_with_audit("deep_research")
+@_with_notice()
 async def deep_research(
     query: str,
     engine: str = "duckduckgo_lite",
     max_sources: int = 30,
     expand_queries: bool = True,
     primary_sources_only: bool = False,
+    auto_fetch: int = 0,
     ctx: Context | None = None,
 ) -> str:
     """Deep multi-engine search with query expansion and intelligent ranking.
@@ -496,22 +659,27 @@ async def deep_research(
 
     The agent should review the sources and call fetch_page / fetch_bulk
     to read the content of URLs it finds relevant.
+
+    Args:
+        auto_fetch: Automatically fetch and summarize the top N results (0-3).
+            Saves the agent from calling fetch_page separately. Default 0.
     """
     from .tools import tool_deep_research
 
-    result = await tool_deep_research(
+    return await tool_deep_research(
         query,
         engine,
         max_sources,
         expand_queries,
         primary_sources_only,
+        auto_fetch,
     )
-    return _inject_notice_into_response(result)
 
 
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def stealthy_fetch(
     url: str,
     max_tokens: int = 6000,
@@ -526,6 +694,7 @@ async def stealthy_fetch(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def parallel_search(
     queries: list[str],
     engine: str = "duckduckgo_lite",
@@ -542,6 +711,7 @@ async def parallel_search(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def version(
     ctx: Context | None = None,
 ) -> str:
@@ -577,6 +747,7 @@ async def version(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def list_engines(
     ctx: Context | None = None,
 ) -> str:
@@ -593,7 +764,13 @@ async def list_engines(
     for name in SearchEngineRegistry.list_engines():
         try:
             cls = SearchEngineRegistry.get(name)
-            status = "🟢" if cls.reliability_score >= 0.85 else "🟡" if cls.reliability_score >= 0.7 else "🔴"
+            status = (
+                "🟢"
+                if cls.reliability_score >= 0.85
+                else "🟡"
+                if cls.reliability_score >= 0.7
+                else "🔴"
+            )
             lines.append(
                 f"{status} **{name}** — tier {cls.quality_tier}, "
                 f"reliability {cls.reliability_score:.0%}, "
@@ -609,6 +786,7 @@ async def list_engines(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def engine_health(
     engine: str = "",
     ctx: Context | None = None,
@@ -632,7 +810,13 @@ async def engine_health(
         try:
             eng = SearchEngineRegistry.create(name)
             cb = eng._circuit_breaker
-            cb_state = "CLOSED ✅" if cb.state == "closed" else "OPEN ❌" if cb.state == "open" else "HALF-OPEN ⚠️"
+            cb_state = (
+                "CLOSED ✅"
+                if cb.state == "closed"
+                else "OPEN ❌"
+                if cb.state == "open"
+                else "HALF-OPEN ⚠️"
+            )
             lines.append(
                 f"**{name}**: {cb_state} | "
                 f"failures: {cb.failure_count}/{cb.failure_threshold} | "
@@ -647,6 +831,7 @@ async def engine_health(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def generate_code(
     task_description: str,
     proposed_code: str,
@@ -719,9 +904,11 @@ async def generate_code(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def query_knowledge(
     query: str,
     limit: int = 3,
+    max_age_days: int = 30,
     ctx: Context | None = None,
 ) -> str:
     """Search the persisted knowledge base for past research results.
@@ -734,23 +921,25 @@ async def query_knowledge(
     Args:
         query: The topic to look up in the knowledge base.
         limit: Maximum number of past results to return (default 3).
+        max_age_days: Only return results newer than this many days (default 30).
     """
     from .harness.persistence import KnowledgeStore
 
     store = KnowledgeStore()
-    entries = store.query(query, max_results=limit)
+    entries = store.query(query, max_results=limit, max_age_days=max_age_days)
 
     if not entries:
         return (
             f"## No prior research found for: '{query}'\n\n"
             "This topic hasn't been researched in the knowledge base yet. "
-            "Run `deep_research(query=...) first to populate it."
+            "Run `deep_research(query=...)` first to populate it."
         )
 
     lines = [f"## Prior Research Results ({len(entries)} found)", ""]
     for i, entry in enumerate(entries, 1):
         lines.append(f"### [{i}] {entry.query}")
-        lines.append(f"_Sources: {len(entry.sources)} | Saved: {entry.created_at}_")
+        saved_ago = _format_time_ago(entry.created_at)
+        lines.append(f"_Sources: {len(entry.sources)} | Saved: {saved_ago}_")
         lines.append("")
         # Truncate answer to first 800 chars to stay within token budget
         preview = entry.answer[:800] if len(entry.answer) > 800 else entry.answer
@@ -769,6 +958,7 @@ async def query_knowledge(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+@_with_notice()
 async def session_state(
     ctx: Context | None = None,
 ) -> str:
@@ -806,7 +996,9 @@ async def session_state(
 
     if state.citations_found:
         lines.append("")
-        lines.append(f"**Citations available**: {', '.join(f'[{c}]' for c in state.citations_found)}")
+        lines.append(
+            f"**Citations available**: {', '.join(f'[{c}]' for c in state.citations_found)}"
+        )
 
     lines.append("")
     if not state.research_done:
@@ -817,6 +1009,131 @@ async def session_state(
         lines.append("🟢 **Session is research-ready.** You may call dependent tools.")
 
     return "\n".join(lines)
+
+
+@mcp.tool()
+@_with_validation()
+@_with_audit()
+@_with_notice()
+async def cache_stats(
+    ctx: Context | None = None,
+) -> str:
+    """Return in-memory cache statistics for search and fetch caches.
+
+    BEST FOR:
+    - Understanding cache hit rates
+    - Diagnosing why results feel slow (cache misses)
+    - Monitoring server performance
+    """
+    from .utils.cache import get_fetch_cache, get_search_cache
+
+    search_cache = get_search_cache()
+    fetch_cache = get_fetch_cache()
+
+    search_stats = search_cache.stats()
+    fetch_stats = fetch_cache.stats()
+
+    lines = [
+        "## Cache Statistics",
+        "",
+        "### Search Cache",
+        f"- Hits: {search_stats['hits']}",
+        f"- Misses: {search_stats['misses']}",
+        f"- Hit rate: {search_stats['hit_rate']:.1%}",
+        f"- Size: {search_stats['size']} / {search_stats['maxsize']}",
+        "",
+        "### Fetch Cache",
+        f"- Hits: {fetch_stats['hits']}",
+        f"- Misses: {fetch_stats['misses']}",
+        f"- Hit rate: {fetch_stats['hit_rate']:.1%}",
+        f"- Size: {fetch_stats['size']} / {fetch_stats['maxsize']}",
+        "",
+        "💡 Tip: Low hit rates mean the agent is making unique queries or fetching uncached URLs.",
+    ]
+    return "\n".join(lines)
+
+
+@mcp.tool()
+@_with_validation()
+@_with_audit()
+@_with_notice()
+async def clear_caches(
+    ctx: Context | None = None,
+) -> str:
+    """Clear all in-memory caches. Use when you suspect stale results.
+
+    BEST FOR:
+    - Getting fresh results after a bug fix or engine update
+    - Debugging cache-related issues
+    - Forcing re-fetch of pages that may have changed
+    """
+    from .utils.cache import get_fetch_cache, get_search_cache
+
+    get_search_cache().clear()
+    get_fetch_cache().clear()
+    return "✅ All caches cleared. Next searches and fetches will hit live sources."
+
+
+@mcp.tool()
+@_with_validation()
+@_with_audit()
+@_with_notice()
+async def export_research(
+    filename: str = "research_export.md",
+    ctx: Context | None = None,
+) -> str:
+    """Export the current session's research result to a markdown file.
+
+    BEST FOR:
+    - Saving research for offline review
+    - Sharing research with teammates
+    - Building a personal knowledge base
+
+    Args:
+        filename: Output file name (default: research_export.md).
+    """
+    from .harness.enforcer import get_enforcer
+
+    session_id = _get_session_id(ctx)
+    enforcer = get_enforcer()
+    state = enforcer.get_or_create(session_id)
+
+    if not state.research_done:
+        return "❌ No research to export. Run `deep_research(query=...)` first."
+
+    lines = [
+        f"# Research Export: {state.research_query}",
+        "",
+        f"- **Session ID**: `{state.session_id}`",
+        f"- **Research ID**: `{state.research_id}`",
+        f"- **Age**: {state.research_age_seconds:.0f}s",
+        f"- **Citations**: {', '.join(f'[{c}]' for c in state.citations_found) or '(none)'}",
+        "",
+        "---",
+        "",
+        state.research_result,
+    ]
+    content = "\n".join(lines)
+
+    from pathlib import Path
+
+    try:
+        path = Path(filename)
+        # Prevent path traversal — only allow simple filenames
+        if path.name != filename or path.suffix not in (".md", ".txt"):
+            return (
+                "❌ Invalid filename. Use a simple name like `research_export.md` or `notes.txt`."
+            )
+        # Prevent accidental overwrite of existing files
+        if path.exists():
+            return (
+                f"❌ File `{filename}` already exists. Choose a different name or "
+                "delete the existing file first."
+            )
+        path.write_text(content, encoding="utf-8")
+        return f"✅ Research exported to `{path.resolve()}` ({len(content)} characters)."
+    except OSError as exc:
+        return f"❌ Export failed: {exc}"
 
 
 def _research_main(argv: list[str] | None = None) -> int:

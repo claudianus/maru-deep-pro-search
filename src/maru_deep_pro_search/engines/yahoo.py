@@ -29,6 +29,7 @@ _SERP_SELECTORS = {
     "snippet": [".compText p", ".compText span", ".compText"],
 }
 
+
 class YahooEngine(SearchEngine):
     """Yahoo Search engine with direct HTML scraping."""
 

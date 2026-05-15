@@ -184,9 +184,7 @@ class SessionEnforcer:
         if not state.research_done:
             return None  # check_research will block anyway
 
-        non_research_tools = [
-            t for t in state.tools_called if t not in self.RESEARCH_EXEMPT_TOOLS
-        ]
+        non_research_tools = [t for t in state.tools_called if t not in self.RESEARCH_EXEMPT_TOOLS]
         if len(non_research_tools) >= self.MAX_TOOLS_WITHOUT_RESEARCH:
             return (
                 f"\n\n🟡 **Mid-task warning**: You have called {len(non_research_tools)} tools "

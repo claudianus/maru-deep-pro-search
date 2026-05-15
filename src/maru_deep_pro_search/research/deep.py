@@ -57,6 +57,9 @@ class ResearchResult:
 
 # ── Main pipeline ─────────────────────────────────────────────────────────
 
+# Module-level semaphore to limit concurrent search requests across all calls
+_search_semaphore = asyncio.Semaphore(4)
+
 
 async def deep_research(
     query: str,
@@ -112,7 +115,6 @@ async def deep_research(
 
     # Phase 2: Multi-engine search
     engine_results: dict[str, list[SearchResult]] = {e: [] for e in engines}
-    _search_semaphore = asyncio.Semaphore(4)
 
     async def _search_one(
         eng_name: str, sq: str, allow_fallback: bool = True
@@ -124,9 +126,7 @@ async def deep_research(
                 # handles circuit breaker and cooldown. Adding with_retry here
                 # causes every retry attempt to increment the circuit breaker,
                 # leading to premature engine death.
-                results = await search_engine.search(
-                    sq, max_results=max_sources * 3
-                )
+                results = await search_engine.search(sq, max_results=max_sources * 3)
                 return (eng_name, results)
             except NetworkError as exc:
                 logger.warning("Search '%s' on %s failed: %s", sq[:40], eng_name, exc)
@@ -255,8 +255,15 @@ def format_for_llm(result: ResearchResult) -> str:
     lines.append(f"## Research: {result.query}")
 
     coverage_str = " ".join(f"{k}={v}" for k, v in result.search_coverage.items())
+
+    # Compute research quality score
+    quality_score = _compute_research_quality(result)
+    grade = _quality_grade(quality_score)
+    grade_emoji = {"A": "🟢", "B": "🟡", "C": "🟠", "D": "🔴", "F": "⚫"}.get(grade, "⚪")
+
     lines.append(
-        f"_engines: {coverage_str} | sources: {result.total_sources} | {result.elapsed_ms:.0f}ms_"
+        f"_engines: {coverage_str} | sources: {result.total_sources} | "
+        f"{result.elapsed_ms:.0f}ms | quality: {grade_emoji} {grade} ({quality_score}/100)_"
     )
 
     if len(result.subqueries) > 1:
@@ -303,6 +310,51 @@ def format_for_llm(result: ResearchResult) -> str:
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────
+
+
+def _compute_research_quality(result: ResearchResult) -> int:
+    """Score research quality 0-100 based on source diversity, authority, and coverage."""
+    if not result.sources:
+        return 0
+
+    total = len(result.sources)
+    authority_count = sum(1 for s in result.sources if s.authority_boost)
+    primary_count = sum(1 for s in result.sources if s.is_primary)
+    high_quality_count = sum(1 for s in result.sources if s.quality == "high")
+    multi_engine_count = sum(1 for s in result.sources if len(s.engines_found) > 1)
+
+    # Coverage: how many engines contributed
+    engine_count = len(result.search_coverage)
+    coverage_score = min(engine_count * 15, 30)  # 2 engines=30, 1 engine=15
+
+    # Authority ratio
+    authority_score = int((authority_count / total) * 25)
+
+    # Primary source ratio
+    primary_score = int((primary_count / total) * 20)
+
+    # High-quality ratio
+    quality_score = int((high_quality_count / total) * 15)
+
+    # Cross-engine confirmation ratio
+    diversity_score = int((multi_engine_count / total) * 10)
+
+    return min(
+        coverage_score + authority_score + primary_score + quality_score + diversity_score, 100
+    )
+
+
+def _quality_grade(score: int) -> str:
+    """Convert numeric score to letter grade."""
+    if score >= 85:
+        return "A"
+    if score >= 70:
+        return "B"
+    if score >= 55:
+        return "C"
+    if score >= 40:
+        return "D"
+    return "F"
 
 
 def _estimate_quality(result: SearchResult) -> str:

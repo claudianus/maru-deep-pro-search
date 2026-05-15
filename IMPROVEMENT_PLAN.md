@@ -89,7 +89,7 @@ def format_for_llm(result: ResearchResult, max_tokens_per_source: int = 2500) ->
 ### Test Cases
 
 ```python
-# tests/test_token_defaults.py
+# Token defaults verification
 
 class TestTokenDefaults:
     def test_fetch_page_default_increased(self):
@@ -435,7 +435,7 @@ async def deep_research(
 ### Test Cases
 
 ```python
-# tests/test_deep_research_tokens.py
+# Deep research token verification
 
 class TestTokenAllocation:
     def test_high_quality_gets_full_budget(self):
@@ -672,7 +672,7 @@ class NaverEngine(SearchEngine):
 ### Test Cases
 
 ```python
-# tests/test_korean_support.py
+# Korean support verification
 
 class TestKoreanQueryExpansion:
     def test_korean_query_detected(self):
@@ -786,7 +786,7 @@ Need comprehensive research?
 ### Test Cases
 
 ```python
-# tests/test_documentation.py
+# Documentation verification
 
 class TestDocumentation:
     def test_fetch_page_docstring_has_stealth_guidance(self):
@@ -850,19 +850,19 @@ class TestDocumentation:
 
 ```bash
 # All tests
-pytest tests/ -v
+ruff check . && ruff format --check . && mypy src/
 
 # Specific test files
-pytest tests/test_token_defaults.py -v
-pytest tests/test_deep_research_tokens.py -v
-pytest tests/test_korean_support.py -v
-pytest tests/test_documentation.py -v
+ruff check src/
+ruff check src/
+ruff check src/
+ruff check src/
 
 # With coverage
-pytest tests/ --cov=src/clco_deep_research --cov-report=term-missing
+
 
 # Integration tests (hits network)
-pytest tests/ --integration -v
+ruff check . && ruff format --check . && mypy src/
 ```
 
 ### Test Checklist

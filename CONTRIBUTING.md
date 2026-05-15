@@ -16,18 +16,14 @@ uv sync
 bash scripts/install.sh
 ```
 
-## Running Tests
+## Quality Gates
 
 ```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=src/maru_deep_pro_search --cov-report=term-missing
-
-# Run specific test file
-pytest tests/test_sanitize.py -v
+# Run all quality checks
+ruff check . && ruff format --check . && mypy src/
 ```
+
+No tests. Static analysis is the only verification we use.
 
 ## Code Style
 
@@ -41,8 +37,7 @@ pytest tests/test_sanitize.py -v
 1. Create `src/maru_deep_pro_search/engines/<name>.py`
 2. Inherit from `BaseEngine` and implement `search()` and `fetch()`
 3. Register in `engines/registry.py` `_register_builtins()`
-4. Add tests in `tests/test_engines.py`
-5. Update README.md engine table and docs/index.html
+4. Update README.md engine table and docs/index.html
 
 ## Adding a New Agent Adapter
 
@@ -55,14 +50,13 @@ pytest tests/test_sanitize.py -v
 
 1. Add regex patterns to `utils/sanitize.py` `_compile_signatures()`
 2. Include multi-language variants where relevant
-3. Add test cases in `tests/test_sanitize.py`
-4. Update README.md signature count
+3. Update README.md signature count
 
 ## Pull Request Process
 
 1. Fork the repository and create a feature branch
 2. Make your changes with clear commit messages
-3. Ensure all tests pass
+3. Ensure quality gates pass (`ruff check . && ruff format --check . && mypy src/`)
 4. Update documentation (README.md, docs/index.html, CHANGELOG.md)
 5. Submit a PR using the provided template
 

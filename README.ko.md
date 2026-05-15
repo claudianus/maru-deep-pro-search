@@ -60,9 +60,11 @@ pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 
 설정 마법사가 AI 에이전트를 자동 감지하고, 기존 설정을 백업한 뒤 MCP 설정을 주입하고, 리서치 우선 규칙을 강제합니다.
 
----
+**프로젝트 하네스:** `maru-deep-pro-search-init` — `.maru/harness.yaml`, 로컬 지식 DB, 선택적 `AGENTS.md` 생성.
 
-## 🛠️ 17개 MCP 툴
+**검색 쿼리:** 검색 툴은 **키워드형**(3–12단어)만 허용합니다. 챗 문장은 HTTP 전에 거부되며, 에이전트가 재작성합니다. 비활성: `MARU_STRICT_QUERY=0`. `deep_research` 경로에서 **한글·중문** 쿼리는 네이버/바이두에 로컬 하네스로 보강됩니다.
+
+## 🛠️ 18개 MCP 툴
 
 ### 리서치 코어
 | 툴 | 용도 | 언제 사용 |
@@ -85,6 +87,7 @@ pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 |------|---------|-------------|
 | `generate_code` | **코드 검증 게이트** — 인용 없는 코드 차단 | 리서치 후 — 코드가 인용에 기반하는지 확인 |
 | `session_state` | 세션 리서치 상태, 툴 기록, 인용 확인 | 툴이 차단된 이유 디버깅 |
+| `drift_status` | 마지막 리서치 이후 매니페스트/에러 드리프트 (웹 검색 없음) | 의존성·에러 패턴 변경 후 |
 | `query_knowledge` | 지식 저장소에서 과거 리서치 검색 | 웹 재검색 없이 리서치 재사용 |
 | `export_research` | 현재 세션 리서치를 마크다운 파일로 납볍 | 리서치 결과 저장/공유 |
 
@@ -106,7 +109,7 @@ pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
     ├── 특정 URL 읽기? → fetch_page / fetch_bulk
     ├── 사이트 차단? → stealthy_fetch (최후 수단)
     ├── 과거 리서치 재사용? → query_knowledge
-    ├── 리서치 신선도 확인? → session_state
+    ├── 리서치 신선도 확인? → session_state / drift_status
     └── 느린 검색 진단? → cache_stats / engine_health
 ```
 
@@ -157,7 +160,7 @@ MCP 클라이언트 (Claude, Cursor, Kimi, Windsurf, ...)
         ▼
 ┌──────────────────────────────────────────────────────────────┐
 │  maru-deep-pro-search MCP 서버                               │
-│  ├─ 17개 툴 (검색, 페치, 인용, 검증, 인트로스펙션)         │
+│  ├─ 18개 툴 (검색, 페치, 인용, 검증, 인트로스펙션)         │
 │  ├─ 9엔진 폴오버 레지스트리 (쿼리 인식 선택)               │
 │  ├─ 하이브리드 랭킹 (BM25 + 시맨틱 + 권위/신선도)          │
 │  ├─ 3계층 강제 + 리서치 품질 점수 (A-F)                    │

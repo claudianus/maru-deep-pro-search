@@ -72,7 +72,7 @@ The setup wizard auto-detects your AI agent, backs up existing configs, injects 
 ### 1. Verify installation
 ```bash
 maru-deep-pro-search --version
-# Expected: 0.11.3
+# Expected: 0.15.0
 ```
 
 ### 2. Set up your agent
@@ -99,7 +99,24 @@ Ask your agent: *"Research FastAPI vs Django 2025 and tell me which to choose."*
 
 The agent will automatically call `deep_research()` first, then synthesize an answer with real citations.
 
----
+### 5. Project harness (teams)
+
+Initialize `.maru/harness.yaml`, local knowledge DB, and optional `AGENTS.md` in the repo you are working in:
+
+```bash
+maru-deep-pro-search-init
+maru-deep-pro-search-init --agents cursor claude   # project-scope configs for listed agents
+```
+
+Each working copy can keep `.maru/` and `harness.yaml` without committing dogfood agent dotfiles — use `setup` for machine-wide MCP wiring.
+
+### 6. Search queries & strict gate
+
+Search tools expect **keyword-style** queries (3–12 terms: library + aspect + year). Conversational prompts like “please help me fix this” are **rejected before any HTTP request** so agents rewrite into SERP-friendly text.
+
+- Disable rejection (optimize only): `export MARU_STRICT_QUERY=0`
+- After `deep_research`: receipts live under `~/.maru/receipts/`; **drift** from lockfiles triggers in-tool warnings; call `drift_status` without web I/O.
+- Share team cache: `maru-deep-pro-search-knowledge export -o bundle.json` / `import bundle.json`
 
 ## 🏆 vs Alternatives
 
@@ -116,7 +133,7 @@ The agent will automatically call `deep_research()` first, then synthesize an an
 
 ---
 
-## 🛠️ 17 MCP Tools
+## 🛠️ 18 MCP Tools
 
 ### Research Core
 | Tool | Purpose | When to Use |
@@ -139,6 +156,7 @@ The agent will automatically call `deep_research()` first, then synthesize an an
 |------|---------|-------------|
 | `generate_code` | **Code validation gate** — blocks un-researched code by checking for missing citations | After research — ensures code is backed by citations |
 | `session_state` | Check session research status, tool history, citations | Debugging why a tool was blocked |
+| `drift_status` | Manifest/error drift since last research (no web search) | After dependency or error changes |
 | `query_knowledge` | Search persisted knowledge base for prior research | Reusing research without re-searching the web |
 | `export_research` | Export current session research to a markdown file | Saving/sharing research results |
 
@@ -160,7 +178,7 @@ Any technical request?
     ├── Specific URLs? → fetch_page / fetch_bulk
     ├── Blocked site? → stealthy_fetch (last resort)
     ├── Reuse prior research? → query_knowledge
-    ├── Check research freshness? → session_state
+    ├── Check research freshness? → session_state / drift_status
     └── Diagnose slow searches? → cache_stats / engine_health
 ```
 
@@ -211,7 +229,7 @@ MCP Client (Claude, Cursor, Kimi, Windsurf, ...)
         ▼
 ┌──────────────────────────────────────────────────────────────┐
 │  maru-deep-pro-search MCP Server                             │
-│  ├─ 17 Tools (search, fetch, cite, validate, introspect)     │
+│  ├─ 18 Tools (search, fetch, cite, validate, introspect)     │
 │  ├─ 9-Engine Failover Registry (query-aware selection)       │
 │  ├─ Hybrid Ranking (BM25 + semantic + authority/freshness)   │
 │  ├─ 3-Layer Enforcement + Research Quality Score (A-F)       │

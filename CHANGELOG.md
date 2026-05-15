@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-05-16
+
+### Added
+- **Locale harness in `deep_research`** — Naver/Baidu searches apply `optimize_for_engine` (English tech terms → localized hints) for better in-cluster SERP quality at zero cost.
+
+### Changed
+- **README / README.ko** — document harness `init`, strict query gate, `drift_status`, knowledge CLI; bump tool count to 18.
+
 ## [0.14.0] - 2026-05-15
 
 ### Added

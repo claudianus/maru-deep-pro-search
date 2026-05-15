@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from ..engines.base import SearchResult
 from ..engines.registry import SearchEngineRegistry
 from ..exceptions import NetworkError
+from ..utils.locale_harness import optimize_for_engine
 from ..utils.url import is_authority_domain
 from .expander import expand_query
 from .gap_detector import detect_gaps
@@ -122,11 +123,9 @@ async def deep_research(
         async with _search_semaphore:
             try:
                 search_engine = SearchEngineRegistry.create(eng_name)
-                # Call search directly — the engine's _wrapped_search already
-                # handles circuit breaker and cooldown. Adding with_retry here
-                # causes every retry attempt to increment the circuit breaker,
-                # leading to premature engine death.
-                results = await search_engine.search(sq, max_results=max_sources * 3)
+                # Locale harness: English tech terms → localized tokens for Naver/Baidu.
+                sent = optimize_for_engine(sq, eng_name) if eng_name in ("naver", "baidu") else sq
+                results = await search_engine.search(sent, max_results=max_sources * 3)
                 return (eng_name, results)
             except NetworkError as exc:
                 logger.warning("Search '%s' on %s failed: %s", sq[:40], eng_name, exc)

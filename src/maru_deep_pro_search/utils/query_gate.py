@@ -194,10 +194,14 @@ def validate_query_quality(query: str) -> tuple[bool, str, list[str]]:
     hints: list[str] = []
     q = query.strip()
     if len(q) < _MIN_CHARS:
-        return False, "Query too short for search engines (min ~8 characters).", [
-            "`{library} {topic} official documentation " + str(_CURRENT_YEAR) + "`",
-            "`{exact error message} fix stackoverflow`",
-        ]
+        return (
+            False,
+            "Query too short for search engines (min ~8 characters).",
+            [
+                "`{library} {topic} official documentation " + str(_CURRENT_YEAR) + "`",
+                "`{exact error message} fix stackoverflow`",
+            ],
+        )
 
     tokens = _tokens(q)
     meaningful = _meaningful_tokens(tokens)
@@ -224,16 +228,22 @@ def validate_query_quality(query: str) -> tuple[bool, str, list[str]]:
         )
 
     if _VAGUE_ONLY.match(q):
-        return False, "Query is a generic single word — not searchable.", hints or [
-            "`FastAPI middleware order official documentation`"
-        ]
+        return (
+            False,
+            "Query is a generic single word — not searchable.",
+            hints or ["`FastAPI middleware order official documentation`"],
+        )
 
     lowered = q.lower()
     if lowered in ("deep research", "research this", "search web", "look it up"):
-        return False, "Meta-instruction is not a search query.", [
-            "Extract the TECHNICAL subject from the user request first.",
-            f"Example: user wants auth → `JWT vs session cookies FastAPI {_CURRENT_YEAR}`",
-        ]
+        return (
+            False,
+            "Meta-instruction is not a search query.",
+            [
+                "Extract the TECHNICAL subject from the user request first.",
+                f"Example: user wants auth → `JWT vs session cookies FastAPI {_CURRENT_YEAR}`",
+            ],
+        )
 
     # Mostly stopwords
     if tokens and len(meaningful) / max(len(tokens), 1) < 0.35:
@@ -244,9 +254,13 @@ def validate_query_quality(query: str) -> tuple[bool, str, list[str]]:
         )
 
     if len(q) > 512:
-        return False, "Query too long — search engines prefer concise keyword queries.", [
-            "Shorten to ≤12 keywords; move context to fetch_page after search.",
-        ]
+        return (
+            False,
+            "Query too long — search engines prefer concise keyword queries.",
+            [
+                "Shorten to ≤12 keywords; move context to fetch_page after search.",
+            ],
+        )
 
     return True, "", hints
 

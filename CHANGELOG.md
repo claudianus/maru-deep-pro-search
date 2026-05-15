@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-05-15
+
+### Added
+- **Search Query Gate (strict)** — Rejects conversational/vague `query` strings with rewrite templates; auto-optimizes valid queries (strip filler, fresh year, security/compare/docs hints). Set `MARU_STRICT_QUERY=0` to disable rejection.
+- **Rule 14** in research protocol — agents must send keyword-style queries to all search tools.
+
+### Changed
+- `deep_research`, `web_search`, `answer`, `parallel_search`, `search_with_citations` run queries through the gate before any network I/O.
+- Tool output may include `_query: original → optimized (...)_` when auto-fixed.
+
 ## [0.13.0] - 2026-05-15
 
 ### Added

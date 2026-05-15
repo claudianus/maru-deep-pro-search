@@ -10,20 +10,33 @@ import logging
 import re
 
 from .engines.registry import SearchEngineRegistry
-from .exceptions import MaruSearchError
+from .exceptions import MaruSearchError, QueryRejectedError
 from .extraction.content import truncate_for_llm
 from .research.deep import deep_research, format_for_llm
 from .research.fetch_planner import plan_reads
 from .research.receipt import generate_research_id, write_receipt
 from .utils.cache import cache_key, get_fetch_cache, get_search_cache
 from .utils.locale_harness import optimize_for_engine
-from .utils.query_sanitize import sanitize_query
+from .utils.query_gate import (
+    QueryPrepResult,
+    format_query_meta,
+    format_query_rejection,
+    prepare_search_query,
+)
 from .utils.sanitize import analyze_content, wrap_external_content
 
 logger = logging.getLogger(__name__)
 
 # All registered engines
 SEARCH_ENGINES = SearchEngineRegistry.list_engines()
+
+
+def require_engine_query(query: str) -> tuple[str, QueryPrepResult]:
+    """Validate/optimize *query* or raise QueryRejectedError for the host agent."""
+    prep = prepare_search_query(query)
+    if not prep.passed_gate:
+        raise QueryRejectedError(format_query_rejection(prep))
+    return prep.query, prep
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -42,7 +55,7 @@ async def tool_web_search(
     Returns content type hints and citation IDs per result so the LLM
     can prioritize and cite sources.
     """
-    query = sanitize_query(query)
+    query, prep = require_engine_query(query)
 
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
@@ -118,6 +131,7 @@ async def tool_web_search(
     result_text = "\n".join(lines)
     report = analyze_content(result_text)
     result_text = wrap_external_content(result_text, source_url=f"search:{engine}", report=report)
+    result_text += format_query_meta(prep)
     cache.set(key, result_text)
     return result_text
 
@@ -421,7 +435,7 @@ async def tool_deep_research(
     - primary_sources_only: Keep only official docs, GitHub, registries,
       academic papers, and Stack Overflow. Drops blogs and aggregators.
     """
-    query = sanitize_query(query)
+    query, prep = require_engine_query(query)
 
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
@@ -533,6 +547,7 @@ async def tool_deep_research(
     result_text = wrap_external_content(
         result_text, source_url="deep-research:multiple-sources", report=report
     )
+    result_text += format_query_meta(prep)
     cache.set(key, result_text)
 
     # Persist to knowledge store for future retrieval
@@ -583,7 +598,7 @@ async def tool_answer(
     - Creative writing
     - Reading specific known URLs (use fetch_page)
     """
-    query = sanitize_query(query)
+    query, prep = require_engine_query(query)
 
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
@@ -609,7 +624,7 @@ async def tool_answer(
     if not result.sources:
         return f"I couldn't find any sources for: **{query}**"
 
-    return format_for_llm(result)
+    return format_for_llm(result) + format_query_meta(prep)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -632,15 +647,16 @@ async def tool_search_with_citations(
     - Academic or technical writing with source attribution
     - Building a bibliography before deep reading
     """
-    query = sanitize_query(query)
+    query, prep = require_engine_query(query)
 
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
     try:
         search_engine = SearchEngineRegistry.create(engine)
+        optimized_query = optimize_for_engine(query, engine)
         results = await asyncio.wait_for(
-            search_engine.search(query, max_results=max_results),
+            search_engine.search(optimized_query, max_results=max_results),
             timeout=30.0,
         )
     except asyncio.TimeoutError:
@@ -696,7 +712,7 @@ async def tool_search_with_citations(
 
     lines.append("---")
     lines.append("Use `fetch_page(url)` or `fetch_bulk(urls)` to read full content.")
-    return "\n".join(lines)
+    return "\n".join(lines) + format_query_meta(prep)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -741,7 +757,9 @@ async def tool_parallel_search(
     comparison_mode: When True, attempts to organize results into a structured
         comparison table with source type classification and primary source badges.
     """
-    queries = [sanitize_query(q) for q in queries]
+    gated: list[tuple[str, QueryPrepResult]] = [require_engine_query(q) for q in queries]
+    queries = [g[0] for g in gated]
+    query_meta = "".join(format_query_meta(p) for _, p in gated if format_query_meta(p))
 
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
@@ -758,7 +776,7 @@ async def tool_parallel_search(
     results = await asyncio.gather(*(_search_one(q) for q in queries))
 
     if not comparison_mode:
-        return "\n\n---\n\n".join(results)
+        return "\n\n---\n\n".join(results) + query_meta
 
     # ── Comparison mode: renumber and structure ──
     all_lines: list[str] = []
@@ -834,7 +852,7 @@ async def tool_parallel_search(
         all_lines.extend(block_lines)
         all_lines.append("")
 
-    return "\n".join(all_lines)
+    return "\n".join(all_lines) + query_meta
 
 
 # ═══════════════════════════════════════════════════════════════

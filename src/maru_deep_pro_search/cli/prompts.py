@@ -28,7 +28,8 @@ Rule 9: Comparison (A vs B) → parallel_search multi-angle.
 Rule 10: Insufficient results → re-search refined query. NEVER guess.
 Rule 11: Security topic → also search "latest CVE" + "advisory".
 Rule 12: Cite sources [1][2][3] after every search. Never cite from memory.
-Rule 13: No search in last 3-5 tool calls → search again."""
+Rule 13: No search in last 3-5 tool calls → search again.
+Rule 14: Search tools need KEYWORD queries (3-12 terms)—never raw user sentences; include library name + aspect + year; conversational queries are REJECTED."""
 
 RESEARCH_PROTOCOL = f"{PROTOCOL_START_MARKER}\n{_RESEARCH_PROTOCOL_BODY}\n{PROTOCOL_END_MARKER}"
 

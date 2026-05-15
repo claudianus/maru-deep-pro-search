@@ -1,6 +1,0 @@
-name: maru-research-gate
-version: "1.0"
-description: >
-  Blocks un-researched tool calls via pre_tool_call hook.
-  Provides /research and /verify slash commands.
-  Distributed as part of maru-deep-pro-search.

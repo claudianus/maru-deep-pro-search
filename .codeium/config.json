@@ -1,5 +1,0 @@
-{
-  "instructions": {
-    "research_first": "You MUST call deep_research before any code generation or file edits. This is enforced by the maru-deep-pro-search MCP server."
-  }
-}

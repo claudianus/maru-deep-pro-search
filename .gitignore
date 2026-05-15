@@ -61,10 +61,28 @@ dist/
 .playwright-mcp/
 deployed-*.png
 preview-*.png
+pr-with-*.png
+docs-*.png
 docs/dist/
 docs/layouts/default-backup.vue
 .maru/
+benchmark/search_quality_report.json
+
+# ── Local agent setup output (use maru-deep-pro-search-setup) ──
+/.mcp.json
+/kilo.jsonc
+/opencode.json
+/SOUL.md
+/.claude/
+/.cursor/
+/.codex/
+/.codeium/
+/.gemini/
+/.hermes/
+/.kimi/
+/.tabnine/
+/.opencode/
+/.kilo/
 
 # ── Screenshots / Artifacts ──
 *.png
-.playwright-mcp/

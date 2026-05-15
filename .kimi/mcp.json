@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "maru-deep-pro-search": {
-      "command": "/Users/modumaru/Desktop/code/clco-deep-research-mcp/.venv/bin/maru-deep-pro-search",
-      "args": []
-    }
-  }
-}

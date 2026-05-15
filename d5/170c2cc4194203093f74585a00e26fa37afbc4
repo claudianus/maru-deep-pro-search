@@ -1,0 +1,43 @@
+src/maru_deep_pro_search/research/receipt.py
+  s_48732b6ec24419::t_192a6ba0a52b15 100-102
+  s_48732b6ec24419::t_4db6bfdf429bca 1-99,103-132
+src/maru_deep_pro_search/research/fetch_planner.py
+  s_48732b6ec24419::t_70abc25b277767 1-191
+src/maru_deep_pro_search/research/__init__.py
+  s_48732b6ec24419::t_66c9256232a7bc 5,7,11-14,17-18,20,22
+uv.lock
+  ai_agent 1139
+src/maru_deep_pro_search/tools.py
+  s_48732b6ec24419::t_5ef8d8c3cf7111 16-17
+  s_48732b6ec24419::t_a07e7ade830e81 490-499,504-509
+CHANGELOG.md
+  s_48732b6ec24419::t_7ae4b1fb88b60f 10-19
+src/maru_deep_pro_search/server.py
+  s_48732b6ec24419::t_3f413441ef9aac 194-195
+src/maru_deep_pro_search/__init__.py
+  s_48732b6ec24419::t_69cd12884f19bf 7
+src/maru_deep_pro_search/research/deep.py
+  s_48732b6ec24419::t_de160006d8dd3a 289-292
+  s_48732b6ec24419::t_fbeb17bdc0326d 254
+  s_48732b6ec24419::t_43b7a3dd29d717 245-248,255-257
+src/maru_deep_pro_search/harness/enforcer.py
+  s_48732b6ec24419::t_53b6d43a4f6aeb 65-66,69-74
+pyproject.toml
+  s_48732b6ec24419::t_f30ee0c16e90a1 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "d5170c2cc4194203093f74585a00e26fa37afbc4",
+  "prompts": {},
+  "sessions": {
+    "s_48732b6ec24419": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "067dff20-aa21-4b5a-bcbf-a4c6b17394ff",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

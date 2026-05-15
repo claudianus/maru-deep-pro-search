@@ -1,0 +1,116 @@
+src/maru_deep_pro_search/cli/backup.py
+  s_48732b6ec24419::t_7f7b7f8046e327 38-39
+  s_48732b6ec24419::t_4fea3e6962028e 43
+  s_48732b6ec24419::t_a13547cb364a8e 33-37,40-42,44
+src/maru_deep_pro_search/cli/agents/jetbrains.py
+  s_48732b6ec24419::t_9fb4faf77d520a 1,7-9,21,44-45,50,59,65-66,87-92
+src/maru_deep_pro_search/cli/agents/aider.py
+  s_48732b6ec24419::t_aa4f6787c68193 301,304
+  s_48732b6ec24419::t_b3e205abd5f186 8-15,225,282
+src/maru_deep_pro_search/cli/agents/codex.py
+  s_48732b6ec24419::t_6f10396b77bf52 214-215,217-225
+  s_48732b6ec24419::t_b3e205abd5f186 15-27,56,189-197
+src/maru_deep_pro_search/cli/agents/base.py
+  s_48732b6ec24419::t_174bd3f3ffaab4 146-151
+  s_48732b6ec24419::t_7323813aef21d9 26-41
+src/maru_deep_pro_search/cli/setup.py
+  s_48732b6ec24419::t_174bd3f3ffaab4 194-197,201-217
+src/maru_deep_pro_search/cli/agents/antigravity.py
+  s_48732b6ec24419::t_5b1cb97221788b 7-16,39,55-59,61-66
+  s_48732b6ec24419::t_397241014d18ce 50
+src/maru_deep_pro_search/cli/agents/kimi_toml.py
+  s_48732b6ec24419::t_a67ce3b57201e5 22
+  s_48732b6ec24419::t_1a9ad0452210f3 1-21,23-37
+src/maru_deep_pro_search/cli/verify_status.py
+  s_48732b6ec24419::t_c3c1c8adddd6de 6,8
+  s_48732b6ec24419::t_11442d1cd256af 161
+  s_48732b6ec24419::t_a08ebbd80d41e4 51
+  s_48732b6ec24419::t_2ea7ef97911b46 154-155
+  s_48732b6ec24419::t_539711a4e2c612 79,81
+  s_48732b6ec24419::t_6eccb5f2ca093a 69,71
+  s_48732b6ec24419::t_da7529972bded3 107-108,111-112,117
+  s_48732b6ec24419::t_a61cac0bf13793 1,11-12,32-34,37,39,45-50,52-56,58-59,61-68,70,72-78,80,82-83,85-106,109-110,113-116,118-132,137-138,140-153,156-157,159-160,162,166-174
+  s_48732b6ec24419::t_7f9694a242ab2c 23-25,28-30
+  s_48732b6ec24419::t_10928206844df1 133-136,139
+  s_48732b6ec24419::t_6632055d943fdf 2-5,7,9-10,13-22,26-27,31,35-36,38,40-44,57,60,158
+  s_48732b6ec24419::t_a24476d167d5f1 84,163-165
+uv.lock
+  ai_agent 1145,1168
+pyproject.toml
+  s_48732b6ec24419::t_7037a78c321138 46
+src/maru_deep_pro_search/cli/agents/codeium.py
+  s_48732b6ec24419::t_a09add33e6122a 12
+  s_48732b6ec24419::t_8418b1009f4f1c 53
+src/maru_deep_pro_search/cli/agents/kimi.py
+  s_48732b6ec24419::t_b3e205abd5f186 13,21,26,97
+  s_48732b6ec24419::t_170f625f0bb943 119-121,133,136-140,142
+src/maru_deep_pro_search/cli/idempotent.py
+  s_48732b6ec24419::t_d06d9b91f1bb62 1-4,6-21
+  s_48732b6ec24419::t_8574e900d63bf7 5
+src/maru_deep_pro_search/cli/agents/claude.py
+  s_48732b6ec24419::t_a09add33e6122a 14
+  s_48732b6ec24419::t_8418b1009f4f1c 75
+src/maru_deep_pro_search/cli/agents/cursor.py
+  s_48732b6ec24419::t_a09add33e6122a 19
+  s_48732b6ec24419::t_8cb08b2b3ca009 60-63
+  s_48732b6ec24419::t_8418b1009f4f1c 73
+src/maru_deep_pro_search/cli/agents/supermaven.py
+  s_48732b6ec24419::t_8418b1009f4f1c 46
+  s_48732b6ec24419::t_a09add33e6122a 12
+src/maru_deep_pro_search/cli/agents/devin.py
+  s_48732b6ec24419::t_a09add33e6122a 12
+  s_48732b6ec24419::t_8418b1009f4f1c 48
+src/maru_deep_pro_search/cli/agents/cline.py
+  s_48732b6ec24419::t_174bd3f3ffaab4 11,63-64,69-70,73
+  s_48732b6ec24419::t_bf53d8b8ad6d31 232-236,238-241
+  s_48732b6ec24419::t_99b74d60839d24 237,242-243
+  s_48732b6ec24419::t_b3e205abd5f186 31,155,183-188,201
+src/maru_deep_pro_search/cli/agents/windsurf.py
+  s_48732b6ec24419::t_8418b1009f4f1c 128,133
+  s_48732b6ec24419::t_a09add33e6122a 29
+src/maru_deep_pro_search/cli/prompts.py
+  s_48732b6ec24419::t_79b536a57c4922 113-117
+src/maru_deep_pro_search/cli/agents/kilo.py
+  s_48732b6ec24419::t_a09add33e6122a 8
+  s_48732b6ec24419::t_8418b1009f4f1c 39
+src/maru_deep_pro_search/cli/agents/tabnine.py
+  s_48732b6ec24419::t_8418b1009f4f1c 62
+  s_48732b6ec24419::t_a09add33e6122a 18
+src/maru_deep_pro_search/cli/agents/zed.py
+  s_48732b6ec24419::t_c5ef1ec0a57327 14,57,112,116,118
+  s_48732b6ec24419::t_a24476d167d5f1 117
+src/maru_deep_pro_search/cli/agents/hermes.py
+  s_48732b6ec24419::t_397241014d18ce 28,33,36,38
+  s_48732b6ec24419::t_185e8f462bc8ab 79-90,94-95,98-101,143-151
+src/maru_deep_pro_search/cli/agents/amazon_q.py
+  s_48732b6ec24419::t_37b52ae39f9555 78
+  s_48732b6ec24419::t_3423012a7f78a7 19,54-55,58-60,63-67
+src/maru_deep_pro_search/cli/agents/continue_.py
+  s_48732b6ec24419::t_397241014d18ce 58,86-87,100
+  s_48732b6ec24419::t_ed55d4d7416b48 15
+src/maru_deep_pro_search/cli/agents/cody.py
+  s_48732b6ec24419::t_8418b1009f4f1c 53
+  s_48732b6ec24419::t_a09add33e6122a 12
+src/maru_deep_pro_search/cli/agents/copilot.py
+  s_48732b6ec24419::t_b0119e16625f89 1-7,14,33-34,43-45,54,56
+  s_48732b6ec24419::t_8cf669b2f39b6e 53
+src/maru_deep_pro_search/cli/agents/opencode.py
+  s_48732b6ec24419::t_654254b301aed2 101
+  s_48732b6ec24419::t_7c0d72e8981954 6,21,62,105-119,122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "d4db191e8d9692bc13a0fd7748f44587d2f0fc17",
+  "prompts": {},
+  "sessions": {
+    "s_48732b6ec24419": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "067dff20-aa21-4b5a-bcbf-a4c6b17394ff",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

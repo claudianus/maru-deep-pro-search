@@ -47,6 +47,7 @@ Before writing ANY code:
 DEFAULT_GITIGNORE = """# Maru Harness
 .maru/knowledge.db
 .maru/knowledge.db-journal
+.maru/receipts/
 .maru/*.bak
 """
 

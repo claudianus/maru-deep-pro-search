@@ -1,6 +1,6 @@
 [project]
 name = "maru-deep-pro-search"
-version = "0.12.0"
+version = "0.13.0"
 description = "Universal AI search MCP server — Perplexity-level quality with zero API keys. Multi-engine web scraping, intelligent ranking, and citation-native answers."
 readme = "README.md"
 license = "MIT"
@@ -62,6 +62,7 @@ maru-deep-pro-search = "maru_deep_pro_search.server:run"
 maru-deep-pro-search-mcp = "maru_deep_pro_search.server:run"
 maru-deep-pro-search-setup = "maru_deep_pro_search.cli.setup:main"
 maru-deep-pro-search-init = "maru_deep_pro_search.cli.init_cmd:main"
+maru-deep-pro-search-knowledge = "maru_deep_pro_search.cli.knowledge_cmd:main"
 maru-deep-pro-search-plugin = "maru_deep_pro_search.cli.plugin_cmd:main"
 
 [project.entry-points."hermes_agent.plugins"]

@@ -200,7 +200,7 @@ def _with_enforcement(tool_name: str | None = None):
             result = await fn(*args, ctx=ctx, **kwargs)
             # Record tool call and check for mid-task research warnings
             state = enforcer.get_or_create(session_id)
-            state.record_tool(name)
+            state.record_tool(name, result if isinstance(result, str) else "")
             # Periodic session cleanup to prevent memory leaks
             await _maybe_prune_sessions(enforcer)
             warning = enforcer.should_research(session_id, name)
@@ -1008,6 +1008,60 @@ async def session_state(
     else:
         lines.append("🟢 **Session is research-ready.** You may call dependent tools.")
 
+    summary = enforcer.drift_summary(session_id)
+    if summary.get("drift_detected"):
+        lines.append("")
+        lines.append("🟠 **Drift**: manifest or error pattern changed since last research.")
+        for change in summary.get("manifest_changes", []):
+            lines.append(f"  - {change}")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+@_with_validation()
+@_with_audit()
+@_with_notice()
+async def drift_status(
+    ctx: Context | None = None,
+) -> str:
+    """Check workspace drift since last deep_research (no web search).
+
+    Compares dependency manifest fingerprints and error signatures.
+    Returns suggested micro-queries for the host LLM to pass to deep_research.
+    """
+    from .harness.enforcer import get_enforcer
+
+    session_id = _get_session_id(ctx)
+    summary = get_enforcer().drift_summary(session_id)
+
+    lines = [
+        "## Drift Status",
+        "",
+        f"**Research done**: {'yes' if summary['research_done'] else 'no'}",
+        f"**Research ID**: `{summary.get('research_id') or '(none)'}`",
+        f"**Workspace**: `{summary.get('workspace_root', '')}`",
+        f"**Manifests tracked**: {len(summary.get('manifest_files_tracked', []))}",
+        f"**Drift detected**: {'yes' if summary.get('drift_detected') else 'no'}",
+    ]
+    changes = summary.get("manifest_changes", [])
+    if changes:
+        lines.append("")
+        lines.append("**Manifest changes:**")
+        for c in changes:
+            lines.append(f"- {c}")
+    if summary.get("error_signature_changed"):
+        lines.append("")
+        lines.append("**Error pattern** changed since last research.")
+    suggestions = summary.get("suggested_queries", [])
+    if suggestions:
+        lines.append("")
+        lines.append("**Suggested deep_research queries (host synthesizes):**")
+        for s in suggestions:
+            lines.append(f"- `{s}`")
+    if not summary["research_done"]:
+        lines.append("")
+        lines.append("Run `deep_research(query=...)` first to establish a baseline snapshot.")
     return "\n".join(lines)
 
 

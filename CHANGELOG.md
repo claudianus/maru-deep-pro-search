@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-05-15
+
+### Added
+- **Research Drift Guard** — Tracks manifest fingerprints (`pyproject.toml`, lockfiles, etc.) and error signatures between `deep_research` calls; appends drift warnings to tool output with suggested micro-queries (no local LLM).
+- **`drift_status` MCP tool** — Read-only drift report without web search (research-exempt).
+- **`maru-deep-pro-search-knowledge`** CLI — `export` / `import` portable JSON bundles for team knowledge sharing (optional, bounded to 500 entries).
+
+### Changed
+- **`session_state`** includes drift summary when manifests changed.
+- **`.maru/receipts/`** added to default harness `.gitignore` template.
+
 ## [0.12.0] - 2026-05-15
 
 ### Added

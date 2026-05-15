@@ -253,6 +253,54 @@ class KnowledgeStore:
             )
         conn.commit()
 
+    def export_bundle(self, path: Path | str, max_entries: int = 500) -> int:
+        """Export knowledge rows to a portable JSON bundle (no embeddings)."""
+        out = Path(path)
+        conn = self._connect()
+        rows = conn.execute(
+            """
+            SELECT query, answer, sources, created_at
+            FROM knowledge
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            (max_entries,),
+        ).fetchall()
+        entries = [
+            {
+                "query": row["query"],
+                "answer": row["answer"],
+                "sources": json.loads(row["sources"]),
+                "created_at": row["created_at"],
+            }
+            for row in rows
+        ]
+        payload = {"format": "maru-knowledge-v1", "count": len(entries), "entries": entries}
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        return len(entries)
+
+    def import_bundle(self, path: Path | str) -> int:
+        """Import entries from a maru-knowledge-v1 JSON bundle."""
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        entries = data.get("entries", [])
+        if not isinstance(entries, list):
+            return 0
+        count = 0
+        for item in entries:
+            if not isinstance(item, dict):
+                continue
+            query = item.get("query")
+            answer = item.get("answer")
+            if not isinstance(query, str) or not isinstance(answer, str):
+                continue
+            sources = item.get("sources")
+            if not isinstance(sources, list):
+                sources = []
+            self.save(query, answer, sources)
+            count += 1
+        return count
+
     def get_domain_stats(self, domain: str) -> dict | None:
         """Get performance stats for a domain."""
         conn = self._connect()

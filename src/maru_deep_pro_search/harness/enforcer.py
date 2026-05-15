@@ -14,6 +14,14 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ..exceptions import MaruSearchError
+from .drift import (
+    WorkspaceSnapshot,
+    compare_snapshots,
+    extract_error_signature,
+    format_drift_warning,
+    snapshot_workspace,
+    suggest_research_queries,
+)
 
 
 class ResearchRequiredError(MaruSearchError):
@@ -53,9 +61,17 @@ class SessionState:
     tools_called: list[str] = field(default_factory=list)
     citations_found: list[str] = field(default_factory=list)
     code_generated: bool = False
+    workspace_snapshot: WorkspaceSnapshot = field(
+        default_factory=lambda: WorkspaceSnapshot(root="")
+    )
+    research_error_signature: str = ""
+    last_error_signature: str = ""
 
-    def record_tool(self, name: str) -> None:
+    def record_tool(self, name: str, result: str = "") -> None:
         self.tools_called.append(name)
+        sig = extract_error_signature(result)
+        if sig:
+            self.last_error_signature = sig
 
     def mark_research(self, query: str, result: str) -> None:
         self.research_done = True
@@ -65,6 +81,8 @@ class SessionState:
         extracted = self._extract_research_id(result)
         self.research_id = extracted or self._generate_research_id()
         self._extract_citations(result)
+        self.workspace_snapshot = snapshot_workspace()
+        self.research_error_signature = self.last_error_signature
 
     @staticmethod
     def _extract_research_id(text: str) -> str:
@@ -107,6 +125,7 @@ class SessionEnforcer:
         "list_engines",
         "engine_health",
         "session_state",
+        "drift_status",
     }
 
     # Mid-task enforcement: warn after N non-research tools without fresh research
@@ -193,6 +212,26 @@ class SessionEnforcer:
             return None  # check_research will block anyway
 
         non_research_tools = [t for t in state.tools_called if t not in self.RESEARCH_EXEMPT_TOOLS]
+
+        drift_reasons: list[str] = []
+        if state.workspace_snapshot.files:
+            drift_reasons = compare_snapshots(state.workspace_snapshot)
+
+        error_drift = bool(
+            state.last_error_signature
+            and state.research_error_signature != state.last_error_signature
+        )
+
+        if drift_reasons or error_drift:
+            error_line = ""
+            if error_drift:
+                error_line = "recent tool error"
+            return format_drift_warning(
+                drift_reasons,
+                suggest_research_queries(drift_reasons, state.research_query, error_line),
+                error_drift=error_drift,
+            )
+
         if len(non_research_tools) >= self.MAX_TOOLS_WITHOUT_RESEARCH:
             return (
                 f"\n\n🟡 **Mid-task warning**: You have called {len(non_research_tools)} tools "
@@ -200,7 +239,41 @@ class SessionEnforcer:
                 f"your knowledge before continuing."
             )
 
+        if state.research_age_seconds > 900 and len(non_research_tools) >= 2:
+            return (
+                "\n\n🟡 **Research aging**: Last research was "
+                f"{int(state.research_age_seconds // 60)}+ minutes ago. "
+                "Consider `deep_research()` if you changed direction or dependencies."
+            )
+
         return None
+
+    def drift_summary(self, session_id: str) -> dict[str, Any]:
+        """Read-only drift report for drift_status tool."""
+        state = self.get_or_create(session_id)
+        current = snapshot_workspace()
+        reasons = (
+            compare_snapshots(state.workspace_snapshot) if state.workspace_snapshot.files else []
+        )
+        return {
+            "research_done": state.research_done,
+            "research_id": state.research_id,
+            "research_query": state.research_query,
+            "research_age_seconds": state.research_age_seconds,
+            "workspace_root": current.root,
+            "manifest_files_tracked": list(current.files.keys()),
+            "drift_detected": bool(reasons)
+            or (
+                state.last_error_signature
+                and state.research_error_signature != state.last_error_signature
+            ),
+            "manifest_changes": reasons,
+            "error_signature_changed": bool(
+                state.last_error_signature
+                and state.research_error_signature != state.last_error_signature
+            ),
+            "suggested_queries": suggest_research_queries(reasons, state.research_query),
+        }
 
     async def validate_code_generation(
         self,

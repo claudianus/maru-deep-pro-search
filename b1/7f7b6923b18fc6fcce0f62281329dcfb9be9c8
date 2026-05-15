@@ -1,0 +1,22 @@
+.github/workflows/validate.yml
+  s_48732b6ec24419::t_9454f60e8a5f11 30,33,36,39
+src/maru_deep_pro_search/cli/agents/continue_.py
+  s_48732b6ec24419::t_14fe7573808ea2 1,3-5,12-14,17,19,34,36-53,68-73,76-96,99-109,111-124,126-135,140-188,191-212,217-218,221-235
+  s_48732b6ec24419::t_1a509db8e8e600 125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b17f7b6923b18fc6fcce0f62281329dcfb9be9c8",
+  "prompts": {},
+  "sessions": {
+    "s_48732b6ec24419": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "067dff20-aa21-4b5a-bcbf-a4c6b17394ff",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

@@ -242,12 +242,19 @@ async def deep_research(
 # ── Output formatting ─────────────────────────────────────────────────────
 
 
-def format_for_llm(result: ResearchResult) -> str:
+def format_for_llm(
+    result: ResearchResult,
+    planned_reads: list | None = None,
+) -> str:
     """Format research results into markdown for agent consumption.
 
     Returns ranked URLs with metadata badges. The agent decides which
     sources to fetch using fetch_page / fetch_bulk tools.
     """
+    from .fetch_planner import format_planned_reads, plan_reads
+
+    if planned_reads is None:
+        planned_reads = plan_reads(result.query, result.sources)
     if not result.sources:
         return f"No results found for: '{result.query}'"
 
@@ -278,6 +285,10 @@ def format_for_llm(result: ResearchResult) -> str:
         if snippet:
             lines.append(f"- [{src.citation_id}] {snippet}")
     lines.append("")
+
+    planned_block = format_planned_reads(planned_reads)
+    if planned_block:
+        lines.append(planned_block)
 
     # Sources with rich metadata
     lines.append("### Sources")

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-05-15
+
+### Added
+- **Research Receipt** — `deep_research` writes `~/.maru/receipts/RSCH-*.md` + JSON (citations, planned reads, excerpt). Auto-prune (~48 files, 14-day TTL) to limit disk use.
+- **Fetch Planner (metadata-only)** — `### Recommended Reads` section ranks top 3 URLs via BM25 metadata + intent heuristics (security/docs/compare). No local LLM; host calls `fetch_page` / `fetch_bulk`.
+- **`auto_fetch`** uses planned-read IDs when set (max 3, opt-in only).
+
+### Changed
+- **`research_id`** generated once in `deep_research` output; session enforcer reuses ID from tool text (no duplicate IDs).
+
 ## [0.11.3] - 2026-05-13
 
 ### Security

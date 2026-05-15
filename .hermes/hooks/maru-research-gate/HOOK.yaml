@@ -1,4 +1,0 @@
-name: maru-research-gate
-events:
-  - session:start
-  - agent:end

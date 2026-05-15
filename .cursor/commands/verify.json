@@ -1,5 +1,0 @@
-{
-  "name": "verify",
-  "description": "Verify research was completed for this session",
-  "prompt": "Check if deep_research has been called in this session. If not, refuse to proceed and instruct the user to run /research first."
-}

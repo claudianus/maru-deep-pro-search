@@ -1,0 +1,44 @@
+src/maru_deep_pro_search/__init__.py
+  s_48732b6ec24419::t_cef24248f8bb97 7
+pyproject.toml
+  s_48732b6ec24419::t_749cf5661266d1 3
+src/maru_deep_pro_search/research/deep.py
+  s_48732b6ec24419::t_21c9c5ce8cc377 127
+  s_48732b6ec24419::t_95cd7a7f0163dd 18
+  s_48732b6ec24419::t_81a10c1237f8ce 128
+  s_48732b6ec24419::t_773799f6e51cd1 126
+README.ko.md
+  s_48732b6ec24419::t_b13ed30d9c5c38 67
+  s_48732b6ec24419::t_b4d866015b6ebd 63-65
+  s_48732b6ec24419::t_034411460c054b 112
+  s_48732b6ec24419::t_e42324953aee4f 163
+  s_48732b6ec24419::t_b3dfc1ccb61f3b 90
+uv.lock
+  ai_agent 1139
+README.md
+  s_48732b6ec24419::t_79f62538809e17 159
+  s_48732b6ec24419::t_c7b691753921a2 75
+  s_48732b6ec24419::t_8817459d3f6669 181
+  s_48732b6ec24419::t_85a2310b8454be 102-107,109-110,112-119
+  s_48732b6ec24419::t_1d5fbb57eca90a 136
+  s_48732b6ec24419::t_b0c69b21ae23a5 108,111
+  s_48732b6ec24419::t_2712320357b586 232
+CHANGELOG.md
+  s_48732b6ec24419::t_4e47d527b8bf00 10-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b255778edf2af11357ad5e8bdd219687c653f252",
+  "prompts": {},
+  "sessions": {
+    "s_48732b6ec24419": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "067dff20-aa21-4b5a-bcbf-a4c6b17394ff",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

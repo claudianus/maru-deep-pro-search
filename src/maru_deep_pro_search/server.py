@@ -653,16 +653,17 @@ async def deep_research(
 ) -> str:
     """Deep multi-engine search with query expansion and intelligent ranking.
 
-    Searches across multiple engines with orthogonal subqueries, then merges,
-    deduplicates, and ranks results by relevance and authority. Returns a
-    ranked URL list with rich metadata for the agent to consume.
+    QUERY FORMAT (strict — conversational text is REJECTED):
+    - 3-12 keywords: `{library} {aspect} official documentation {year}`
+    - Security: include `CVE` or `security advisory`
+    - Comparisons: include `vs` or `comparison`
+    - Do NOT pass the user's raw chat message as query=
 
-    The agent should review the sources and call fetch_page / fetch_bulk
-    to read the content of URLs it finds relevant.
+    Searches across multiple engines with orthogonal subqueries, then merges,
+    deduplicates, and ranks results. Returns Recommended Reads for fetch_page.
 
     Args:
-        auto_fetch: Automatically fetch and summarize the top N results (0-3).
-            Saves the agent from calling fetch_page separately. Default 0.
+        auto_fetch: Fetch top planned reads (0-3). Default 0 to save bandwidth.
     """
     from .tools import tool_deep_research
 

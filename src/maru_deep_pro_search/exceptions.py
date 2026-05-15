@@ -75,3 +75,10 @@ class ExtractionError(MaruSearchError):
 
     def __init__(self, message: str, retryable: bool = True):
         super().__init__(message, retryable=retryable)
+
+
+class QueryRejectedError(MaruSearchError):
+    """Search query failed quality gate — agent must rewrite keywords."""
+
+    def __init__(self, message: str):
+        super().__init__(message, retryable=True)

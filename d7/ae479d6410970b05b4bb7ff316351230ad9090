@@ -1,0 +1,36 @@
+CHANGELOG.md
+  s_48732b6ec24419::t_c7d995e45b9382 15
+  s_48732b6ec24419::t_fba020f8d886e5 24
+  s_48732b6ec24419::t_4ce89f11cea206 14
+src/maru_deep_pro_search/cli/setup.py
+  s_48732b6ec24419::t_36299de1a36aaa 6
+  s_48732b6ec24419::t_547e35d4f676d6 66-107
+  s_48732b6ec24419::t_c6757b648d3f01 176-177,182-190,193-196,198-202,206
+  s_48732b6ec24419::t_d432e45779f261 207
+  s_48732b6ec24419::t_86c1feb25887a3 191,204
+README.en.md
+  s_48732b6ec24419::t_53ac9c57278599 56,58,60,62,64,66
+README.md
+  s_48732b6ec24419::t_fdc23771b69dd8 56,58,60,62
+  s_48732b6ec24419::t_1a3f629981ddf7 64,66
+scripts/install.ps1
+  s_48732b6ec24419::t_748ef1d8f4ba77 154,158
+scripts/install.sh
+  s_48732b6ec24419::t_d57a1c068b8a64 185,189
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "d7ae479d6410970b05b4bb7ff316351230ad9090",
+  "prompts": {},
+  "sessions": {
+    "s_48732b6ec24419": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "067dff20-aa21-4b5a-bcbf-a4c6b17394ff",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

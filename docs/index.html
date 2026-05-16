@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="theme-color" content="#042f2e">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>maru-deep-pro-search — Perplexity급 웹 리서치, 0 API 키</title>
-<meta name="description" content="Cursor·Claude Code 등용 무료 웹 리서치 MCP. API 키 없이 다중 엔진 검색, 인용, 안전 필터, 쿼리 게이트. 설치 절차·채팅 프롬프트 예시 포함.">
+<title>maru-deep-pro-search — 멀티엔진 웹 조사 MCP</title>
+<meta name="description" content="Cursor·Claude Code 등에 붙이는 무료 MCP. API 키 없이 다중 엔진 검색·재랭킹·인용·페일오버·쿼리 게이트. 설치와 채팅 예시 포함.">
 <meta property="og:title" content="maru-deep-pro-search — Perplexity-grade AI research, zero API keys">
 <meta property="og:description" content="Universal AI search MCP server — Perplexity-level quality with zero API keys. 18 tools, 9-engine failover, BM25+semantic ranking, strict query gate, drift guard, auto-fetch, native citations, and 72-layer prompt injection defense.">
 <meta property="og:type" content="website">
@@ -135,16 +135,16 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
   <div class="relative z-10 max-w-5xl mx-auto px-4 text-center">
     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-maru-300 text-sm mb-8">
       <span class="w-2 h-2 rounded-full bg-maru-400 animate-pulse"></span>
-      <span class="ko">API 키 없음 · 고품질 웹 리서치</span>
-      <span class="en hidden">Zero API keys · high-signal web research</span>
+      <span class="ko">API 키 없음 · 멀티엔진 검색</span>
+      <span class="en hidden">No API keys · multi-engine search</span>
     </div>
     <h1 class="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-tight">
-      <span class="ko">AI가 <span class="gradient-text">리서치 없이</span> 코드부터 쓰지 않도록</span>
-      <span class="en hidden">Keep Your AI Agent<br><span class="gradient-text">Research-First</span> by default</span>
+      <span class="ko"><span class="gradient-text">조사</span>하고 · 출처 붙이고 · 코드 고친다</span>
+      <span class="en hidden">Search.<br><span class="gradient-text">Cite.</span> Then ship.</span>
     </h1>
     <p class="text-xl md:text-2xl text-gray-400 mb-4 max-w-3xl mx-auto leading-relaxed">
-      <span class="ko">Cursor·Claude Code 등 AI 코딩 에이전트에 연결하는 <span class="text-white font-semibold">웹 리서치 우선 MCP</span>입니다. 단일 검색 엔진 장애 시에도 다른 엔진으로 자동 전환(failover)합니다.</span>
-      <span class="en hidden">An MCP server for AI coding agents (Cursor, Claude Code, …) that enforces <span class="text-white font-semibold">research-first workflows</span> with citations—and automatic failover when one search engine degrades.</span>
+      <span class="ko">Cursor·Claude Code 등에 붙이는 <span class="text-white font-semibold">MCP 서버</span>입니다. SERP 한 줄이 아니라 다중 엔진·재랭킹·인용까지 한 흐름으로 묶고, 한 엔진이 막히면 다음으로 넘어갑니다.</span>
+      <span class="en hidden">An MCP for Cursor, Claude Code, and peers: <span class="text-white font-semibold">multi-engine search</span>, re-ranked results, citations—failover when an engine blocks or flakes.</span>
     </p>
     <div class="h-8 mb-6">
       <span id="typing" class="text-maru-300 font-mono text-lg typing-cursor"></span>
@@ -1365,20 +1365,20 @@ animateParticles();
 
 // Typing Effect
 const koTexts = [
-  "한 엔진이 막혀도 다음 엔진으로 자동 전환…",
-  "짧은 키워드일수록 SERP 품질이 안정적…",
-  "네이티브 인용으로 근거를 추적…",
-  "장문보다 검색창에 넣을 한 줄이 중요…",
-  "코드 변경 전 워크스페이스 드리프트 확인…",
-  "API 키 없이 무료로 운영 가능."
+  "엔진 하나가 막히면 다음으로 넘김…",
+  "짧은 쿼리가 SERP에 더 잘 먹힘…",
+  "[1], [2]로 출처를 응답에 붙임…",
+  "쿼리 게이트가 잡담형 검색어를 걸러 냄…",
+  "패치 전에 워크스페이스 드리프트 확인…",
+  "API 키 없이 돌릴 수 있음."
 ];
 const enTexts = [
-  "9-engine failover for resilient search...",
-  "BM25 + semantic ranking filters only the best...",
-  "Native [1], [2] citations block hallucinations...",
-  "Strict query gate kills chatty SERP waste...",
-  "Research-first rules force agent compliance...",
-  "Zero API keys. 100% free. Forever."
+  "Nine engines; blocked? rotate to the next...",
+  "BM25 + dense similarity re-ranks SERPs...",
+  "Inline [1], [2] citations you can grep...",
+  "Query gate trims chatty searches...",
+  "Fingerprint drift before big edits...",
+  "No API keys. Runs on your machine."
 ];
 let textIdx = 0, charIdx = 0, isDeleting = false;
 const typingEl = document.getElementById('typing');

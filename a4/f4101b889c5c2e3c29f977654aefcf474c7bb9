@@ -1,0 +1,19 @@
+docs/index.html
+  s_48732b6ec24419::t_855afdc8c16733 106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "a4f4101b889c5c2e3c29f977654aefcf474c7bb9",
+  "prompts": {},
+  "sessions": {
+    "s_48732b6ec24419": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "067dff20-aa21-4b5a-bcbf-a4c6b17394ff",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

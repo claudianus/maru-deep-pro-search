@@ -1,0 +1,28 @@
+docs/index.html
+  s_48732b6ec24419::t_fae47da274262c 930
+  s_48732b6ec24419::t_530ab076635437 373
+  s_48732b6ec24419::t_4f6ce81cf3643c 330,333
+  s_48732b6ec24419::t_0ceb3f812e21ac 47
+  s_48732b6ec24419::t_4339cac40a4e46 41-42
+  s_48732b6ec24419::t_f4186ca7a38889 631
+  s_48732b6ec24419::t_6edd840a150a5c 1131
+  s_48732b6ec24419::t_d0ff40f8fc8cda 25
+  s_48732b6ec24419::t_1106c7529ceb1a 9-11,14-15,17-18
+  s_48732b6ec24419::t_dcb60e39864b70 359
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "ad9d009b825cbed3b281f459939069adc50f9068",
+  "prompts": {},
+  "sessions": {
+    "s_48732b6ec24419": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "067dff20-aa21-4b5a-bcbf-a4c6b17394ff",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

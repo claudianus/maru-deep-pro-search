@@ -74,7 +74,7 @@ PyPI만 쓸 때는 `uv tool install --python 3.12 "maru-deep-pro-search[semantic
 ### 1. 설치 확인
 ```bash
 maru-deep-pro-search --version
-# 예: 0.15.0
+# 예: 0.15.1
 ```
 
 ### 2. 에이전트 설정

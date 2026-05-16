@@ -23,6 +23,15 @@
 ### Documentation
 - **README / README.en** — `pydantic-settings` 오기 제거, `SearchConfig`·타임아웃 환경 변수 표를 코드와 일치. 수동 설치에 Python ≥3.10·`python3 -m pip`、`MARU_SKIP_SEMANTIC_INSTALL`, `uv tool install --with sentence-transformers` 예시 보강.
 
+## [0.15.1] - 2026-05-16
+
+### Documentation
+- **GitHub Pages (`docs/index.html`)** — 바이브 코더 플레이북·쿼리 게이트 프롬프트 팁·18툴 고밀도 표·ENV 치트시트·내비/히어로/아키텍처 보강, 설치 스니펫에 semantic `--with` 및 `setup`/`init`.
+- **README / README.en** — Getting Started 예시 버전 문자열 `0.15.1` 동기화.
+
+### Changed
+- **버전** — `pyproject.toml` · `maru_deep_pro_search.__version__` → **0.15.1**.
+
 ## [0.15.0] - 2026-05-16
 
 ### Added

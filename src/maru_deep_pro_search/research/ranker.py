@@ -6,8 +6,10 @@ to produce Perplexity-level result ranking."""
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass
 
+from ..config import DEFAULT_CONFIG
 from ..engines.base import ContentType, PageContent, SearchResult
 from ..research.expander import extract_keywords
 from ..utils.url import get_domain, is_authority_domain, normalize_url
@@ -24,6 +26,7 @@ _FORUM_TYPE_BOOST = 0.6
 _CROSS_ENGINE_BOOST = 0.5
 _SNIPPET_QUALITY_BOOST = 1.0
 _POSITION_DECAY = 0.1
+_RRF_K = 60
 
 
 @dataclass
@@ -141,16 +144,44 @@ _SPAM_DOMAINS_LOCAL = {
 }
 
 
-def _score_metadata(result: SearchResult) -> float:
+def _query_freshness_boost(query: str, result: SearchResult) -> float:
+    """Boost when snippet/URL mentions a year explicitly requested in the query."""
+    years = re.findall(r"20\d{2}", query)
+    if not years:
+        return 0.0
+    target = max(years)
+    haystack = f"{result.url} {result.snippet or ''}".lower()
+    if target in haystack:
+        return _FRESHNESS_BOOST * DEFAULT_CONFIG.freshness_weight
+    return 0.0
+
+
+def _compute_rrf_scores(
+    engine_results: dict[str, list[SearchResult]],
+) -> dict[str, float]:
+    """Reciprocal rank fusion across engine result lists."""
+    scores: dict[str, float] = {}
+    for results in engine_results.values():
+        for rank, result in enumerate(results, start=1):
+            norm = normalize_url(result.url)
+            scores[norm] = scores.get(norm, 0.0) + 1.0 / (_RRF_K + rank)
+    return scores
+
+
+def _score_metadata(result: SearchResult, query: str = "") -> float:
     """Score a result based on metadata quality signals."""
+    cfg = DEFAULT_CONFIG
+    auth_w = cfg.authority_weight
+    snippet_w = cfg.snippet_weight
+    pos_w = cfg.position_weight
     score = 0.0
     domain = get_domain(result.url)
 
     # Authority boost — stronger for tier-1 domains
     if any(d in domain for d in _TIER1_DOMAINS):
-        score += _AUTHORITY_BOOST * 2.0  # 4.0 for tier-1
+        score += auth_w * 2.0
     elif is_authority_domain(result.url):
-        score += _AUTHORITY_BOOST  # 2.0 for general authority
+        score += auth_w
 
     # Spam / SEO blog penalty
     if any(d in domain for d in _SPAM_DOMAINS_LOCAL):
@@ -178,14 +209,17 @@ def _score_metadata(result: SearchResult) -> float:
 
     # Snippet quality (length heuristic)
     if result.snippet:
-        score += min(len(result.snippet) / 500, 1.0) * _SNIPPET_QUALITY_BOOST
+        score += min(len(result.snippet) / 500, 1.0) * _SNIPPET_QUALITY_BOOST * snippet_w
 
     # Position bonus with decay
-    score += max(0, (10 - result.position) / 10) * (1 - result.position * _POSITION_DECAY)
+    score += max(0, (10 - result.position) / 10) * (1 - result.position * _POSITION_DECAY) * pos_w
 
     # Cross-engine confirmation boost
     if len(result.engines_found) > 1:
         score += _CROSS_ENGINE_BOOST * min(len(result.engines_found), 3)
+
+    if query:
+        score += _query_freshness_boost(query, result)
 
     return score
 
@@ -312,6 +346,7 @@ def merge_results(
 
     # Phase 3: Compute BM25 scores
     bm25_scores = _compute_bm25_scores(query, merged)
+    rrf_scores = _compute_rrf_scores(engine_results)
 
     # Phase 3b: Compute semantic scores (optional, lazy-loaded)
     semantic_scores: dict[str, float] = {}
@@ -328,14 +363,18 @@ def merge_results(
     # Phase 4: Build ranked results
     ranked: list[RankedResult] = []
     for r in merged:
-        bm25 = bm25_scores.get(normalize_url(r.url), 0.0)
-        meta = _score_metadata(r)
-        semantic = semantic_scores.get(normalize_url(r.url), 0.0)
+        norm_url = normalize_url(r.url)
+        bm25 = bm25_scores.get(norm_url, 0.0)
+        meta = _score_metadata(r, query)
+        semantic = semantic_scores.get(norm_url, 0.0)
+        rrf = rrf_scores.get(norm_url, 0.0)
         # Normalize BM25 to be comparable with metadata score
         # (BM25 scores can be 0-30+, we compress to 0-5 range)
         normalized_bm25 = min(bm25 / 5.0, 5.0) if bm25 > 0 else 0.0
+        # RRF typically 0-0.15 per engine; scale to ~0-3
+        rrf_component = min(rrf * 20.0, 3.0)
         # Semantic similarity is [0,1]; scale to [0,2] to match BM25 weight
-        final = normalized_bm25 + meta + r.cross_engine_score + semantic * 2.0
+        final = normalized_bm25 + meta + r.cross_engine_score + semantic * 2.0 + rrf_component
 
         ranked.append(
             RankedResult(

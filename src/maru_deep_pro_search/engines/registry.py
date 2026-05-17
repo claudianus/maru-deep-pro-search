@@ -78,6 +78,15 @@ class SearchEngineRegistry:
             if re.search(r"[\u4e00-\u9fff]", query):  # CJK
                 locale_boosts["baidu"] = 2.0
 
+            from ..research.fetch_planner import detect_query_intent
+
+            intent = detect_query_intent(query)
+            if intent == "security":
+                locale_boosts["bing"] = locale_boosts.get("bing", 0.0) + 1.5
+            elif intent == "docs":
+                locale_boosts["bing"] = locale_boosts.get("bing", 0.0) + 1.0
+                locale_boosts["startpage"] = locale_boosts.get("startpage", 0.0) + 0.5
+
         for name in engines:
             try:
                 eng_cls = cls.get(name)
@@ -118,6 +127,13 @@ def _register_builtins() -> None:
             SearchEngineRegistry.register(name, engine_class)
         except ImportError as exc:
             logger.warning("Could not register %s engine: %s", name, exc)
+
+    # Separate instance/CB for page fetch vs SERP search (same implementation class).
+    if SearchEngineRegistry.is_registered("duckduckgo_lite"):
+        SearchEngineRegistry.register(
+            "duckduckgo_fetch",
+            SearchEngineRegistry.get("duckduckgo_lite"),
+        )
 
 
 _register_builtins()

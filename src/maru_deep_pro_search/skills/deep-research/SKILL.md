@@ -51,10 +51,7 @@ For ordinary user searches like "갤럭시 중고폰 최신 시세 추천", pref
 
 ## Performance
 
-Multi-engine vs single-engine (TREC-standard, 10 queries):
-- Precision@5: **+86%** (0.14 → 0.26)
-- NDCG@10: **+36%** (0.49 → 0.67)
-- Trade-off: ~2× response time
+Multi-engine deep_research is slower than single `web_search` but ranks sources better; use `max_sources=10` by default.
 
 ## Anti-Patterns
 

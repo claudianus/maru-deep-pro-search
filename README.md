@@ -360,6 +360,11 @@ ACTION REQUIRED:
 |-----------|--------|-----------|
 | `MARU_SEARCH_ENGINE` | `duckduckgo_lite` | MCP `web_search` / `search_with_citations` / `answer` / `parallel_search` / `deep_research` 기본 엔진 |
 | `MARU_SEARCH_MAX_RESULTS` | `10` | 위 툴의 `max_results` 또는 `answer`의 `max_sources` 기본값 |
+| `MARU_DEEP_MAX_SOURCES` | `10` | `deep_research` 기본 `max_sources` |
+| `MARU_SERP_PER_ENGINE_CAP` | `40` | 엔진당 SERP 파싱 상한 |
+| `MARU_WRAPPER_TIER` | `tiered` | `tiered`(SERP 경량 래퍼) 또는 `full` |
+| `MARU_KNOWLEDGE_REUSE_MAX_CHARS` | `4000` | KnowledgeStore 캐시 히트 응답 상한 |
+| `MARU_RESEARCH_CONTEXT_MAX_CHARS` | `8000` | enforcer 세션 research 누적 상한 |
 | `MARU_SEARCH_MAX_CONCURRENT` | `5` | `fetch_bulk`의 `max_concurrent` 기본값 |
 | `MARU_SEARCH_RETRIES` | `3` | Bing/Yahoo 등 SERP `with_retry` 최대 시도 횟수 |
 | `MARU_SEARCH_TIMEOUT` | `30.0` | SERP 스크레이프 (`web_search`, `search_with_citations`), 초 |

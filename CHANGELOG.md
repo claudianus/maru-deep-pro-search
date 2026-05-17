@@ -8,6 +8,27 @@
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-05-17
+
+### Added
+- **RRF 융합** — `merge_results`에 reciprocal rank fusion 레이어 (엔진별 순위 합산 후 BM25/메타 보정).
+- **`rank_pages` 연결** — `fetch_bulk`가 `query`가 있을 때 본문 재랭킹.
+- **벤치 확장** — primary/acceptable 도메인 GT, answer extended 5쿼리, latency p50/p95·tokens_estimated·engine_failures 리포트.
+- **환경 변수** — `MARU_DEEP_MAX_SOURCES`, `MARU_SERP_PER_ENGINE_CAP`, `MARU_WRAPPER_TIER`, `MARU_KNOWLEDGE_REUSE_MAX_CHARS`, `MARU_RESEARCH_CONTEXT_MAX_CHARS`, ranker 가중치.
+
+### Changed
+- **토큰 효율** — `deep_research` 기본 `max_sources` 30→10; SERP는 `wrap_serp_content`(경량 래퍼); top-8만 긴 snippet.
+- **`auto_fetch` / `answer`** — 병렬 fetch, 본문-only preview(래퍼 잘림 버그 수정).
+- **성능** — `duckduckgo_fetch` 별도 CB; fetch 캐시 키 통일; trafilatura `asyncio.to_thread`; `domain_stats` 기록.
+- **gap_detector** — CVE/semver/연도 엔티티 누락 시 follow-up 제안.
+- **MCP prompts** — `tool_selection_guide`·`anti_bot_strategy` 압축.
+- **enforcer** — `append_research_context` 8k chars cap.
+
+### Fixed
+- KnowledgeStore 24h 히트 시 무제한 반환 → 4k chars cap.
+
+**수동 회귀 게이트:** `uv run python benchmark/search_quality_benchmark.py` — deep_research NDCG@10 ≥ 0.45, Precision@5 ≥ 0.40.
+
 ## [0.17.2] - 2026-05-17
 
 ### Added

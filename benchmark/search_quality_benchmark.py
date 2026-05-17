@@ -33,15 +33,14 @@ from maru_deep_pro_search.engines.registry import SearchEngineRegistry
 # Each query has a list of relevant domain patterns.
 # A result URL is "relevant" if it matches ANY pattern.
 
-GROUND_TRUTH: dict[str, list[str]] = {
+GROUND_TRUTH: dict[str, list[str] | dict[str, list[str]]] = {
     "FastAPI middleware documentation": [
         "fastapi.tiangolo.com",
     ],
-    "urllib3 CVE-2026-44431 security advisory": [
-        "github.com/urllib3/urllib3",
-        "nvd.nist.gov",
-        "cve.mitre.org",
-    ],
+    "urllib3 CVE-2026-44431 security advisory": {
+        "primary": ["nvd.nist.gov", "github.com/urllib3/urllib3"],
+        "acceptable": ["cve.mitre.org", "github.com/advisories", "security.snyk.io"],
+    },
     "Python asyncio semaphore example": [
         "docs.python.org",
     ],
@@ -74,7 +73,7 @@ GROUND_TRUTH: dict[str, list[str]] = {
 }
 
 # Answer-engine style queries (Korean consumer / price / recommendations)
-ANSWER_GROUND_TRUTH: dict[str, list[str]] = {
+ANSWER_GROUND_TRUTH: dict[str, list[str] | dict[str, list[str]]] = {
     "갤럭시 중고폰 최신 시세 추천 2026": [
         "danawa.com",
         "naver.com",
@@ -93,6 +92,31 @@ ANSWER_GROUND_TRUTH: dict[str, list[str]] = {
     ],
 }
 
+# Extended answer-mode suite (security + docs + consumer)
+ANSWER_EXTENDED_GROUND_TRUTH: dict[str, list[str] | dict[str, list[str]]] = {
+    "Express.js latest security vulnerabilities 2026": {
+        "primary": ["github.com/advisories", "nvd.nist.gov"],
+        "acceptable": ["expressjs.com", "snyk.io", "nodejs.org"],
+    },
+    "OpenSSL CVE recent advisory": {
+        "primary": ["openssl.org", "nvd.nist.gov"],
+        "acceptable": ["cve.mitre.org", "github.com/openssl"],
+    },
+    "React 19 official documentation breaking changes": {
+        "primary": ["react.dev"],
+        "acceptable": ["github.com/facebook/react", "reactjs.org"],
+    },
+    "Python 3.13 release notes what's new": {
+        "primary": ["docs.python.org", "python.org"],
+        "acceptable": ["peps.python.org", "github.com/python"],
+    },
+    "맥북 에어 M4 중고 시세 2026": [
+        "danawa.com",
+        "naver.com",
+        "apple.com",
+    ],
+}
+
 
 @dataclass
 class QueryResult:
@@ -101,6 +125,8 @@ class QueryResult:
     results: list[dict[str, str]]  # [{"title": ..., "url": ..., "score": ...}]
     duration_ms: float
     fallback_used: bool
+    tokens_estimated: int = 0
+    engine_failures: int = 0
 
 
 @dataclass
@@ -118,8 +144,21 @@ class MetricResult:
     total_relevant: int
 
 
+def _domain_patterns(query: str) -> tuple[list[str], list[str]]:
+    raw = (
+        GROUND_TRUTH.get(query)
+        or ANSWER_GROUND_TRUTH.get(query)
+        or ANSWER_EXTENDED_GROUND_TRUTH.get(query, [])
+    )
+    if isinstance(raw, dict):
+        primary = list(raw.get("primary", []))
+        acceptable = list(raw.get("acceptable", []))
+        return primary, primary + acceptable
+    return raw, raw
+
+
 def is_relevant(url: str, query: str) -> bool:
-    patterns = GROUND_TRUTH.get(query) or ANSWER_GROUND_TRUTH.get(query, [])
+    _, patterns = _domain_patterns(query)
     url_lower = url.lower()
     return any(pat.lower() in url_lower for pat in patterns)
 
@@ -203,12 +242,15 @@ async def run_single_query_web_search(
             results = []
 
     duration_ms = (time.monotonic() - start) * 1000
+    blob = " ".join(f"{r.get('title', '')} {r.get('url', '')}" for r in results)
     return QueryResult(
         query=query,
         engine=engine_name,
         results=results,
         duration_ms=duration_ms,
         fallback_used=fallback_used,
+        tokens_estimated=max(1, len(blob) // 4),
+        engine_failures=1 if fallback_used else 0,
     )
 
 
@@ -246,12 +288,15 @@ async def run_single_query_deep_research(query: str, max_results: int = 10) -> Q
         results = []
 
     duration_ms = (time.monotonic() - start) * 1000
+    blob = " ".join(f"{r.get('title', '')} {r.get('url', '')}" for r in results)
     return QueryResult(
         query=query,
         engine="deep_research",
         results=results,
         duration_ms=duration_ms,
         fallback_used=False,
+        tokens_estimated=max(1, len(blob) // 4),
+        engine_failures=0,
     )
 
 
@@ -342,7 +387,9 @@ def print_report(metrics: list[MetricResult]) -> None:
     print(f"\nReport saved: {report_path}")
 
 
-async def run_benchmark_mode(queries: list[str], mode: str) -> list[MetricResult]:
+async def run_benchmark_mode(
+    queries: list[str], mode: str
+) -> tuple[list[MetricResult], list[QueryResult]]:
     print(f"\n{'=' * 60}")
     print(f"MODE: {mode.upper()}")
     print(f"{'=' * 60}")
@@ -356,9 +403,12 @@ async def run_benchmark_mode(queries: list[str], mode: str) -> list[MetricResult
             # Use bing for web_search to avoid duckduckgo circuit breaker
             result = await run_single_query_web_search(query, engine_name="bing")
         query_results.append(result)
-        print(f"({len(result.results)} results, {result.duration_ms:.0f}ms)")
+        print(
+            f"({len(result.results)} results, {result.duration_ms:.0f}ms, "
+            f"~{result.tokens_estimated} tok)"
+        )
 
-    return [evaluate_query(r) for r in query_results]
+    return [evaluate_query(r) for r in query_results], query_results
 
 
 async def main() -> int:
@@ -367,18 +417,25 @@ async def main() -> int:
     print("Comparing web_search (single engine) vs deep_research (multi-engine)")
 
     # Run both modes (use bing for web_search to avoid duckduckgo circuit breaker)
-    web_metrics = await run_benchmark_mode(queries, "web_search")
+    web_metrics, web_qr = await run_benchmark_mode(queries, "web_search")
     # Wait for duckduckgo circuit breaker recovery before deep_research
     print("\n  [recovery] Waiting 5s for circuit breaker recovery...")
     await asyncio.sleep(5)
-    deep_metrics = await run_benchmark_mode(queries, "deep_research")
+    deep_metrics, deep_qr = await run_benchmark_mode(queries, "deep_research")
 
     print("\n" + "=" * 80)
     print("COMPARATIVE REPORT: web_search vs deep_research")
     print("=" * 80)
 
-    def summarize(metrics: list[MetricResult]) -> dict[str, float]:
+    def summarize(
+        metrics: list[MetricResult], query_results: list[QueryResult]
+    ) -> dict[str, float]:
         n = len(metrics)
+        times = sorted(m.duration_ms for m in metrics)
+        p50 = times[len(times) // 2] if times else 0.0
+        p95 = times[int(len(times) * 0.95)] if times else 0.0
+        tokens = sum(q.tokens_estimated for q in query_results) / max(len(query_results), 1)
+        failures = sum(q.engine_failures for q in query_results)
         return {
             "precision_at_5": sum(m.precision_at_5 for m in metrics) / n,
             "precision_at_10": sum(m.precision_at_10 for m in metrics) / n,
@@ -387,10 +444,14 @@ async def main() -> int:
             "ndcg_at_10": sum(m.ndcg_at_10 for m in metrics) / n,
             "mrr": sum(m.mrr for m in metrics) / n,
             "avg_time_ms": sum(m.duration_ms for m in metrics) / n,
+            "latency_p50_ms": p50,
+            "latency_p95_ms": p95,
+            "tokens_estimated_avg": tokens,
+            "engine_failures": float(failures),
         }
 
-    web = summarize(web_metrics)
-    deep = summarize(deep_metrics)
+    web = summarize(web_metrics, web_qr)
+    deep = summarize(deep_metrics, deep_qr)
 
     print(f"\n{'Metric':<25} {'web_search':>12} {'deep_research':>15} {'Delta':>10}")
     print("-" * 65)
@@ -412,8 +473,8 @@ async def main() -> int:
         print(f"{'=' * 80}")
         print("\n  [recovery] Waiting 5s before answer-mode benchmark...")
         await asyncio.sleep(5)
-        answer_metrics = await run_benchmark_mode(answer_queries, "deep_research")
-        answer_summary = summarize(answer_metrics)
+        answer_metrics, answer_qr = await run_benchmark_mode(answer_queries, "deep_research")
+        answer_summary = summarize(answer_metrics, answer_qr)
         report_data["answer_pipeline"] = {
             "summary": answer_summary,
             "results": [asdict(m) for m in answer_metrics],
@@ -423,8 +484,30 @@ async def main() -> int:
         for key, val in answer_summary.items():
             print(f"{key:<25} {val:>15.3f}")
 
+    extended_queries = list(ANSWER_EXTENDED_GROUND_TRUTH.keys())
+    if extended_queries:
+        print(f"\n{'=' * 80}")
+        print(f"ANSWER EXTENDED SUITE ({len(extended_queries)} queries)")
+        print(f"{'=' * 80}")
+        print("\n  [recovery] Waiting 5s before extended answer benchmark...")
+        await asyncio.sleep(5)
+        ext_metrics, ext_qr = await run_benchmark_mode(extended_queries, "deep_research")
+        ext_summary = summarize(ext_metrics, ext_qr)
+        report_data["answer_extended"] = {
+            "summary": ext_summary,
+            "results": [asdict(m) for m in ext_metrics],
+        }
+        print(f"\n{'Metric':<25} {'answer_extended':>15}")
+        print("-" * 42)
+        for key, val in ext_summary.items():
+            print(f"{key:<25} {val:>15.3f}")
+
     report_path.write_text(json.dumps(report_data, indent=2))
     print(f"\nReport saved: {report_path}")
+    print(
+        "\nManual regression gate (record in CHANGELOG before release): "
+        "deep_research NDCG@10 >= 0.45, Precision@5 >= 0.40"
+    )
 
     return 0
 

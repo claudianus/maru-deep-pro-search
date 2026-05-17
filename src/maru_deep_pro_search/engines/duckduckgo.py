@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 import re
@@ -319,60 +320,20 @@ class DuckDuckGoEngine(SearchEngine):
         # Quality assessment
         quality = _assess_quality(stats, len(plain))
 
-        # Enhanced extraction with trafilatura
+        # Enhanced extraction with trafilatura (CPU-bound — off event loop)
         _date_result = ""
         _code_stats = None
 
         if original_html:
             try:
-                import htmldate as _htmldate
-                import trafilatura
-
-                # Try trafilatura on original HTML
-                tf_result = trafilatura.extract(
+                markdown, plain, stats, title, _date_result, _code_stats = await asyncio.to_thread(
+                    _enhance_with_trafilatura,
                     original_html,
-                    output_format="markdown",
-                    include_formatting=True,
-                    include_links=True,
+                    markdown,
+                    plain,
+                    stats,
+                    title,
                 )
-                if tf_result and len(tf_result) > 200:
-                    markdown = tf_result
-                    plain = (
-                        trafilatura.extract(
-                            original_html,
-                            output_format="txt",
-                            include_formatting=False,
-                        )
-                        or plain
-                    )
-                    stats["code_blocks"] = len(re.findall(r"```", markdown)) // 2
-
-                # Extract metadata
-                meta = trafilatura.extract_metadata(original_html)
-                if meta:
-                    if meta.title and meta.title.strip():
-                        title = meta.title.strip()
-                    if meta.date:
-                        _date_result = meta.date
-
-                # htmldate fallback
-                if not _date_result:
-                    with contextlib.suppress(Exception):
-                        _date_result = (
-                            _htmldate.find_date(
-                                original_html,
-                                outputformat="%Y-%m-%d",
-                            )
-                            or ""
-                        )
-
-                # Code-aware analysis
-                from ..extraction.code import analyze_code_content
-
-                _code_stats = analyze_code_content(markdown, published_date=_date_result)
-
-            except ImportError:
-                logger.debug("trafilatura/htmldate not available")
             except Exception as exc:
                 logger.warning("Enhanced extraction failed: %s", exc)
 
@@ -410,6 +371,58 @@ class DuckDuckGoEngine(SearchEngine):
             is_primary=is_primary,
             github_meta=github_meta,
         )
+
+
+def _enhance_with_trafilatura(
+    original_html: str,
+    markdown: str,
+    plain: str,
+    stats: dict,
+    title: str,
+) -> tuple[str, str, dict, str, str, Any | None]:
+    """Run trafilatura/htmldate extraction (sync, for asyncio.to_thread)."""
+    _date_result = ""
+    _code_stats = None
+    try:
+        import htmldate as _htmldate
+        import trafilatura
+    except ImportError:
+        logger.debug("trafilatura/htmldate not available")
+        return markdown, plain, stats, title, _date_result, _code_stats
+
+    tf_result = trafilatura.extract(
+        original_html,
+        output_format="markdown",
+        include_formatting=True,
+        include_links=True,
+    )
+    if tf_result and len(tf_result) > 200:
+        markdown = tf_result
+        plain = (
+            trafilatura.extract(
+                original_html,
+                output_format="txt",
+                include_formatting=False,
+            )
+            or plain
+        )
+        stats["code_blocks"] = len(re.findall(r"```", markdown)) // 2
+
+    meta = trafilatura.extract_metadata(original_html)
+    if meta:
+        if meta.title and meta.title.strip():
+            title = meta.title.strip()
+        if meta.date:
+            _date_result = meta.date
+
+    if not _date_result:
+        with contextlib.suppress(Exception):
+            _date_result = _htmldate.find_date(original_html, outputformat="%Y-%m-%d") or ""
+
+    from ..extraction.code import analyze_code_content
+
+    _code_stats = analyze_code_content(markdown, published_date=_date_result)
+    return markdown, plain, stats, title, _date_result, _code_stats
 
 
 def _extract_structured(element) -> tuple[str, str, dict]:

@@ -15,7 +15,12 @@ class SearchConfig:
 
     default_engine: str = "duckduckgo_lite"
     max_results_per_query: int = 10
+    deep_max_sources: int = 10
+    serp_per_engine_cap: int = 40
     max_concurrent_fetches: int = 5
+    knowledge_reuse_max_chars: int = 4000
+    research_context_max_chars: int = 8000
+    wrapper_tier: str = "tiered"  # tiered | full
     # --- HTTP timeouts (seconds) — read by MCP tools -----------------------------
     serp_timeout_seconds: float = 30.0
     """Timeout for search-engine HTML scrape (``web_search``, ``search_with_citations``)."""
@@ -44,10 +49,22 @@ class SearchConfig:
     @classmethod
     def from_env(cls) -> SearchConfig:
         """Load configuration from environment variables."""
+        wrapper = os.getenv("MARU_WRAPPER_TIER", "tiered").strip().lower()
+        if wrapper not in ("tiered", "full"):
+            wrapper = "tiered"
         return cls(
             default_engine=os.getenv("MARU_SEARCH_ENGINE", "duckduckgo_lite"),
             max_results_per_query=int(os.getenv("MARU_SEARCH_MAX_RESULTS", "10")),
+            deep_max_sources=int(os.getenv("MARU_DEEP_MAX_SOURCES", "10")),
+            serp_per_engine_cap=int(os.getenv("MARU_SERP_PER_ENGINE_CAP", "40")),
             max_concurrent_fetches=int(os.getenv("MARU_SEARCH_MAX_CONCURRENT", "5")),
+            knowledge_reuse_max_chars=int(os.getenv("MARU_KNOWLEDGE_REUSE_MAX_CHARS", "4000")),
+            research_context_max_chars=int(os.getenv("MARU_RESEARCH_CONTEXT_MAX_CHARS", "8000")),
+            wrapper_tier=wrapper,
+            authority_weight=float(os.getenv("MARU_AUTHORITY_WEIGHT", "2.0")),
+            freshness_weight=float(os.getenv("MARU_FRESHNESS_WEIGHT", "1.0")),
+            snippet_weight=float(os.getenv("MARU_SNIPPET_WEIGHT", "1.0")),
+            position_weight=float(os.getenv("MARU_POSITION_WEIGHT", "0.5")),
             serp_timeout_seconds=float(os.getenv("MARU_SEARCH_TIMEOUT", "30.0")),
             http_fetch_timeout_seconds=float(os.getenv("MARU_FETCH_HTTP_TIMEOUT", "20.0")),
             deep_research_timeout_seconds=float(os.getenv("MARU_DEEP_RESEARCH_TIMEOUT", "45.0")),

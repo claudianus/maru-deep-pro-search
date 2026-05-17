@@ -13,6 +13,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from ..config import DEFAULT_CONFIG
 from ..exceptions import MaruSearchError
 from .constants import (
     FRESH_RESEARCH_REQUIRED_TOOLS,
@@ -97,7 +98,7 @@ class SessionState:
             self.mark_research(query, result)
             return
 
-        self.research_result = "\n\n".join(
+        combined = "\n\n".join(
             (
                 self.research_result,
                 "---",
@@ -105,6 +106,10 @@ class SessionState:
                 result,
             )
         )
+        cap = DEFAULT_CONFIG.research_context_max_chars
+        if len(combined) > cap:
+            combined = combined[:cap] + "\n\n_[research context truncated]_"
+        self.research_result = combined
         self.research_timestamp = time.time()
 
         import re

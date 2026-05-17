@@ -499,140 +499,40 @@ Before writing ANY code:
 ✅ "Researching 'FastAPI vs Django 2026'... [calls deep_research]"
 ✅ "Checking latest CVEs for Express.js... [calls deep_research]"
 ✅ "Finding current React Server Components patterns... [calls deep_research]"
+
+## Anti-Bot Ladder (fetch)
+1. `fetch_page(url)` → 2. `fetch_page(url, stealth=True)` → 3. `stealthy_fetch(url)` → 4. search for mirrors
 """
 
 
 @mcp.prompt()
 def tool_selection_guide() -> str:
     """Comprehensive guide for choosing the right research tool."""
-    return """# Maru Search Tool Selection Guide
+    return """# Tool Selection (compact)
 
-## ⚠️ CRITICAL REMINDER
-**You are REQUIRED to research before coding. See `always_research_first` prompt.**
+See `always_research_first` for the full protocol.
 
-## Quick Decision Tree
+| Need | Tool |
+|------|------|
+| General Q / price / recommendation | `answer(mode=balanced)` |
+| Code / security / architecture | `deep_research` |
+| Multiple angles | `parallel_search(..., comparison_mode=True)` |
+| Extra SERP hits | `web_search` / `search_with_citations` |
+| Known URLs | `fetch_page` / `fetch_bulk` |
+| Blocked fetch | `fetch_page(stealth=True)` → `stealthy_fetch` |
 
-```
-User asks anything?
-├── answer(query, mode="balanced") for general search / recommendations / prices
-│
-Coding, security, architecture, or deep investigation?
-├── deep_research(query)
-│
-Need multiple angles fast?
-├── parallel_search(["angle1", "angle2", "angle3"], comparison_mode=True)
-│
-Have specific URLs to read?
-├── fetch_page (single) or fetch_bulk (multiple)
-│   └── Blocked? → fetch_page with stealth=True
-│       └── Still blocked? → stealthy_fetch (last resort)
-│
-Need citation-ready sources?
-├── search_with_citations
-│
-Need to check version or updates?
-└── version
-
-## Tool Details
-
-### answer ⭐ GENERAL SEARCH ENTRYPOINT
-**When to use**: User asks a web-search question, market price, product recommendation, news/current fact, or simple how-to.
-**Examples**: "갤럭시 중고폰 최신 시세 추천 2026", "What is the latest Python version?"
-**Returns**: Answer-ready evidence packet with ranked sources, fetched excerpts, and citation IDs.
-**Modes**: fast, balanced, deep.
-
-### deep_research ⭐ TECHNICAL/DEEP ENTRYPOINT
-**When to use**: Technical/coding/security/deep research.
-**What it does**: Auto-expands query → searches → BM25 ranks → returns a cited research packet.
-**Returns**: Comprehensive report with inline citations [1], [2] and quality scores.
-**Why first**: It gives you CURRENT information, not stale training data.
-
-### web_search
-**When to use**: You need additional sources beyond what deep_research found.
-**Returns**: Ranked results with [AUTHORITY] badges and citation IDs.
-
-### search_with_citations
-**When to use**: You need sources for academic/technical writing.
-**Returns**: Results pre-tagged with citation IDs [1], [2].
-
-### parallel_search
-**When to use**: You need multiple perspectives simultaneously.
-**Example**: ["Python vs Go performance 2025", "Python concurrency best practices"]
-**Returns**: Separate result sets for each query, merged output.
-
-### fetch_page / fetch_bulk
-**When to use**: You have specific URLs from research results to read deeply.
-**Anti-bot fallback**: If blocked, retry with stealth=True.
-
-### stealthy_fetch
-**When to use**: fetch_page failed even with stealth=True.
-**Warning**: ~3-5x slower. Use as last resort.
-
-### version
-**When to use**: Check if the server is up to date, verify installation health.
-**Returns**: Current version, latest PyPI version, and update instructions if outdated.
-**Why useful**: The server may show an update notice in its first tool response — use `version()` to confirm and get the exact upgrade command.
-
-## Performance Ranking
-1. **Fastest**: web_search, fetch_page, answer(mode="fast")
-2. **Medium**: parallel_search, fetch_bulk, search_with_citations
-3. **Deep answer**: answer(mode="balanced"|"deep"), deep_research
-4. **Slowest**: stealthy_fetch
-
-## Common Mistakes
-- ❌ **SKIPPING deep_research before coding/security/architecture** (MOST CRITICAL)
-- ❌ Using deep_research for simple general questions when answer(mode="balanced") fits better
-- ❌ Using stealthy_fetch for every URL
-- ❌ Not checking quality badges ([HIGH], [BLOCKED])
-- ❌ Ignoring follow-up links in results
-- ❌ Not using citations when the user asks for sources
+Default `deep_research` returns top 10 ranked sources (override with `max_sources`). Use `[N]` citations in every answer.
 """
 
 
 @mcp.prompt()
 def anti_bot_strategy() -> str:
     """Step-by-step strategy for handling anti-bot protected sites."""
-    return """# Anti-Bot Handling Strategy
+    return """# Anti-Bot (compact)
 
-## Escalation Ladder (try in order)
+`fetch_page` → `fetch_page(stealth=True)` → `stealthy_fetch` → `web_search` for mirrors.
 
-### Step 1: Normal Fetch
-Use `fetch_page(url)`
-- Fastest option
-- Works for 70-80% of sites
-
-### Step 2: Stealth Mode
-If Step 1 returns [BLOCKED] or incomplete:
-Use `fetch_page(url, stealth=True)`
-- Enables basic anti-bot bypass
-- Still relatively fast
-
-### Step 3: Full Stealth
-If Step 2 still fails:
-Use `stealthy_fetch(url)`
-- Full browser automation
-- Bypasses Cloudflare Turnstile, DataDome
-- ~3-5x slower
-
-### Step 4: Accept Defeat
-If all steps fail:
-- The site may require JavaScript execution
-- Try searching for the content on alternative sites
-- Use `web_search` to find mirrors or cached versions
-
-## When to Skip Steps
-
-Skip directly to stealthy_fetch if:
-- You know the site uses heavy protection (e.g., Cloudflare challenge page)
-- You've failed on this domain before
-- The content is critical and worth the wait
-
-## Bulk Fetching with Mixed Results
-
-When using fetch_bulk with multiple URLs:
-1. Check quality badges in results
-2. Re-fetch [BLOCKED] ones with stealth=True
-3. If still blocked, use stealthy_fetch individually
+For `fetch_bulk`, re-run failed URLs with stealth before stealthy_fetch.
 """
 
 
@@ -749,7 +649,7 @@ async def fetch_bulk(
 async def deep_research(
     query: str,
     engine: str = DEFAULT_CONFIG.default_engine,
-    max_sources: int = 30,
+    max_sources: int = DEFAULT_CONFIG.deep_max_sources,
     expand_queries: bool = True,
     primary_sources_only: bool = False,
     auto_fetch: int = 0,

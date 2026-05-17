@@ -10,6 +10,7 @@ import logging
 import re
 
 from .config import DEFAULT_CONFIG
+from .engines.base import SearchEngine
 from .engines.registry import SearchEngineRegistry
 from .exceptions import MaruSearchError, QueryRejectedError
 from .extraction.content import truncate_for_llm
@@ -21,6 +22,7 @@ from .research.pipeline import (
     persist_research_artifacts,
     save_research_knowledge,
 )
+from .research.ranker import rank_pages
 from .utils.cache import cache_key, fetch_page_cache_key, get_fetch_cache, get_search_cache
 from .utils.locale_harness import optimize_for_engine
 from .utils.query_gate import (
@@ -29,7 +31,12 @@ from .utils.query_gate import (
     format_query_rejection,
     prepare_search_query,
 )
-from .utils.sanitize import analyze_content, wrap_external_content
+from .utils.sanitize import (
+    analyze_content,
+    unwrap_external_content,
+    wrap_external_content,
+    wrap_serp_content,
+)
 
 logger = logging.getLogger(__name__)
 logging.getLogger("scrapling").setLevel(logging.WARNING)
@@ -47,6 +54,143 @@ def _coerce_registered_engine(engine: str) -> str:
     if fb in SEARCH_ENGINES:
         return fb
     return "duckduckgo_lite"
+
+
+def _fetch_engine() -> SearchEngine:
+    """Fetch engine instance (separate CB from SERP search when registered)."""
+    name = "duckduckgo_fetch"
+    if name not in SEARCH_ENGINES:
+        name = "duckduckgo_lite"
+    return SearchEngineRegistry.create(name)
+
+
+def _cap_knowledge_answer(text: str) -> str:
+    cap = DEFAULT_CONFIG.knowledge_reuse_max_chars
+    if len(text) <= cap:
+        return text
+    return text[:cap] + "\n\n_[cached research truncated — run fresh deep_research if needed]_"
+
+
+async def _fetch_body_markdown(
+    url: str,
+    *,
+    stealth: bool = False,
+    max_tokens: int = 600,
+) -> str:
+    """Fetch extractable body without the external-content security wrapper."""
+    from .utils.url import normalize_url
+
+    norm_url = normalize_url(url)
+    cache = get_fetch_cache()
+    key = fetch_page_cache_key(norm_url, stealth, max_tokens) + "|body"
+    cached = cache.get(key)
+    if cached is not None:
+        return cached  # type: ignore[no-any-return]
+
+    fetch_timeout = DEFAULT_CONFIG.http_fetch_timeout_seconds
+    engine = _fetch_engine()
+    page = await asyncio.wait_for(
+        engine.fetch(url, stealth=stealth),
+        timeout=fetch_timeout,
+    )
+    if page.quality.value == "blocked" or page.content_length == 0:
+        raise MaruSearchError(page.error_message or "fetch blocked or empty")
+
+    content = page.markdown if page.markdown else page.text
+    body = truncate_for_llm(content, max_tokens)
+    cache.set(key, body)
+    _record_fetch_domain(url, page.fetch_duration_ms, success=True)
+    return body
+
+
+async def _parallel_auto_fetch_previews(
+    sources: list,
+    *,
+    preview_chars: int = 800,
+    max_tokens: int = 600,
+) -> list[str]:
+    """Fetch source bodies in parallel for auto_fetch previews."""
+    timeout = DEFAULT_CONFIG.auto_fetch_nested_timeout_seconds
+    sem = asyncio.Semaphore(DEFAULT_CONFIG.max_concurrent_fetches)
+
+    async def _one(src: object) -> list[str]:
+        async with sem:
+            lines: list[str] = []
+            try:
+                body = await asyncio.wait_for(
+                    _fetch_body_markdown(src.url, max_tokens=max_tokens),  # type: ignore[attr-defined]
+                    timeout=timeout,
+                )
+                preview = body[:preview_chars] if len(body) > preview_chars else body
+                lines.append(f"**From [{src.citation_id}] {src.title}**")  # type: ignore[attr-defined]
+                lines.append(f"<{src.url}>")  # type: ignore[attr-defined]
+                lines.append("")
+                lines.append(preview)
+                if len(body) > preview_chars:
+                    lines.append("\n... (truncated)")
+                lines.append("")
+            except Exception as exc:
+                logger.debug("Auto-fetch failed for %s: %s", getattr(src, "url", ""), exc)
+                lines.append(
+                    f"**From [{getattr(src, 'citation_id', '?')}] {getattr(src, 'title', '')}** — fetch failed"
+                )
+                lines.append("")
+            return lines
+
+    chunks = await asyncio.gather(*(_one(s) for s in sources))
+    return [line for block in chunks for line in block]
+
+
+async def _parallel_answer_evidence(
+    sources: list,
+    *,
+    fetch_budget: int,
+) -> tuple[list[str], int]:
+    """Parallel fetch for answer() evidence section."""
+    timeout = DEFAULT_CONFIG.auto_fetch_nested_timeout_seconds
+    sem = asyncio.Semaphore(DEFAULT_CONFIG.max_concurrent_fetches)
+
+    async def _one(src: object) -> tuple[list[str], int]:
+        async with sem:
+            lines: list[str] = []
+            try:
+                body = await asyncio.wait_for(
+                    _fetch_body_markdown(
+                        src.url,  # type: ignore[attr-defined]
+                        max_tokens=max(250, min(fetch_budget, 1800)),
+                    ),
+                    timeout=timeout,
+                )
+                preview = truncate_for_llm(body, max_tokens=max(250, min(fetch_budget, 1800)))
+                lines.append(f"#### [{src.citation_id}] {src.title}")  # type: ignore[attr-defined]
+                lines.append(f"URL: {src.url}")  # type: ignore[attr-defined]
+                lines.append("")
+                lines.append(preview)
+                lines.append("")
+                return lines, 1
+            except Exception as exc:
+                logger.debug("answer auto-fetch failed for %s: %s", getattr(src, "url", ""), exc)
+                lines.append(
+                    f"#### [{getattr(src, 'citation_id', '?')}] {getattr(src, 'title', '')} — fetch failed"
+                )
+                lines.append(f"URL: {getattr(src, 'url', '')}")
+                lines.append("")
+                return lines, 0
+
+    chunks = await asyncio.gather(*(_one(s) for s in sources))
+    flat = [line for block, _ in chunks for line in block]
+    fetched = sum(ok for _, ok in chunks)
+    return flat, fetched
+
+
+def _record_fetch_domain(url: str, duration_ms: float, *, success: bool) -> None:
+    try:
+        from .harness.persistence import KnowledgeStore
+        from .utils.url import get_domain
+
+        KnowledgeStore().record_domain_fetch(get_domain(url), duration_ms, success)
+    except Exception:
+        pass
 
 
 def require_engine_query(query: str) -> tuple[str, QueryPrepResult]:
@@ -163,7 +307,7 @@ async def tool_web_search(
         lines.append("")
     result_text = "\n".join(lines)
     report = analyze_content(result_text)
-    result_text = wrap_external_content(result_text, source_url=f"search:{engine}", report=report)
+    result_text = wrap_serp_content(result_text, source_url=f"search:{engine}", report=report)
     result_text += format_query_meta(prep)
     if used_engine == engine:
         cache.set(key, result_text)
@@ -216,9 +360,7 @@ async def tool_fetch_page(
 
     fetch_timeout = DEFAULT_CONFIG.http_fetch_timeout_seconds
 
-    # Use duckduckgo_lite as the canonical fetch engine so that fetch and
-    # search share the same circuit breaker and cooldown state.
-    engine = SearchEngineRegistry.create("duckduckgo_lite")
+    engine = _fetch_engine()
     try:
         page = await asyncio.wait_for(
             engine.fetch(url, stealth=stealth),
@@ -324,6 +466,7 @@ async def tool_fetch_page(
     )
     report = analyze_content(result_text)
     result_text = wrap_external_content(result_text, source_url=url, report=report)
+    _record_fetch_domain(url, page.fetch_duration_ms, success=True)
     cache.set(key, result_text)
     return result_text
 
@@ -338,6 +481,7 @@ async def tool_fetch_bulk(
     stealth: bool = False,
     max_concurrent: int = DEFAULT_CONFIG.max_concurrent_fetches,
     max_tokens: int = 3000,
+    query: str = "",
 ) -> str:
     """Fetch multiple URLs in parallel via Scrapling.
 
@@ -346,18 +490,18 @@ async def tool_fetch_bulk(
     fetch_timeout = DEFAULT_CONFIG.http_fetch_timeout_seconds
     fetch_timeout_ms = int(fetch_timeout * 1000)
 
-    # Use duckduckgo_lite as the canonical fetch engine so that bulk and single
-    # fetch share the same circuit breaker and cooldown state.
-    engine = SearchEngineRegistry.create("duckduckgo_lite")
+    from .utils.url import normalize_url
+
+    engine = _fetch_engine()
     sem = asyncio.Semaphore(max_concurrent)
 
     async def _fetch_one(u: str):
-        # Check cache before fetching
+        norm = normalize_url(u)
         cache = get_fetch_cache()
-        key = cache_key("fetch", u, str(stealth))
+        key = fetch_page_cache_key(norm, stealth, max_tokens) + "|page"
         cached = cache.get(key)
         if cached is not None:
-            logger.debug("Cache hit for fetch_bulk: %s", u)
+            logger.debug("Cache hit for fetch_bulk: %s", norm)
             return cached
 
         async with sem:
@@ -406,10 +550,17 @@ async def tool_fetch_bulk(
             )
         else:
             safe_pages.append(p)
-    pages = safe_pages
+    from .engines.base import PageContent
+
+    all_pages = [p for p in safe_pages if isinstance(p, PageContent)]
+    rankable = [p for p in all_pages if p.content_length > 0]
+    blocked_pages = [p for p in all_pages if p not in rankable]
+    if rankable and query.strip():
+        rankable = rank_pages(rankable, query)
+    display_pages = rankable + blocked_pages
 
     lines: list[str] = []
-    for i, page in enumerate(pages, 1):
+    for i, page in enumerate(display_pages, 1):
         content = page.markdown if page.markdown else page.text
         content = truncate_for_llm(content, max_tokens)
 
@@ -448,7 +599,7 @@ async def tool_fetch_bulk(
 async def tool_deep_research(
     query: str,
     engine: str = DEFAULT_CONFIG.default_engine,
-    max_sources: int = 30,
+    max_sources: int = DEFAULT_CONFIG.deep_max_sources,
     expand_queries: bool = True,
     primary_sources_only: bool = False,
     auto_fetch: int = 0,
@@ -512,8 +663,9 @@ async def tool_deep_research(
                     logger.info(
                         "KnowledgeStore hit for deep_research: %s (%.1fh old)", query, age_hours
                     )
-                    cache.set(key, entry.answer)
-                    return entry.answer
+                    capped = _cap_knowledge_answer(entry.answer)
+                    cache.set(key, capped)
+                    return capped
             except Exception:
                 pass
     except Exception:
@@ -554,30 +706,11 @@ async def tool_deep_research(
                 if s.citation_id in {p.citation_id for p in planned[: min(auto_fetch, 3)]}
             ] or result.sources[: min(auto_fetch, 3)]
         fetch_lines = ["\n### Auto-Fetched Content", ""]
-        auto_fetch_timeout = DEFAULT_CONFIG.auto_fetch_nested_timeout_seconds
-        for src in top_sources:
-            try:
-                page = await asyncio.wait_for(
-                    tool_fetch_page(src.url, max_tokens=2000),
-                    timeout=auto_fetch_timeout,
-                )
-                # Truncate to first 800 chars to stay within token budget
-                preview = page[:800] if len(page) > 800 else page
-                fetch_lines.append(f"**From [{src.citation_id}] {src.title}**")
-                fetch_lines.append(f"<{src.url}>")
-                fetch_lines.append("")
-                fetch_lines.append(preview)
-                if len(page) > 800:
-                    fetch_lines.append("\n... (truncated)")
-                fetch_lines.append("")
-            except Exception as exc:
-                logger.debug("Auto-fetch failed for %s: %s", src.url, exc)
-                fetch_lines.append(f"**From [{src.citation_id}] {src.title}** — fetch failed")
-                fetch_lines.append("")
+        fetch_lines.extend(await _parallel_auto_fetch_previews(top_sources))
         result_text += "\n" + "\n".join(fetch_lines)
 
     report = analyze_content(result_text)
-    result_text = wrap_external_content(
+    result_text = wrap_serp_content(
         result_text, source_url="deep-research:multiple-sources", report=report
     )
     result_text += format_query_meta(prep)
@@ -619,9 +752,8 @@ def _format_source_map(result_text: str) -> str:
 
 
 def _compact_fetch_preview(page: str, max_tokens: int) -> str:
-    # Search pages are wrapped with an external-content security banner. Keep the
-    # banner because it is useful, but cap each fetched source so answer() stays usable.
-    return truncate_for_llm(page, max_tokens=max(250, min(max_tokens, 1800)))
+    body = unwrap_external_content(page)
+    return truncate_for_llm(body, max_tokens=max(250, min(max_tokens, 1800)))
 
 
 async def tool_answer(
@@ -692,23 +824,11 @@ async def tool_answer(
         if n_fetch and fetch_budget * n_fetch > max_tokens:
             fetch_budget = max(1, max_tokens // n_fetch)
         fetch_lines.extend(["### Fetched Evidence", ""])
-        for src in selected[:fetch_count]:
-            try:
-                page = await asyncio.wait_for(
-                    tool_fetch_page(src.url, max_tokens=fetch_budget),
-                    timeout=DEFAULT_CONFIG.auto_fetch_nested_timeout_seconds,
-                )
-                fetched_count += 1
-                fetch_lines.append(f"#### [{src.citation_id}] {src.title}")
-                fetch_lines.append(f"URL: {src.url}")
-                fetch_lines.append("")
-                fetch_lines.append(_compact_fetch_preview(page, fetch_budget))
-                fetch_lines.append("")
-            except Exception as exc:
-                logger.debug("answer auto-fetch failed for %s: %s", src.url, exc)
-                fetch_lines.append(f"#### [{src.citation_id}] {src.title} — fetch failed")
-                fetch_lines.append(f"URL: {src.url}")
-                fetch_lines.append("")
+        evidence, fetched_count = await _parallel_answer_evidence(
+            selected[:fetch_count],
+            fetch_budget=fetch_budget,
+        )
+        fetch_lines.extend(evidence)
 
     quality = answer_quality_suffix(result)
     lines = [
@@ -717,10 +837,7 @@ async def tool_answer(
         f"engine: {result.engine} | {quality}_",
         "",
         "### Host Synthesis Instructions",
-        "- Answer the user's question directly using only the evidence below.",
-        "- Cite factual claims with the matching `[N]` source IDs.",
-        "- Call out uncertainty, stale dates, or contradictory snippets instead of overclaiming.",
-        "- For recommendations, separate best pick, budget pick, and avoid/risks when evidence supports it.",
+        "Answer from evidence only; cite every factual claim with `[N]` IDs; note uncertainty or conflicts.",
         "",
         _format_source_map(research_packet),
     ]

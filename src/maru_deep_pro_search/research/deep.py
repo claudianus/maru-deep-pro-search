@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 
@@ -66,7 +67,7 @@ _search_semaphore = asyncio.Semaphore(4)
 async def deep_research(
     query: str,
     engine: str = DEFAULT_CONFIG.default_engine,
-    max_sources: int = 30,
+    max_sources: int = DEFAULT_CONFIG.deep_max_sources,
     expand_queries: bool = True,
     primary_sources_only: bool = False,
 ) -> ResearchResult:
@@ -132,7 +133,8 @@ async def deep_research(
                 search_engine = SearchEngineRegistry.create(eng_name)
                 # Locale harness: English tech terms → localized tokens for Naver/Baidu.
                 sent = optimize_for_engine(sq, eng_name) if eng_name in ("naver", "baidu") else sq
-                results = await search_engine.search(sent, max_results=max_sources * 3)
+                serp_cap = min(max_sources * 2, DEFAULT_CONFIG.serp_per_engine_cap)
+                results = await search_engine.search(sent, max_results=serp_cap)
                 return (eng_name, results)
             except NetworkError as exc:
                 logger.warning("Search '%s' on %s failed: %s", sq[:40], eng_name, exc)
@@ -297,20 +299,25 @@ def format_for_llm(
     lines.append("### Sources")
     lines.append("")
 
-    for src in result.sources:
+    for i, src in enumerate(result.sources):
         badge = " **[HIGH]**" if src.quality == "high" else ""
         auth = " | 🔒 authority" if src.authority_boost else ""
         cross = f" | ✓{len(src.engines_found)} engines" if len(src.engines_found) > 1 else ""
         primary = " | 📌 primary" if src.is_primary else ""
         stype = f" | {src.source_type}" if src.source_type != "unknown" else ""
+        snippet_cap = 400 if i < 8 else 150
 
         lines.append(f"#### [{src.citation_id}] {src.title}{badge}")
         lines.append(f"{src.url}")
         lines.append(f"_score: {src.relevance_score:.1f}{auth}{cross}{primary}{stype}_")
         if src.snippet:
-            lines.append(f"\n> {src.snippet[:400]}\n")
+            lines.append(f"\n> {src.snippet[:snippet_cap]}\n")
         else:
             lines.append("")
+
+    conflict_block = _format_snippet_conflicts(result.sources)
+    if conflict_block:
+        lines.append(conflict_block)
 
     # Suggested follow-ups
     if result.suggested_followups:
@@ -324,6 +331,31 @@ def format_for_llm(
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────
+
+
+def _format_snippet_conflicts(sources: list) -> str:
+    """Surface contradictory version/year hints across top snippets."""
+    version_hits: dict[str, list[int]] = {}
+    year_hits: dict[str, list[int]] = {}
+    for src in sources[:10]:
+        text = src.snippet or ""
+        for ver in re.findall(r"\bv?\d+\.\d+(?:\.\d+)?\b", text):
+            version_hits.setdefault(ver, []).append(src.citation_id)
+        for year in re.findall(r"20\d{2}", text):
+            year_hits.setdefault(year, []).append(src.citation_id)
+    conflicts: list[str] = []
+    if len(version_hits) > 1:
+        parts = [f"{v} [{', '.join(f'#{i}' for i in ids)}]" for v, ids in version_hits.items()]
+        conflicts.append("- Version hints differ: " + "; ".join(parts[:4]))
+    if len(year_hits) > 1:
+        parts = [f"{y} [{', '.join(f'#{i}' for i in ids)}]" for y, ids in year_hits.items()]
+        conflicts.append("- Year hints differ: " + "; ".join(parts[:4]))
+    if not conflicts:
+        return ""
+    lines = ["### Conflicts", "", "_Verify before citing:_", ""]
+    lines.extend(conflicts)
+    lines.append("")
+    return "\n".join(lines)
 
 
 def _compute_research_quality(result: ResearchResult) -> int:

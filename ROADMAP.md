@@ -2,7 +2,7 @@
 
 > **문서 언어:** 로드맵은 **한국어**로 유지합니다.
 
-**현재:** PyPI [`0.16.x`](https://pypi.org/project/maru-deep-pro-search/) — **20개** 에이전트용 MCP 어댑터, **answer-engine** + **deep_research**, 검색은 **영어(en) 전용**, 엔진은 **100% 무료** 스크래핑만.
+**현재:** PyPI [`0.19.0`](https://pypi.org/project/maru-deep-pro-search/) — **20개** 에이전트용 MCP 어댑터, **answer-engine** + **deep_research**, RRF·본문 랭킹·토큰/성능 최적화(0.18–0.19), 검색은 **영어(en) 전용**, 엔진은 **100% 무료** 스크래핑만.
 
 **품질:** `ruff`·`mypy` 정적 분석과 런타임 검증/훅 — **자동 테스트 스위트 없음** (`AGENTS.md` 참고).
 
@@ -23,15 +23,14 @@
 
 ---
 
-## 단기 (0.16.x–0.17)
+## 단기 (0.19.x)
 
 | 우선순위 | 항목 | 메모 |
 |----------|------|------|
-| P0 | **영수증 다듬기** | `answer` 영수증, 툴 커버리지·오류 메시지 |
-| P0 | **드리프트 UX** | 오탐 축소, `drift_status` 호출 시점 문서화 |
-| P1 | **문서** | GitHub Pages·`AGENT_COMPATIBILITY` 지속 동기화, `docs/agent_matrix.html` |
-| P1 | **어댑터 정리** | setup 시 커맨드·스킬 갱신 일관성 |
-| P2 | **성능** | fetch 캐시·타임아웃, 엔진 헬스 |
+| P0 | **품질 회귀 게이트** | 벤치 수동 실행 + CHANGELOG 하한선 (NDCG@10, P@5) |
+| P1 | **harness.yaml merge** | `sync`가 프로젝트 harness를 실제 반영 |
+| P1 | **Hermes 플러그인** | setup 시 버전 동기화 |
+| P2 | **선택 LLM 요약** | opt-in만; 기본 비목표 유지 |
 
 ---
 

@@ -6,6 +6,8 @@ uncovered topics and suggest follow-up search queries.
 
 from __future__ import annotations
 
+import re
+
 from .expander import extract_keywords
 
 # Research angles that are commonly valuable
@@ -37,7 +39,7 @@ def detect_gaps(query: str, sources: list) -> list[str]:
 
     # Extract query keywords
     query_keywords = set(extract_keywords(query))
-    if not query_keywords:
+    if not query_keywords and not _required_entities(query):
         return []
 
     # Collect all text from sources
@@ -50,6 +52,13 @@ def detect_gaps(query: str, sources: list) -> list[str]:
         if hasattr(src, "snippet") and src.snippet:
             source_text += src.snippet + " "
     source_text = source_text.lower()
+    suggestions: list[str] = []
+
+    for entity in _required_entities(query):
+        if entity.lower() not in source_text:
+            suggestions.append(f"{query} {entity}".strip())
+            if len(suggestions) >= 3:
+                return suggestions[:3]
 
     # Check which query keywords are poorly covered
     uncovered_keywords = [kw for kw in query_keywords if kw not in source_text and len(kw) > 3]
@@ -59,9 +68,6 @@ def detect_gaps(query: str, sources: list) -> list[str]:
     for angle in _RESEARCH_ANGLES:
         if angle not in source_text:
             uncovered_angles.append(angle)
-
-    # Build suggestions
-    suggestions: list[str] = []
 
     # Priority 1: uncovered keywords + angle
     for kw in uncovered_keywords[:2]:
@@ -88,3 +94,12 @@ def detect_gaps(query: str, sources: list) -> list[str]:
             suggestions.append(f"{query} security")
 
     return suggestions[:3]
+
+
+def _required_entities(query: str) -> list[str]:
+    """CVE IDs, semver-like tokens, and explicit years from the query."""
+    entities: list[str] = []
+    entities.extend(re.findall(r"CVE-\d{4}-\d+", query, flags=re.IGNORECASE))
+    entities.extend(re.findall(r"\bv?\d+\.\d+(?:\.\d+)?\b", query))
+    entities.extend(re.findall(r"20\d{2}", query))
+    return entities

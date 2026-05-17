@@ -200,6 +200,6 @@ uv run python benchmark/search_quality_benchmark.py
 4. **인용 네이티브** — 외부 서비스 없이 `[1]`, `[2]` ID.
 5. **리서치 퍼스트** — MCP 프롬프트 + `_with_enforcement`로 코딩 전 검색 강제.
 6. **프롬프트 인젝션 방어** — 제로폭 제거, 채팅 토큰 중화.
-7. **3층 레이트 리밋** — Semaphore(3) + 쿨다운 + 토큰 버킷.
+7. **3층 레이트 리밋** — Semaphore(4) + 엔진별 쿨다운 + 슬라이딩 윈도우(`RateLimiter`).
 8. **세션 재사용 스텔스** — Google/Startpage용 `AsyncStealthySession`.
 9. **MCP 툴은 데이터만** — 종합은 에이전트 LLM이 결정.

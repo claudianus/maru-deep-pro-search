@@ -1,0 +1,9 @@
+src/maru_deep_pro_search/utils/sanitize.py
+  ai_agent 457
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "546de55e0db36bd795db41c635c0bf98e9f13faf",
+  "prompts": {}
+}

@@ -1,0 +1,19 @@
+src/maru_deep_pro_search/tools.py
+  s_15929f54bfa054::t_56e29552fc9ae2 705-708
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "57e35ea40f54850d110b6f9d66e7c6d9e5d0ee38",
+  "prompts": {},
+  "sessions": {
+    "s_15929f54bfa054": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "36ef6e70-4837-46d2-a0c1-50b0bc3b675a",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

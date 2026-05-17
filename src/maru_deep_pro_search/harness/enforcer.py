@@ -110,7 +110,7 @@ class SessionState:
         marker = "\n\n_[research context truncated]_"
         if len(combined) > cap:
             keep = max(0, cap - len(marker))
-            combined = combined[:keep] + marker
+            combined = (combined[:keep] + marker)[:cap]
         self.research_result = combined
         self.research_timestamp = time.time()
 

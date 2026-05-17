@@ -289,6 +289,9 @@ def _with_enforcement(tool_name: str | None = None):
     return decorator
 
 
+_OPTIONAL_QUERY_TOOLS = frozenset({"fetch_bulk"})
+
+
 def _with_validation(tool_name: str | None = None):
     """Decorator that validates MCP tool input parameters to prevent DoS."""
 
@@ -298,7 +301,7 @@ def _with_validation(tool_name: str | None = None):
             if "query" in kwargs:
                 q = kwargs["query"]
                 if isinstance(q, str):
-                    if not q.strip():
+                    if not q.strip() and (tool_name or fn.__name__) not in _OPTIONAL_QUERY_TOOLS:
                         raise ValueError("Query cannot be empty or whitespace-only.")
                     if len(q) > 4096:
                         raise ValueError(
@@ -624,7 +627,7 @@ async def fetch_page(
 
 
 @mcp.tool()
-@_with_validation()
+@_with_validation("fetch_bulk")
 @_with_enforcement()
 @_with_audit()
 @_with_notice()

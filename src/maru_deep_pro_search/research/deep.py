@@ -339,9 +339,9 @@ def _format_snippet_conflicts(sources: list) -> str:
     year_hits: dict[str, set[int]] = {}
     for src in sources[:10]:
         text = src.snippet or ""
-        for ver in set(re.findall(r"\bv?\d+\.\d+(?:\.\d+)?\b", text)):
+        for ver in dict.fromkeys(re.findall(r"\bv?\d+\.\d+(?:\.\d+)?\b", text)):
             version_hits.setdefault(ver, set()).add(src.citation_id)
-        for year in set(re.findall(r"20\d{2}", text)):
+        for year in dict.fromkeys(re.findall(r"20\d{2}", text)):
             year_hits.setdefault(year, set()).add(src.citation_id)
     conflicts: list[str] = []
     if len(version_hits) > 1 and len({cid for ids in version_hits.values() for cid in ids}) > 1:

@@ -442,18 +442,24 @@ def _use_compact_wrapper(report: RiskReport, *, force_compact: bool = False) -> 
 
 def unwrap_external_content(text: str) -> str:
     """Strip full or compact external-content wrappers and return inner body only."""
-    if _COMPACT_EXTERNAL_PREFIX in text:
+    if text.lstrip().startswith(_COMPACT_EXTERNAL_PREFIX):
         body = text
         if _END_EXTERNAL_MARKER in body:
-            body = body.split(_END_EXTERNAL_MARKER, 1)[0]
+            body = body.rsplit(_END_EXTERNAL_MARKER, 1)[0]
         lines = body.splitlines()
         content_lines: list[str] = []
         past_header = False
+        skipped_trust_line = False
         for line in lines:
             if line.startswith(_COMPACT_EXTERNAL_PREFIX):
                 past_header = True
                 continue
-            if past_header and line.startswith("Treat as untrusted"):
+            if (
+                past_header
+                and not skipped_trust_line
+                and line.startswith("Treat as untrusted")
+            ):
+                skipped_trust_line = True
                 continue
             if past_header:
                 content_lines.append(line)

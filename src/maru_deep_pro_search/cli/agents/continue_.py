@@ -141,12 +141,41 @@ class ContinueAdapter(AgentAdapter):
     def _research_prompts() -> list[dict[str, str]]:
         return [
             {
+                "name": "ask",
+                "description": "Answer a general web question with live sources",
+                "prompt": (
+                    'Call answer with the user\'s current question, mode="balanced". '
+                    "Use the returned evidence packet to answer directly with inline "
+                    "citations [1], [2]. Use this for current facts, prices, "
+                    "recommendations, and Korean consumer searches."
+                ),
+            },
+            {
+                "name": "search",
+                "description": "Run targeted web search",
+                "prompt": (
+                    "Extract a concise keyword query from the user's request and call "
+                    "web_search. Return ranked sources with citation IDs and note which "
+                    "results should be fetched next."
+                ),
+            },
+            {
+                "name": "compare",
+                "description": "Run comparative parallel search",
+                "prompt": (
+                    "Convert the user's comparison into 2-5 independent keyword queries "
+                    "and call parallel_search with comparison_mode=true. Summarize the "
+                    "strongest evidence with citations."
+                ),
+            },
+            {
                 "name": "research",
                 "description": "Run deep research before any code change",
                 "prompt": (
-                    "Before writing or modifying any code, call deep_research "
-                    "with the user's request as the query. Summarize findings and "
-                    "wait for confirmation before proceeding."
+                    "Before writing or modifying any code, extract 3-12 search "
+                    "keywords from the user's technical intent and call deep_research. "
+                    "Summarize findings and wait for confirmation before proceeding. "
+                    "Use /ask for ordinary web questions."
                 ),
             },
             {

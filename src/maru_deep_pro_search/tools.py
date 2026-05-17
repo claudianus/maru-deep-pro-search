@@ -27,6 +27,8 @@ from .utils.query_gate import (
 from .utils.sanitize import analyze_content, wrap_external_content
 
 logger = logging.getLogger(__name__)
+logging.getLogger("scrapling").setLevel(logging.WARNING)
+logging.getLogger("scrapling.fetchers").setLevel(logging.WARNING)
 
 # All registered engines
 SEARCH_ENGINES = SearchEngineRegistry.list_engines()
@@ -610,30 +612,63 @@ async def tool_deep_research(
 # ═══════════════════════════════════════════════════════════════
 
 
+def _answer_mode_config(mode: str) -> tuple[str, bool, int]:
+    normalized = mode.strip().lower()
+    if normalized == "fast":
+        return "fast", False, 0
+    if normalized == "deep":
+        return "deep", True, 3
+    return "balanced", True, 2
+
+
+def _format_source_map(result_text: str) -> str:
+    if not result_text.strip():
+        return ""
+    return "\n".join(
+        [
+            "### Research Packet",
+            "",
+            result_text,
+        ]
+    )
+
+
+def _compact_fetch_preview(page: str, max_tokens: int) -> str:
+    # Search pages are wrapped with an external-content security banner. Keep the
+    # banner because it is useful, but cap each fetched source so answer() stays usable.
+    return truncate_for_llm(page, max_tokens=max(250, min(max_tokens, 1800)))
+
+
 async def tool_answer(
     query: str,
     engine: str = DEFAULT_CONFIG.default_engine,
     max_sources: int = DEFAULT_CONFIG.max_results_per_query,
     max_tokens: int = 8000,
     primary_sources_only: bool = False,
+    mode: str = "balanced",
 ) -> str:
-    """Get a direct, citation-backed answer to a question.
+    """Return an answer-ready research packet for a general user question.
 
-    Like Perplexity: searches the web, extracts top sources,
-    and synthesizes a concise answer with inline citations [1], [2].
+    No LLM synthesis happens inside the MCP server. Instead this gathers live
+    sources, optionally reads the best pages, and returns a compact packet that
+    the host agent can turn into a Perplexity-style answer with citations.
 
     BEST FOR:
-    - Factual questions ("What is X?")
-    - How-to questions ("How do I do Y?")
-    - Comparison questions ("X vs Y?")
+    - Factual questions ("What is X?", "latest price?", "what changed?")
+    - Consumer recommendations ("갤럭시 중고폰 최신 시세 추천 2026")
+    - How-to and comparison questions
 
     NOT FOR:
     - Creative writing
     - Reading specific known URLs (use fetch_page)
     """
     query, prep = require_engine_query(query)
+    mode, expand_queries, fetch_count = _answer_mode_config(mode)
 
     engine = _coerce_registered_engine(engine)
+    source_limit = max(1, min(max_sources, 12))
+    if mode == "fast":
+        source_limit = min(source_limit, 6)
 
     answer_timeout = DEFAULT_CONFIG.answer_timeout_seconds
     try:
@@ -641,8 +676,8 @@ async def tool_answer(
             deep_research(
                 query=query,
                 engine=engine,
-                max_sources=max_sources,
-                expand_queries=True,
+                max_sources=source_limit,
+                expand_queries=expand_queries,
                 primary_sources_only=primary_sources_only,
             ),
             timeout=answer_timeout,
@@ -657,7 +692,53 @@ async def tool_answer(
     if not result.sources:
         return f"I couldn't find any sources for: **{query}**"
 
-    return format_for_llm(result) + format_query_meta(prep)
+    planned = plan_reads(query, result.sources)
+    research_packet = format_for_llm(result, planned_reads=planned)
+    fetch_lines: list[str] = []
+    fetched_count = 0
+    if fetch_count:
+        selected = [
+            s
+            for s in result.sources
+            if s.citation_id in {p.citation_id for p in planned[:fetch_count]}
+        ] or result.sources[:fetch_count]
+        fetch_budget = max(500, max_tokens // max(len(selected) + 2, 3))
+        fetch_lines.extend(["### Fetched Evidence", ""])
+        for src in selected[:fetch_count]:
+            try:
+                page = await asyncio.wait_for(
+                    tool_fetch_page(src.url, max_tokens=fetch_budget),
+                    timeout=DEFAULT_CONFIG.auto_fetch_nested_timeout_seconds,
+                )
+                fetched_count += 1
+                fetch_lines.append(f"#### [{src.citation_id}] {src.title}")
+                fetch_lines.append(f"URL: {src.url}")
+                fetch_lines.append("")
+                fetch_lines.append(_compact_fetch_preview(page, fetch_budget))
+                fetch_lines.append("")
+            except Exception as exc:
+                logger.debug("answer auto-fetch failed for %s: %s", src.url, exc)
+                fetch_lines.append(f"#### [{src.citation_id}] {src.title} — fetch failed")
+                fetch_lines.append(f"URL: {src.url}")
+                fetch_lines.append("")
+
+    lines = [
+        f"## Answer Engine: {query}",
+        f"_mode: {mode} | sources: {len(result.sources)} | fetched: {fetched_count} | "
+        f"engine: {result.engine}_",
+        "",
+        "### Host Synthesis Instructions",
+        "- Answer the user's question directly using only the evidence below.",
+        "- Cite factual claims with the matching `[N]` source IDs.",
+        "- Call out uncertainty, stale dates, or contradictory snippets instead of overclaiming.",
+        "- For recommendations, separate best pick, budget pick, and avoid/risks when evidence supports it.",
+        "",
+        _format_source_map(research_packet),
+    ]
+    if fetch_lines:
+        lines.extend(["", *fetch_lines])
+    lines.append(format_query_meta(prep).strip())
+    return "\n".join(line for line in lines if line is not None)
 
 
 # ═══════════════════════════════════════════════════════════════

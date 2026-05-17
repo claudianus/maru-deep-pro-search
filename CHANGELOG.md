@@ -8,20 +8,20 @@
 
 ## [Unreleased]
 
-### Changed
-- **`init` / `setup` 범위** — `init`은 `.maru/` 등 **프로젝트 로컬** 데이터만 만들고 에이전트 점 파일은 쓰지 않음. MCP·규칙·스킬은 `setup` / `sync`가 **항상 사용자(전역)** 경로에만 기록. `setup --scope`·`init --agents` 제거.
-- **CLI** — `server:run` 진입 시 `sync` / `knowledge` / `plugin` 위임, `-V`/`--version`, 잘못된 서브커맨드는 종료 코드 2. `setup --check --agents`로 특정 에이전트만 검증. `plugin`은 하위 명령 필수. `update` 도움말에서 미구현 `--force` 제거. semantic 옵션 설치 시 `uv pip` 우선.
-- **설치 스크립트** — `install.sh` / `install.ps1`에서 `uv tool install`에 `--with sentence-transformers>=3.0.0` 추가, pip 경로는 `maru-deep-pro-search[semantic]`.
-- **`setup` semantic** — `sentence-transformers` 미설치 시 대화 없이 `python -m pip` → `--user` → `uv pip --python` → `uv pip --system` 순으로 시도; `MARU_SKIP_SEMANTIC_INSTALL=1`로 생략. 실패 시 수동 명령 안내.
-- **런타임 설정** — `SearchConfig`에 SERP/페이지 fetch/딥리서치/answer/auto-fetch 타임아웃을 분리하고 `tools.py`가 `DEFAULT_CONFIG`를 사용. 환경변수: `MARU_FETCH_HTTP_TIMEOUT`, `MARU_DEEP_RESEARCH_TIMEOUT`, `MARU_ANSWER_TIMEOUT`, `MARU_AUTO_FETCH_TIMEOUT` (기존 `MARU_SEARCH_TIMEOUT`은 SERP용).
-- **MCP·엔진 기본값** — `MARU_SEARCH_ENGINE` / `MARU_SEARCH_MAX_RESULTS` / `MARU_SEARCH_MAX_CONCURRENT` / `MARU_SEARCH_RETRIES`를 `server.py`·`tools.py`·`research/deep.py` 및 SERP `with_retry`에 반영. `parallel_search` 기본 `max_results`는 이제 `MARU_SEARCH_MAX_RESULTS`와 동일(기본 10; 이전 기본 5).
+## [0.16.0] - 2026-05-17
 
-### Fixed
-- **`web_search` / `search_with_citations`** — 엔진 폴백 시 `optimize_for_engine` 적용, `asyncio.wait_for`로 타임아웃 통일; 폴백 시 검색 캐시 오염 방지(캐시 미기록). 응답 헤더에 실제 사용 엔진 표기.
-- **`MARU_SKIP_UPDATE_CHECK`** — MCP `run()` 시작 시 `maybe_notify_update()`를 써서 업데이트 배너가 실제로 생략되도록 수정.
+### Added
+- **`answer-engine` skill** — 일반 웹 질문·시세·추천·한국어 소비자 검색용 Perplexity 스타일 진입 가이드.
+- **에이전트 커맨드** — Claude/Cursor에 `ask`·`search`·`compare`, Continue에 동명 슬래시 커맨드 추가 (`research`·`verify`와 함께).
+
+### Changed
+- **`answer` 툴** — 랭킹 소스·페치 근거가 포함된 answer-engine 패킷으로 강화; 일반 질문은 `answer`, 코드·보안·깊은 조사는 `deep_research` 우선.
+- **쿼리 게이트** — 영어/한국어 자연어 질문을 SERP 키워드로 정규화(예: 중고폰 시세 추천 → 최신 시세 검색); 대화체 즉시 거절 완화.
+- **`setup` semantic** — 기본 MCP stdio는 조용히 유지; `MARU_ENABLE_SEMANTIC_INSTALL=1`일 때만 `sentence-transformers` 설치 시도 (`MARU_SKIP_SEMANTIC_INSTALL` 대체).
+- **하네스·프롬프트** — enforcer·deep-research SKILL·에이전트 어댑터가 answer-first 결정 트리와 동기화.
 
 ### Documentation
-- **README / README.en** — `pydantic-settings` 오기 제거, `SearchConfig`·타임아웃 환경 변수 표를 코드와 일치. 수동 설치에 Python ≥3.10·`python3 -m pip`、`MARU_SKIP_SEMANTIC_INSTALL`, `uv tool install --with sentence-transformers` 예시 보강.
+- **README / README.en / GitHub Pages** — 툴 우선순위, 쿼리 게이트, semantic opt-in, v0.16.0 배지 동기화.
 
 ## [0.15.1] - 2026-05-16
 

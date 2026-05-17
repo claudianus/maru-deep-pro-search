@@ -304,10 +304,30 @@ class ClaudeAdapter(AgentAdapter):
         cmds_dir.mkdir(parents=True, exist_ok=True)
 
         commands = {
+            "ask.md": (
+                "# /ask — Perplexity-style live web answer\n\n"
+                'Call `answer` with the user\'s current question, `mode="balanced"`, '
+                "and synthesize a direct response with inline citations [1], [2]. "
+                "Use this for current facts, prices, recommendations, and Korean "
+                "consumer searches such as 중고폰 시세 or 노트북 추천."
+            ),
+            "search.md": (
+                "# /search — Targeted source search\n\n"
+                "Extract a concise keyword query from the user's request and call "
+                "`web_search`. Return ranked sources with citation IDs and note "
+                "which results should be fetched next."
+            ),
+            "compare.md": (
+                "# /compare — Multi-angle comparison search\n\n"
+                "Convert the user's comparison into 2-5 independent keyword queries "
+                "and call `parallel_search` with `comparison_mode=true`. Summarize "
+                "the strongest evidence and cite sources."
+            ),
             "research.md": (
                 "# /research — Deep research with citations\n\n"
-                "Call `deep_research` with the user's current technical intent "
-                "and return a synthesized answer with inline citations [1], [2]."
+                "Extract 3-12 search keywords from the user's current technical "
+                "intent, call `deep_research`, and return a synthesized answer "
+                "with inline citations [1], [2]. Use /ask for ordinary web questions."
             ),
             "verify.md": (
                 "# /verify — Verify code against research\n\n"

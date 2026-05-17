@@ -25,12 +25,13 @@ from .drift import (
 
 
 class ResearchRequiredError(MaruSearchError):
-    """Raised when a tool is called before deep_research in the same session."""
+    """Raised when a dependent tool is called before fresh research."""
 
     def __init__(self, tool_name: str) -> None:
         super().__init__(
-            f"[BLOCKED] '{tool_name}' requires prior deep_research call. "
-            f"Run deep_research(query=...) first to unlock this tool.",
+            f"[BLOCKED] '{tool_name}' requires fresh research in this session. "
+            "Run answer(query=...) for general questions or deep_research(query=...) "
+            "for coding/security work first.",
             retryable=False,
         )
 
@@ -41,8 +42,8 @@ class CodeGenerationBlockedError(MaruSearchError):
     def __init__(self, reason: str) -> None:
         super().__init__(
             f"[BLOCKED] Code generation blocked: {reason} "
-            f"Run deep_research(query=...) and use generate_code(research_id=...) "
-            f"with valid citations from the research result.",
+            "Run deep_research(query=...) for coding/security work and use "
+            "generate_code(research_id=...) with valid citations from the research result.",
             retryable=False,
         )
 
@@ -84,6 +85,31 @@ class SessionState:
         self.workspace_snapshot = snapshot_workspace()
         self.research_error_signature = self.last_error_signature
 
+    def append_research_context(self, query: str, result: str) -> None:
+        """Merge a fetched/read result into existing research without changing its ID."""
+        if not self.research_done:
+            self.mark_research(query, result)
+            return
+
+        self.research_result = "\n\n".join(
+            (
+                self.research_result,
+                "---",
+                f"## Additional Research Context: {query}",
+                result,
+            )
+        )
+        self.research_timestamp = time.time()
+
+        import re
+
+        for citation in re.findall(r"\[(\d+)\]", result):
+            if citation not in self.citations_found:
+                self.citations_found.append(citation)
+
+        self.workspace_snapshot = snapshot_workspace()
+        self.research_error_signature = self.last_error_signature
+
     @staticmethod
     def _extract_research_id(text: str) -> str:
         import re
@@ -117,10 +143,20 @@ class SessionState:
 class SessionEnforcer:
     """Tracks every MCP session and enforces research-before-action policies."""
 
-    # Tools that REQUIRE deep_research to have been called first.
+    # Tools that create useful research state and can be the first tool call.
+    RESEARCH_PRODUCING_TOOLS: set[str] = {
+        "deep_research",
+        "answer",
+        "web_search",
+        "search_with_citations",
+        "parallel_search",
+        "fetch_page",
+        "fetch_bulk",
+        "stealthy_fetch",
+    }
+
     # Tools that can be called WITHOUT prior research.
     RESEARCH_EXEMPT_TOOLS: set[str] = {
-        "deep_research",
         "version",
         "list_engines",
         "engine_health",
@@ -129,7 +165,10 @@ class SessionEnforcer:
         "query_knowledge",
         "cache_stats",
         "clear_caches",
-    }
+    } | RESEARCH_PRODUCING_TOOLS
+
+    # Tools that consume prior evidence and therefore need fresh research.
+    FRESH_RESEARCH_REQUIRED_TOOLS: set[str] = {"generate_code", "export_research"}
 
     # Mid-task enforcement: warn after N non-research tools without fresh research
     MAX_TOOLS_WITHOUT_RESEARCH: int = 5
@@ -150,6 +189,16 @@ class SessionEnforcer:
             # Also update filesystem markers so client-side hooks can check it
             self._touch_research_marker()
             self._write_session_research_marker(query, state.research_id)
+            return state
+
+    async def append_research_context(
+        self, session_id: str, query: str, result: str
+    ) -> SessionState:
+        async with self._lock:
+            state = self.get_or_create(session_id)
+            state.append_research_context(query, result)
+            self._touch_research_marker()
+            self._write_session_research_marker(state.research_query, state.research_id)
             return state
 
     @staticmethod
@@ -189,6 +238,9 @@ class SessionEnforcer:
         state = self.get_or_create(session_id)
 
         if tool_name in self.RESEARCH_EXEMPT_TOOLS:
+            return state
+
+        if tool_name not in self.FRESH_RESEARCH_REQUIRED_TOOLS:
             return state
 
         if not state.research_done:

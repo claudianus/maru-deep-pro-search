@@ -155,16 +155,7 @@ def register(ctx) -> None:
 
     ctx.register_hook("on_session_start", on_session_start)
 
-    # ── Slash command: /research ────────────────────────────────────
-    def cmd_research(query: str = "") -> str:
-        """Trigger deep_research with the given query."""
-        if not query.strip():
-            return "Usage: /research <query>"
-
-        # Dispatch the deep_research tool via Hermes
-        result = ctx.dispatch_tool("deep_research", {"query": query.strip()})
-
-        # Touch the session marker so the gate opens
+    def _mark_research(query: str) -> None:
         SESSION_FILE.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "completed_at": datetime.now(timezone.utc).isoformat(),
@@ -172,6 +163,66 @@ def register(ctx) -> None:
             "query": query.strip(),
         }
         SESSION_FILE.write_text(json.dumps(data, indent=2))
+
+    # ── Slash command: /ask ─────────────────────────────────────────
+    def cmd_ask(query: str = "") -> str:
+        """Trigger answer with the given query."""
+        if not query.strip():
+            return "Usage: /ask <query>"
+        result = ctx.dispatch_tool("answer", {"query": query.strip(), "mode": "balanced"})
+        _mark_research(query)
+        return f"[MARU] Answer evidence ready. {result}"
+
+    ctx.register_command(
+        name="ask",
+        handler=cmd_ask,
+        description="Answer a general web question with live sources",
+    )
+
+    # ── Slash command: /search ──────────────────────────────────────
+    def cmd_search(query: str = "") -> str:
+        """Trigger web_search with the given query."""
+        if not query.strip():
+            return "Usage: /search <query>"
+        result = ctx.dispatch_tool("web_search", {"query": query.strip()})
+        _mark_research(query)
+        return f"[MARU] Search completed. {result}"
+
+    ctx.register_command(
+        name="search",
+        handler=cmd_search,
+        description="Run targeted web search",
+    )
+
+    # ── Slash command: /compare ─────────────────────────────────────
+    def cmd_compare(query: str = "") -> str:
+        """Trigger parallel_search with comma-separated query angles."""
+        if not query.strip():
+            return "Usage: /compare <query A>, <query B>"
+        queries = [part.strip() for part in query.split(",") if part.strip()]
+        if len(queries) < 2:
+            queries = [query.strip(), f"{query.strip()} comparison benchmark"]
+        result = ctx.dispatch_tool(
+            "parallel_search",
+            {"queries": queries[:5], "comparison_mode": True},
+        )
+        _mark_research(query)
+        return f"[MARU] Comparison completed. {result}"
+
+    ctx.register_command(
+        name="compare",
+        handler=cmd_compare,
+        description="Run comparative parallel search",
+    )
+
+    # ── Slash command: /research ────────────────────────────────────
+    def cmd_research(query: str = "") -> str:
+        """Trigger deep_research with the given query."""
+        if not query.strip():
+            return "Usage: /research <query>"
+
+        result = ctx.dispatch_tool("deep_research", {"query": query.strip()})
+        _mark_research(query)
 
         return f"[MARU] Research completed. {result}"
 

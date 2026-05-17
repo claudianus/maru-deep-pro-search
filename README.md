@@ -57,7 +57,7 @@ irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scrip
 ```bash
 python3 -m pip install --user "maru-deep-pro-search[semantic]" && maru-deep-pro-search setup
 ```
-`setup`은 `sentence-transformers`가 없으면 같은 인터프리터에 자동 설치를 시도합니다. 건너뛰려면 `MARU_SKIP_SEMANTIC_INSTALL=1`을 설정하세요.
+`sentence-transformers`는 선택 사항입니다. `setup`은 기본적으로 조용히 지나가며, 시맨틱 랭킹 설치까지 원하면 `MARU_ENABLE_SEMANTIC_INSTALL=1`을 설정하세요.
 
 **권장 (uv — 빠른 설치, semantic 포함):**
 ```bash
@@ -112,7 +112,7 @@ maru-deep-pro-search-init
 
 ### 6. 검색 쿼리·엄격 게이트
 
-검색 툴은 **키워드형**(라이브러리·주제·연도 등 3–12어절) 쿼리를 기대합니다. *「이거 고쳐줘」* 같은 대화체는 **HTTP 요청 전에 거절**되므로, 에이전트가 SERP에 맞게 다시 써야 합니다.
+검색 툴은 **키워드형**(제품/라이브러리·주제·연도 등 3–12어절) 쿼리를 선호하지만, 일반 영어/한국어 질문은 가능한 한 먼저 검색용 키워드로 정규화합니다. 예: *「갤럭시 중고폰 최신 시세 추천」*은 거절하지 않고 최신 시세 검색으로 바꿉니다.
 
 - 거절 끄기(최적화만): `export MARU_STRICT_QUERY=0`
 - `deep_research` 이후 영수증은 `~/.maru/receipts/`에 저장됩니다. 락파일 등 **드리프트**가 있으면 툴 출력에 경고가 붙습니다. 웹 없이 확인하려면 `drift_status`를 호출합니다.
@@ -142,8 +142,8 @@ maru-deep-pro-search-init
 ### 리서치 코어
 | 툴 | 용도 | 언제 사용 |
 |------|---------|-------------|
-| `deep_research` | 쿼리 확장 + 다중 엔진 + BM25 랭킹 + **품질 점수** + **자동 페치** | **🔴 항상 먼저** — 코드, 아키텍처, 기술 결정 전 |
-| `answer` | Perplexity 스타일 직접 답변 + 인라인 인용 | 리서치 후 빠른 사실 확인 |
+| `answer` | Perplexity 스타일 answer-engine 패킷 + 랭킹 소스 + 페치 근거 | 일반 웹 질문, 시세, 추천, 한국어 소비자 검색 |
+| `deep_research` | 쿼리 확장 + 다중 엔진 + BM25 랭킹 + **품질 점수** + **자동 페치** | 코드, 아키텍처, 보안, 복잡한 리서치 전 |
 | `parallel_search` | 동시 다각도 검색 + 비교 모드 | 다각도 분석 (예: "A vs B") |
 | `web_search` | 스크래핑 + 랭킹 + 인용 결과 반환 | 추가 타겟 소스 수집 |
 | `search_with_citations` | 학술 작성용 사전 번호 소스 | 논문, 엄격한 인용 필요 시 |
@@ -175,9 +175,9 @@ maru-deep-pro-search-init
 
 **툴 선택 가이드:**
 ```
-기술적 요청이 있음?
-└── deep_research(query, auto_fetch=3) 먼저
-    ├── 빠른 확인 필요? → answer
+사용자 요청?
+├── 일반 웹 질문 / 최신 시세 / 추천? → answer(query, mode="balanced")
+├── 코드 / 보안 / 아키텍처 / 깊은 조사? → deep_research(query, auto_fetch=3)
     ├── 다각도 분석? → parallel_search
     ├── 특정 URL 읽기? → fetch_page / fetch_bulk
     ├── 사이트 차단? → stealthy_fetch (최후 수단)
@@ -194,11 +194,11 @@ maru-deep-pro-search-init
 
 | 에이전트 | MCP | Hooks | Commands | Agents/Cron/Plugins | 규칙 / 프롬프트 | Skills | 기타 표면 |
 |-------|:---:|:-----:|:--------:|:-------------------:|-----------------|--------|-----------|
-| **Claude Code** | ✅ | 4개 라이프사이클 훅 | `research.md` `verify.md` | — | `CLAUDE.md` + hooks | `~/.claude/skills/` nested | 권한 deny 패턴 |
-| **Cursor** | ✅ | — | `research.json` `verify.json` | — | `.cursor/rules/*.md` | `~/.cursor/rules/` flat | `autoEnableTools` |
+| **Claude Code** | ✅ | 4개 라이프사이클 훅 | `ask.md` `search.md` `compare.md` `research.md` `verify.md` | — | `CLAUDE.md` + hooks | `~/.claude/skills/` nested | 권한 deny 패턴 |
+| **Cursor** | ✅ | — | `ask.json` `search.json` `compare.json` `research.json` `verify.json` | — | `.cursor/rules/*.md` | `~/.cursor/rules/` flat | `autoEnableTools` |
 | **Kimi** | ✅ | `PreToolUse` (TOML) | — | — | `config.toml` `system_prompt` | `~/.kimi/skills/` nested | `default_yolo=false` |
 | **Cline** | ✅ | `PreToolUse.py` | — | `maru-research-gate.md` 에이전트 + `.cron.md` | `.clinerules/*.md` | `~/.cline/skills/` flat | — |
-| **Continue** | ✅ | — | `research` `verify` | — | `system_message` + `.continue/rules/` | `~/.continue/rules/` flat | — |
+| **Continue** | ✅ | — | `ask` `search` `compare` `research` `verify` | — | `system_message` + `.continue/rules/` | `~/.continue/rules/` flat | — |
 | **Windsurf** | ✅ | 3개 Cascade 훅 | — | — | `.windsurf/rules/*.md` + `AGENTS.md` | `~/.windsurf/rules/` flat | `.codeiumignore` |
 | **Zed** | ✅ | — | — | — | `.rules` + `assistant.md` | — | `tool_permissions` |
 | **JetBrains** | ⚠️ | — | — | — | `.idea/ai-assistant-rules/*.md` | `.idea/ai-assistant-rules/` flat | — |

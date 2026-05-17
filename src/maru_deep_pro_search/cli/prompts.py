@@ -16,7 +16,7 @@ PROTOCOL_END_MARKER = "<!-- MARU-RESEARCH-PROTOCOL-END -->"
 # English only — token-efficient and optimal for all LLMs.
 _RESEARCH_PROTOCOL_BODY = """MANDATORY RESEARCH PROTOCOL
 
-Rule 1: BEFORE any work → deep_research(user's raw intent). No exceptions.
+Rule 1: BEFORE code/architecture/security work → extract 3-12 search keywords from the user's raw intent, then deep_research(query). No exceptions.
 Rule 2: Uncertain concept/function/class → STOP and search immediately.
 Rule 3: New import/package → verify latest version/API via deep_research first.
 Rule 4: Error/warning/deprecation → search EXACT text BEFORE fixing.
@@ -29,7 +29,8 @@ Rule 10: Insufficient results → re-search refined query. NEVER guess.
 Rule 11: Security topic → also search "latest CVE" + "advisory".
 Rule 12: Cite sources [1][2][3] after every search. Never cite from memory.
 Rule 13: No search in last 3-5 tool calls → search again.
-Rule 14: Search tools need KEYWORD queries (3-12 terms)—never raw user sentences; include library name + aspect + year; conversational queries are REJECTED."""
+Rule 14: General user web questions → answer(query, mode="balanced") first; use deep_research for deep/coding/security work.
+Rule 15: Search tools prefer KEYWORD queries (3-12 terms). Natural/Korean questions may be normalized, but extract product/library + aspect + year whenever possible."""
 
 RESEARCH_PROTOCOL = f"{PROTOCOL_START_MARKER}\n{_RESEARCH_PROTOCOL_BODY}\n{PROTOCOL_END_MARKER}"
 

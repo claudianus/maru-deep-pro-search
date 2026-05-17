@@ -173,23 +173,17 @@ def cmd_setup(args: argparse.Namespace) -> int:
         elif result.get("skills_supported") is False:
             print("   ℹ SKILL.md 규칙 파일 미지원")
 
-    # Semantic search: auto-install *sentence-transformers* into the same
-    # interpreter as this CLI (``MARU_SKIP_SEMANTIC_INSTALL=1`` to skip).
+    # Semantic search is useful but heavy. Keep default setup quiet and avoid
+    # surprise model downloads in MCP stdio environments.
     import importlib.util
 
     if importlib.util.find_spec("sentence_transformers"):
         print(f"\n  {green('✓')} semantic search (sentence-transformers) 설치됨")
-    elif os.environ.get("MARU_SKIP_SEMANTIC_INSTALL", "").strip().lower() in (
+    elif os.environ.get("MARU_ENABLE_SEMANTIC_INSTALL", "").strip().lower() in (
         "1",
         "true",
         "yes",
     ):
-        print(f"\n  {yellow('!')} semantic search 미설치 (MARU_SKIP_SEMANTIC_INSTALL 로 생략)")
-        print(
-            f"     수동: {bold(f'{sys.executable} -m pip install --user {_SENTENCE_TRANSFORMERS_SPEC}')}"
-        )
-        print(f"     또는: {bold(f'uv pip install --system {_SENTENCE_TRANSFORMERS_SPEC}')}")
-    else:
         print(f"\n  {yellow('!')} semantic search 미설치 — 자동 설치 시도 중...")
         ok, detail = _pip_install_sentence_transformers()
         if ok:
@@ -206,6 +200,12 @@ def cmd_setup(args: argparse.Namespace) -> int:
                 "     PyPI 패키지는 Python 3.10+ 필요: "
                 + bold("python3.12 -m pip install 'maru-deep-pro-search[semantic]'")
             )
+    else:
+        print(f"\n  {yellow('!')} semantic search 미설치 — 기본 설정에서는 자동 설치하지 않음")
+        print(f"     필요하면: {bold('MARU_ENABLE_SEMANTIC_INSTALL=1 maru-deep-pro-search setup')}")
+        print(
+            f"     수동: {bold(f'{sys.executable} -m pip install --user {_SENTENCE_TRANSFORMERS_SPEC}')}"
+        )
 
     print(f"\n{green('✅ 완료!')} 에이전트를 재시작하면 적용됩니다.")
     print(f"   되돌리려면: {bold('maru-deep-pro-search setup --restore')}")

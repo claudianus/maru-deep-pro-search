@@ -103,13 +103,45 @@ class CursorAdapter(AgentAdapter):
         cmds_dir.mkdir(parents=True, exist_ok=True)
 
         _write_cursor_command(
+            cmds_dir / "ask.json",
+            name="ask",
+            description="Answer a general web question with live sources",
+            prompt=(
+                'Call answer with the user\'s current question, mode="balanced". '
+                "Use the returned evidence packet to answer directly with inline "
+                "citations [1], [2]. Use this for current facts, prices, "
+                "recommendations, and Korean consumer searches."
+            ),
+        )
+        _write_cursor_command(
+            cmds_dir / "search.json",
+            name="search",
+            description="Run targeted web search",
+            prompt=(
+                "Extract a concise keyword query from the user's request and call "
+                "web_search. Return ranked sources with citation IDs and note which "
+                "results should be fetched next."
+            ),
+        )
+        _write_cursor_command(
+            cmds_dir / "compare.json",
+            name="compare",
+            description="Run comparative parallel search",
+            prompt=(
+                "Convert the user's comparison into 2-5 independent keyword queries "
+                "and call parallel_search with comparison_mode=true. Summarize the "
+                "strongest evidence with citations."
+            ),
+        )
+        _write_cursor_command(
             cmds_dir / "research.json",
             name="research",
             description="Run deep research before any code change",
             prompt=(
-                "Before writing or modifying any code, you MUST run deep_research "
-                "with the user's request as the query. Summarize findings and wait "
-                "for user confirmation before proceeding."
+                "Before writing or modifying any code, you MUST extract 3-12 search "
+                "keywords from the user's technical intent and run deep_research. "
+                "Summarize findings and wait for user confirmation before proceeding. "
+                "Use /ask for ordinary web questions."
             ),
         )
         _write_cursor_command(

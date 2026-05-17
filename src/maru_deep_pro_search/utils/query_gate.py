@@ -26,6 +26,13 @@ _CONVERSATIONAL_SUFFIX = re.compile(
     r"\s+(?:for me|please|thanks|thank you|\.{2,})\s*$",
     re.I,
 )
+_KOREAN_SEARCH_FILLER = re.compile(
+    r"(?:"
+    r"딥리서치(?:해서)?|리서치(?:해서)?|검색(?:해서)?|찾아(?:서)?|조사(?:해서)?|"
+    r"알려줘|알려주세요|찾아줘|찾아주세요|검색해줘|검색해주세요|"
+    r"추천해줘|추천해주세요|정리해줘|정리해주세요|해줘|해주세요"
+    r")"
+)
 
 _VAGUE_ONLY = re.compile(
     r"^(?:"
@@ -119,6 +126,10 @@ _TECH_HINT = re.compile(
 )
 _SECURITY_HINT = re.compile(r"\b(cve|vulnerability|exploit|security|ghsa|advisory)\b", re.I)
 _COMPARE_HINT = re.compile(r"\b(vs\.?|versus|compare|comparison|better than)\b", re.I)
+_FRESHNESS_HINT = re.compile(
+    r"\b(latest|current|recent|today|price|prices|recommendation|buy|used|market)\b|"
+    r"(최신|현재|요즘|오늘|시세|가격|추천|중고|구매|가성비)"
+)
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
 _MAX_QUERY_LEN = 180
@@ -183,6 +194,10 @@ def strict_query_gate_enabled() -> bool:
 
 def _tokens(query: str) -> list[str]:
     return [t for t in re.split(r"[\s,;]+", query.strip()) if t]
+
+
+def _has_korean(text: str) -> bool:
+    return bool(re.search(r"[가-힣]", text))
 
 
 def _meaningful_tokens(tokens: list[str]) -> list[str]:
@@ -274,10 +289,18 @@ def optimize_query_for_engine(query: str) -> tuple[str, list[str]]:
 
     original_len = len(q)
     q = _CONVERSATIONAL_PREFIX.sub("", q)
+    q = _CONVERSATIONAL_PREFIX.sub("", q)
+    q = q.strip(" ?.,;")
     q = _CONVERSATIONAL_SUFFIX.sub("", q)
     q = q.strip(" ?.,;")
     if len(q) < original_len:
         transforms.append("stripped_conversational")
+
+    korean_cleaned = _KOREAN_SEARCH_FILLER.sub(" ", q)
+    korean_cleaned = re.sub(r"\s+", " ", korean_cleaned).strip(" ?.,;")
+    if korean_cleaned and len(korean_cleaned) >= _MIN_CHARS and korean_cleaned != q:
+        q = korean_cleaned
+        transforms.append("stripped_korean_filler")
 
     q = sanitize_query(q)
     if q != query.strip():
@@ -300,6 +323,10 @@ def optimize_query_for_engine(query: str) -> tuple[str, list[str]]:
     if _TECH_HINT.search(q) and not _YEAR_RE.search(q):
         q = f"{q} {_CURRENT_YEAR}"
         transforms.append("added_year")
+
+    if _FRESHNESS_HINT.search(q) and not _YEAR_RE.search(q):
+        q = f"{q} {_CURRENT_YEAR}"
+        transforms.append("added_fresh_year")
 
     if (
         _TECH_HINT.search(q)
@@ -326,18 +353,9 @@ def prepare_search_query(
     """Validate and optimize a query. If strict and invalid, passed_gate=False."""
     original = query
     strict_mode = strict if strict is not None else strict_query_gate_enabled()
+    hints: list[str] = []
 
-    ok, reason, hints = validate_query_quality(query)
-    if not ok and strict_mode:
-        return QueryPrepResult(
-            original=original,
-            query=original.strip(),
-            passed_gate=False,
-            reject_reason=reason,
-            hints=hints,
-        )
-
-    optimized, transforms = optimize_query_for_engine(query if ok else query.strip())
+    optimized, transforms = optimize_query_for_engine(query)
     if not optimized.strip():
         return QueryPrepResult(
             original=original,
@@ -350,6 +368,13 @@ def prepare_search_query(
     # Re-validate optimized form
     ok2, reason2, hints2 = validate_query_quality(optimized)
     if not ok2 and strict_mode:
+        if _has_korean(optimized) and len(optimized) >= _MIN_CHARS:
+            return QueryPrepResult(
+                original=original,
+                query=optimized,
+                passed_gate=True,
+                transformations=transforms,
+            )
         return QueryPrepResult(
             original=original,
             query=optimized,

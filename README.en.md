@@ -57,7 +57,7 @@ irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scrip
 ```bash
 python3 -m pip install --user "maru-deep-pro-search[semantic]" && maru-deep-pro-search setup
 ```
-`setup` tries to auto-install `sentence-transformers` into the same interpreter when missing. Set `MARU_SKIP_SEMANTIC_INSTALL=1` to skip.
+`sentence-transformers` is optional. `setup` stays quiet by default; set `MARU_ENABLE_SEMANTIC_INSTALL=1` if you want it to install semantic ranking support.
 
 **Recommended (uv — fastest, includes semantic):**
 ```bash
@@ -115,7 +115,7 @@ Each clone can commit `.maru/` + `harness.yaml` policy as your team prefers; dot
 
 ### 6. Search queries & strict gate
 
-Search tools expect **keyword-style** queries (3–12 terms: library + aspect + year). Conversational prompts like “please help me fix this” are **rejected before any HTTP request** so agents rewrite into SERP-friendly text.
+Search tools prefer **keyword-style** queries (3–12 terms: product/library + aspect + year), but natural English/Korean questions are normalized first when possible. For example, “갤럭시 중고폰 최신 시세 추천” becomes a current-market search instead of being rejected.
 
 - Disable rejection (optimize only): `export MARU_STRICT_QUERY=0`
 - After `deep_research`: receipts live under `~/.maru/receipts/`; **drift** from lockfiles triggers in-tool warnings; call `drift_status` without web I/O.
@@ -141,8 +141,8 @@ Search tools expect **keyword-style** queries (3–12 terms: library + aspect + 
 ### Research Core
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
-| `deep_research` | Multi-engine deep search with query expansion, BM25 ranking, **quality score**, and **auto-fetch** | **🔴 ALWAYS FIRST** — before any code, architecture, or technical decision |
-| `answer` | Perplexity-style direct answer with inline citations | Quick factual check after research |
+| `answer` | Perplexity-style answer-engine packet with ranked sources and fetched evidence | General web questions, prices, recommendations, Korean consumer searches |
+| `deep_research` | Multi-engine deep search with query expansion, BM25 ranking, **quality score**, and **auto-fetch** | Before code, architecture, security, or complex research |
 | `parallel_search` | Run multiple searches simultaneously with comparison mode | Multi-angle analysis (e.g., "vs" comparisons) |
 | `web_search` | Scrape + rank + return cited results | Additional targeted sources |
 | `search_with_citations` | Pre-numbered sources for academic writing | Papers, documentation requiring strict attribution |
@@ -174,9 +174,9 @@ Search tools expect **keyword-style** queries (3–12 terms: library + aspect + 
 
 **Tool decision tree:**
 ```
-Any technical request?
-└── deep_research(query, auto_fetch=3) FIRST
-    ├── Need quick fact? → answer
+User request?
+├── General web question / latest price / recommendation? → answer(query, mode="balanced")
+├── Code / security / architecture / deep research? → deep_research(query, auto_fetch=3)
     ├── Multiple angles? → parallel_search
     ├── Specific URLs? → fetch_page / fetch_bulk
     ├── Blocked site? → stealthy_fetch (last resort)
@@ -193,11 +193,11 @@ One setup injects research-first rules via **every extension surface** each agen
 
 | Agent | MCP | Hooks | Commands | Agents/Cron/Plugins | Rules / Prompts | Skills | Other Surfaces |
 |-------|:---:|:-----:|:--------:|:-------------------:|-----------------|--------|----------------|
-| **Claude Code** | ✅ | 4 lifecycle hooks | `research.md` `verify.md` | — | `CLAUDE.md` + hooks | `~/.claude/skills/` nested | Permissions deny patterns |
-| **Cursor** | ✅ | — | `research.json` `verify.json` | — | `.cursor/rules/*.md` | `~/.cursor/rules/` flat | `autoEnableTools` |
+| **Claude Code** | ✅ | 4 lifecycle hooks | `ask.md` `search.md` `compare.md` `research.md` `verify.md` | — | `CLAUDE.md` + hooks | `~/.claude/skills/` nested | Permissions deny patterns |
+| **Cursor** | ✅ | — | `ask.json` `search.json` `compare.json` `research.json` `verify.json` | — | `.cursor/rules/*.md` | `~/.cursor/rules/` flat | `autoEnableTools` |
 | **Kimi** | ✅ | `PreToolUse` (TOML) | — | — | `config.toml` `system_prompt` | `~/.kimi/skills/` nested | `default_yolo=false` |
 | **Cline** | ✅ | `PreToolUse.py` | — | `maru-research-gate.md` agent + `.cron.md` | `.clinerules/*.md` | `~/.cline/skills/` flat | — |
-| **Continue** | ✅ | — | `research` `verify` | — | `system_message` + `.continue/rules/` | `~/.continue/rules/` flat | — |
+| **Continue** | ✅ | — | `ask` `search` `compare` `research` `verify` | — | `system_message` + `.continue/rules/` | `~/.continue/rules/` flat | — |
 | **Windsurf** | ✅ | 3 Cascade hooks | — | — | `.windsurf/rules/*.md` + `AGENTS.md` | `~/.windsurf/rules/` flat | `.codeiumignore` |
 | **Zed** | ✅ | — | — | — | `.rules` + `assistant.md` | — | `tool_permissions` |
 | **JetBrains** | ⚠️ | — | — | — | `.idea/ai-assistant-rules/*.md` | `.idea/ai-assistant-rules/` flat | — |

@@ -2,8 +2,9 @@
 name: Deep Research with maru-deep-pro-search
 id: deep-research
 description: >
-  Multi-engine web research with BM25 cross-ranking. Use before ANY technical
-  decision — library versions, APIs, best practices, security advisories.
+  Multi-engine web research with BM25 cross-ranking. Use before technical
+  decisions — library versions, APIs, best practices, security advisories.
+  For general web questions or consumer recommendations, use answer-engine.
 triggers:
   - Before implementing new features
   - Before adding dependencies
@@ -33,6 +34,9 @@ result = await deep_research(
 ```
 
 Then `fetch_page` on top 2-3 results to verify claims. Cite sources as `[1]`, `[2]`.
+
+For ordinary user searches like "갤럭시 중고폰 최신 시세 추천", prefer
+`answer(query, mode="balanced")` so the user gets an answer-ready evidence packet.
 
 ## Quality Signals
 

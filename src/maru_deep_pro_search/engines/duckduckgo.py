@@ -32,6 +32,7 @@ class _SuppressScraplingNoise(logging.Filter):
 
 
 logging.getLogger("scrapling").addFilter(_SuppressScraplingNoise())
+logging.getLogger("scrapling").setLevel(logging.WARNING)
 
 
 # Multiple selector sets for fault tolerance

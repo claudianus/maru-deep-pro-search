@@ -30,44 +30,9 @@ from ..backup import (
     write_json_safe,
     write_text_safe,
 )
+from ..hooks_templates import template_body, write_managed_hook
 from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter, get_mcp_server_command
-
-# ── Windsurf Cascade Hook gate script ───────────────────────────────
-_WINDSURF_HOOK_SCRIPT = '''#!/usr/bin/env python3
-"""Windsurf Cascade Hook — blocks edits/tool-calls without research."""
-import json
-import os
-import sys
-import time
-
-MARKER = os.path.expanduser("~/.maru/last_research")
-TTL_SECONDS = 1800  # 30 min
-
-def main() -> None:
-    data = json.load(sys.stdin)
-    action = data.get("agent_action_name", "")
-
-    # Only gate write-related and tool-use actions
-    if action not in (
-        "pre_write_code", "pre_mcp_tool_use", "pre_user_prompt"
-    ):
-        sys.exit(0)
-
-    if not os.path.exists(MARKER):
-        print("[MARU] Research required before editing. Run deep_research first.", file=sys.stderr)
-        sys.exit(2)
-
-    elapsed = time.time() - os.path.getmtime(MARKER)
-    if elapsed > TTL_SECONDS:
-        print(f"[MARU] Research expired ({elapsed/60:.0f}min). Re-run deep_research.", file=sys.stderr)
-        sys.exit(2)
-
-    sys.exit(0)
-
-if __name__ == "__main__":
-    main()
-'''
 
 
 class WindsurfAdapter(AgentAdapter):
@@ -145,7 +110,12 @@ class WindsurfAdapter(AgentAdapter):
         write_json_safe(path, config)
         return True
 
-    def inject_rules(self, scope: str = "user") -> bool:
+    def refresh_managed_hooks(self, *, repair: bool = False) -> bool:
+        gate_script = Path.home() / ".maru" / "windsurf_research_gate.py"
+        write_managed_hook(gate_script, template_body("windsurf_research_gate"), force=repair)
+        return True
+
+    def inject_rules(self, scope: str = "user", *, repair: bool = False) -> bool:
         protocol = get_protocol_for_agent(self.name)
 
         # 1. .windsurf/rules/*.md — official rule format
@@ -165,19 +135,15 @@ class WindsurfAdapter(AgentAdapter):
             write_text_safe(agents_path, new_agents)
 
         # 3. .windsurf/hooks.json — Cascade Hooks (3-layer gate)
-        self._install_hooks(scope)
+        self._install_hooks(scope, repair=repair)
 
         return True
 
-    def _install_hooks(self, scope: str) -> None:
+    def _install_hooks(self, scope: str, *, repair: bool = False) -> None:
         """Install Windsurf Cascade Hooks for research gating."""
         # Write the gate script to a known location
         gate_script = Path.home() / ".maru" / "windsurf_research_gate.py"
-        gate_script.parent.mkdir(parents=True, exist_ok=True)
-        if not gate_script.exists():
-            gate_script.write_text(_WINDSURF_HOOK_SCRIPT, encoding="utf-8")
-            gate_script.chmod(0o755)
-
+        write_managed_hook(gate_script, template_body("windsurf_research_gate"), force=repair)
         cmd = f"python3 {gate_script}"
 
         hooks_path = self._hooks_path(scope)

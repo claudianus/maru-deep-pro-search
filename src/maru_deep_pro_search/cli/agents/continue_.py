@@ -201,19 +201,35 @@ class ContinueAdapter(AgentAdapter):
             },
         ]
 
-    def _inject_yaml_rules(self, data: dict[str, Any], protocol: str) -> None:
+    def _inject_yaml_rules(
+        self, data: dict[str, Any], protocol: str, *, repair: bool = False
+    ) -> None:
         rules = data.setdefault("rules", [])
         if not isinstance(rules, list):
             rules = []
             data["rules"] = rules
-        for i, rule in enumerate(list(rules)):
-            if yaml_rule_has_protocol(rule):
-                new_r = inject_protocol(cast(str, rule), protocol)
-                if new_r != rule:
-                    rules[i] = new_r
-                break
+        if repair:
+            kept: list[Any] = []
+            merged = False
+            for rule in rules:
+                if isinstance(rule, str) and yaml_rule_has_protocol(rule):
+                    if not merged:
+                        kept.append(inject_protocol(rule, protocol))
+                        merged = True
+                    continue
+                kept.append(rule)
+            if not merged:
+                kept.append(protocol)
+            data["rules"] = kept
         else:
-            rules.append(protocol)
+            for i, rule in enumerate(list(rules)):
+                if yaml_rule_has_protocol(rule):
+                    new_r = inject_protocol(cast(str, rule), protocol)
+                    if new_r != rule:
+                        rules[i] = new_r
+                    break
+            else:
+                rules.append(protocol)
 
         prompts = data.setdefault("prompts", [])
         if not isinstance(prompts, list):
@@ -223,13 +239,13 @@ class ContinueAdapter(AgentAdapter):
         for spec in self._research_prompts():
             self._upsert_named_spec(prompts, spec)
 
-    def inject_rules(self, scope: str = "user") -> bool:
+    def inject_rules(self, scope: str = "user", *, repair: bool = False) -> bool:
         protocol = get_protocol_for_agent(self.name)
         kind, path = self._resolve_config(scope)
 
         if kind == "yaml":
             data = self._load_yaml(path)
-            self._inject_yaml_rules(data, protocol)
+            self._inject_yaml_rules(data, protocol, repair=repair)
             self._write_yaml(path, data)
         else:
             config = read_json_safe(path)

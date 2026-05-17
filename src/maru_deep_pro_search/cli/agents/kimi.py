@@ -21,45 +21,10 @@ from ..backup import (
     sorted_backup_paths,
     write_text_safe,
 )
+from ..hooks_templates import template_body, write_managed_hook
 from ..prompts import get_protocol_for_agent
 from .base import AgentAdapter, get_mcp_server_command
 from .kimi_toml import upsert_kimi_hook_block, upsert_kimi_system_prompt
-
-# ── Kimi PreToolUse hook script ─────────────────────────────────────
-_KIMI_HOOK_SCRIPT = '''#!/usr/bin/env python3
-"""Kimi PreToolUse hook — blocks edits without research."""
-import json
-import os
-import sys
-import time
-
-MARKER = os.path.expanduser("~/.maru/last_research")
-TTL_SECONDS = 1800
-
-def main() -> None:
-    data = json.load(sys.stdin)
-    event = data.get("event", "")
-    if event != "PreToolUse":
-        sys.exit(0)
-
-    tool = data.get("tool", "")
-    if tool not in ("WriteFile", "ApplyDiff", "Shell", "BrowserAction"):
-        sys.exit(0)
-
-    if not os.path.exists(MARKER):
-        print("[MARU] Research required before editing. Run deep_research first.", file=sys.stderr)
-        sys.exit(1)
-
-    elapsed = time.time() - os.path.getmtime(MARKER)
-    if elapsed > TTL_SECONDS:
-        print(f"[MARU] Research expired ({elapsed/60:.0f}min). Re-run deep_research.", file=sys.stderr)
-        sys.exit(1)
-
-    sys.exit(0)
-
-if __name__ == "__main__":
-    main()
-'''
 
 
 class KimiAdapter(AgentAdapter):
@@ -111,7 +76,12 @@ class KimiAdapter(AgentAdapter):
         write_json_safe(path, config)
         return True
 
-    def inject_rules(self, scope: str = "user") -> bool:
+    def refresh_managed_hooks(self, *, repair: bool = False) -> bool:
+        hook_script = Path.home() / ".maru" / "kimi_research_gate.py"
+        write_managed_hook(hook_script, template_body("kimi_research_gate"), force=repair)
+        return True
+
+    def inject_rules(self, scope: str = "user", *, repair: bool = False) -> bool:
         protocol = get_protocol_for_agent(self.name)
         config_path = self._config_path(scope)
 
@@ -120,10 +90,7 @@ class KimiAdapter(AgentAdapter):
         content = upsert_kimi_system_prompt(content, protocol)
 
         hook_script = Path.home() / ".maru" / "kimi_research_gate.py"
-        hook_script.parent.mkdir(parents=True, exist_ok=True)
-        if not hook_script.exists():
-            hook_script.write_text(_KIMI_HOOK_SCRIPT, encoding="utf-8")
-            hook_script.chmod(0o755)
+        write_managed_hook(hook_script, template_body("kimi_research_gate"), force=repair)
 
         hook_block = f"""[[hooks]]
 event = "PreToolUse"

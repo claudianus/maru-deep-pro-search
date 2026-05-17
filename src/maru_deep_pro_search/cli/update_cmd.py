@@ -5,7 +5,13 @@ from __future__ import annotations
 import argparse
 import sys
 
-from ..utils.updater import check_for_update, get_update_notice, perform_update
+from ..utils.updater import (
+    SETUP_REPAIR_HINT,
+    auto_setup_enabled,
+    check_for_update,
+    get_update_notice,
+    perform_update,
+)
 from .env_check import bold, cyan, green, red, yellow
 
 
@@ -29,6 +35,11 @@ def main(argv: list[str] | None = None) -> int:
         "--dry-run",
         action="store_true",
         help="Show what would be updated without installing.",
+    )
+    parser.add_argument(
+        "--with-setup",
+        action="store_true",
+        help="After upgrade, run setup --repair on detected agents (same as MARU_UPDATE_AUTO_SETUP=1).",
     )
 
     args = parser.parse_args(argv)
@@ -56,8 +67,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     print(f"{yellow('⬆️  Updating...')}\n")
-    success, msg = perform_update(dry_run=args.dry_run)
+    with_setup = auto_setup_enabled(args.with_setup)
+    success, msg = perform_update(dry_run=args.dry_run, with_setup=with_setup)
     print(msg)
+    if success and with_setup and not args.dry_run:
+        from .setup import run_repair_after_update
+
+        print(f"\n{bold('⚙️  Refreshing agent configs...')}\n")
+        repair_code = run_repair_after_update()
+        if repair_code != 0:
+            print(yellow(f"   Agent repair had issues. Try: {SETUP_REPAIR_HINT}"))
+            return repair_code
+        print(green("   ✓ Agent configs repaired for detected agents."))
     return 0 if success else 1
 
 

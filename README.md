@@ -74,7 +74,7 @@ PyPI만 쓸 때는 `uv tool install --python 3.12 "maru-deep-pro-search[semantic
 ### 1. 설치 확인
 ```bash
 maru-deep-pro-search --version
-# 예: 0.17.1
+# 예: 0.17.2
 ```
 
 ### 2. 에이전트 설정
@@ -82,6 +82,17 @@ maru-deep-pro-search --version
 maru-deep-pro-search setup
 ```
 설치된 에이전트(Claude, Cursor 등)를 자동 감지하고 MCP 설정을 주입합니다.
+
+**업그레이드(이미 설치한 경우)** — `pip install -U`만 하면 에이전트 설정은 자동으로 바뀌지 않습니다.
+
+```bash
+pip install -U maru-deep-pro-search
+maru-deep-pro-search update --with-setup
+# 또는: maru-deep-pro-search setup --repair
+maru-deep-pro-search setup --check    # 진단만
+```
+
+프로토콜이 중복되거나 훅 문구가 낡았을 때 `setup --repair`를 권장합니다. SKILL 파일까지 덮어쓰려면 `setup --repair --repair-skills`.
 
 ### 3. Claude Code용 MCP 설정 예시
 `~/.claude/settings.json`에 추가:
@@ -371,8 +382,11 @@ maru-deep-pro-search
 
 # AI 에이전트 설정 + 스킬 파일 설치
 maru-deep-pro-search setup
+maru-deep-pro-search setup --check
+maru-deep-pro-search setup --repair
 maru-deep-pro-search setup --list
 maru-deep-pro-search setup --restore
+maru-deep-pro-search update --with-setup
 
 # 프로젝트 하네스 초기화 (.maru만; 에이전트 설정은 하지 않음)
 maru-deep-pro-search init

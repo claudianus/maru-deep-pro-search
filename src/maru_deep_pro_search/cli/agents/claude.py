@@ -15,6 +15,10 @@ from ..backup import (
     write_json_safe,
     write_text_safe,
 )
+from ..hooks_templates import (
+    template_body,
+    write_managed_hook,
+)
 from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter, get_mcp_server_command
 
@@ -93,7 +97,7 @@ class ClaudeAdapter(AgentAdapter):
         return True
 
     # ── inject rules ────────────────────────────────────────────
-    def inject_rules(self, scope: str = "user") -> bool:
+    def inject_rules(self, scope: str = "user", *, repair: bool = False) -> bool:
         # 1. CLAUDE.md
         md_path = self._claude_md_path(scope)
         protocol = get_protocol_for_agent(self.name)
@@ -103,104 +107,36 @@ class ClaudeAdapter(AgentAdapter):
             write_text_safe(md_path, new_content)
 
         # 2. Hook scripts (ensure they exist even if backup restored)
-        self._write_hooks()
+        self._write_hooks(repair=repair)
 
         # 3. Custom commands
         self._write_commands(scope)
         return True
 
-    # ── helpers ─────────────────────────────────────────────────
-    def _write_hooks(self) -> None:
-        """Install the research-gate hook scripts that PreToolUse/PostToolUse call.
+    def refresh_managed_hooks(self, *, repair: bool = False) -> bool:
+        self._write_hooks(repair=repair)
+        return True
 
-        Claude hooks are global-only (user scope) per official docs.
-        """
+    # ── helpers ─────────────────────────────────────────────────
+    def _write_hooks(self, *, repair: bool = False) -> None:
+        """Install the research-gate hook scripts that PreToolUse/PostToolUse call."""
         hooks_dir = Path.home() / ".claude" / "hooks"
         hooks_dir.mkdir(parents=True, exist_ok=True)
-
-        # ── PreToolUse gate ──
-        gate_script = hooks_dir / "maru_research_gate.py"
-        if not gate_script.exists():
-            gate_script.write_text(
-                "#!/usr/bin/env python3\n"
-                '"""Claude Code PreToolUse hook — blocks Bash without research."""\n'
-                "import json, os, sys, time\n\n"
-                "def main() -> None:\n"
-                "    data = json.load(sys.stdin)\n"
-                '    tool_name = data.get("tool_name", "")\n'
-                "    # PreToolUse exit 2 blocks Bash reliably; Write/Edit have a known\n"
-                "    # bug where exit 2 is ignored (github.com/anthropics/claude-code/issues/13744).\n"
-                "    # We block Bash here and rely on PostToolUse to revert Write/Edit.\n"
-                '    if tool_name != "Bash":\n'
-                "        sys.exit(0)\n"
-                '    marker = os.path.expanduser("~/.maru/last_research")\n'
-                "    if not os.path.exists(marker):\n"
-                '        print("[MARU] Research required. Call answer or deep_research before running commands.", file=sys.stderr)\n'
-                "        sys.exit(2)\n"
-                "    elapsed = time.time() - os.path.getmtime(marker)\n"
-                "    if elapsed > 1800:\n"
-                '        print(f"[MARU] Research expired ({elapsed/60:.0f}min ago). Re-run answer or deep_research.", file=sys.stderr)\n'
-                "        sys.exit(2)\n"
-                "    sys.exit(0)\n\n"
-                'if __name__ == "__main__":\n'
-                "    main()\n",
-                encoding="utf-8",
-            )
-            gate_script.chmod(0o755)
-
-        # ── PostToolUse revert script ──
-        revert_script = hooks_dir / "maru_research_revert.py"
-        if not revert_script.exists():
-            revert_script.write_text(
-                "#!/usr/bin/env python3\n"
-                '"""Claude Code PostToolUse hook — reverts Write/Edit without research.\n'
-                "\n"
-                "Workaround for PreToolUse exit 2 not blocking Write/Edit:\n"
-                "https://github.com/anthropics/claude-code/issues/13744\n"
-                '"""\n'
-                "import json, os, subprocess, sys\n\n"
-                "def main() -> None:\n"
-                "    data = json.load(sys.stdin)\n"
-                '    tool_name = data.get("tool_name", "")\n'
-                '    if tool_name not in ("Write", "Edit"):\n'
-                "        sys.exit(0)\n"
-                '    marker = os.path.expanduser("~/.maru/last_research")\n'
-                "    ok = False\n"
-                "    if os.path.exists(marker):\n"
-                "        import time\n"
-                "        if time.time() - os.path.getmtime(marker) <= 1800:\n"
-                "            ok = True\n"
-                "    if ok:\n"
-                "        sys.exit(0)\n"
-                "    # Revert the file change using git checkout\n"
-                '    file_path = data.get("tool_input", {}).get("file_path", "")\n'
-                "    if file_path:\n"
-                '        subprocess.run(["git", "checkout", "--", file_path], capture_output=True)\n'
-                '    print("[MARU-POST-GATE] Reverted un-researched edit. Run /research first.", file=sys.stderr)\n'
-                "    sys.exit(0)\n\n"
-                'if __name__ == "__main__":\n'
-                "    main()\n",
-                encoding="utf-8",
-            )
-            revert_script.chmod(0o755)
-
-        # ── SessionStart inject script ──
-        session_script = hooks_dir / "maru_session_start.py"
-        if not session_script.exists():
-            session_script.write_text(
-                "#!/usr/bin/env python3\n"
-                '"""Claude Code SessionStart hook — inject research reminder."""\n'
-                "import json, sys\n\n"
-                "def main() -> None:\n"
-                "    print(json.dumps({\n"
-                '        "additionalContext": "[MARU-RESEARCH-GATE] New session. You MUST run deep_research before any code changes."\n'
-                "    }))\n"
-                "    sys.exit(0)\n\n"
-                'if __name__ == "__main__":\n'
-                "    main()\n",
-                encoding="utf-8",
-            )
-            session_script.chmod(0o755)
+        write_managed_hook(
+            hooks_dir / "maru_research_gate.py",
+            template_body("claude_research_gate"),
+            force=repair,
+        )
+        write_managed_hook(
+            hooks_dir / "maru_research_revert.py",
+            template_body("claude_research_revert"),
+            force=repair,
+        )
+        write_managed_hook(
+            hooks_dir / "maru_session_start.py",
+            template_body("claude_session_start"),
+            force=repair,
+        )
 
     def _write_settings(self, scope: str) -> None:
         path = self._settings_path(scope)

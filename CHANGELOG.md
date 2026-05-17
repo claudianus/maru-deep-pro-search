@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.17.2] - 2026-05-17
+
+### Added
+- **`setup --check` 확장** — `cli/doctor.py`: 중복 프로토콜 블록, 낡은 maru-managed 훅, MCP 누락, 레거시 project-scope 경고.
+- **`setup --repair`** — 프로토콜 재주입, 커맨드 upsert, 관리 훅 버전 갱신, MCP 재등록 (`--repair-skills`로 SKILL 덮어쓰기 opt-in).
+- **`update --with-setup`** — 업그레이드 후 감지된 에이전트 자동 수리 (`MARU_UPDATE_AUTO_SETUP=1` 동일).
+
+### Changed
+- **훅 중앙화** — `cli/hooks_templates.py` + `# maru-managed: <version>` 스탬프 (Claude, Windsurf, Kimi, Aider).
+- **Continue YAML** — `--repair` 시 중복 protocol rule 제거.
+- **업데이트 안내** — PyPI 업그레이드 성공 시 `setup --repair` 안내 문구.
+
 ## [0.17.1] - 2026-05-17
 
 ### Added

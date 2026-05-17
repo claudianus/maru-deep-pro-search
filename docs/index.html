@@ -26,7 +26,7 @@
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Any",
   "programmingLanguage": "Python",
-  "softwareVersion": "0.19.0",
+  "softwareVersion": "0.19.1",
   "license": "https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE",
   "codeRepository": "https://github.com/claudianus/maru-deep-pro-search",
   "downloadUrl": "https://pypi.org/project/maru-deep-pro-search/",
@@ -155,8 +155,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
     <div class="mb-10">
         <span class="inline-flex flex-wrap items-center justify-center gap-2 px-3 py-1 rounded-full bg-maru-500/10 border border-maru-500/20 text-maru-300 text-sm font-mono">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="ko">v0.19.0 — RRF · token efficiency · parallel fetch</span>
-        <span class="en hidden">v0.19.0 — RRF · token efficiency · parallel fetch</span>
+        <span class="ko">v0.19.1 — 더 빠른 조사 · 기본 10개 출처 · 업그레이드 시 setup --repair</span>
+        <span class="en hidden">v0.19.1 — faster research · 10 sources by default · run setup --repair after upgrade</span>
       </span>
     </div>
     <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -954,8 +954,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
         <div class="absolute top-3 right-3 text-5xl font-black text-white/[0.03] select-none">2</div>
         <h3 class="text-sm font-bold text-blue-300 mb-2 ko">웹에서 한 번에 조사</h3>
         <h3 class="text-sm font-bold text-blue-300 mb-2 en hidden">One-pass web research</h3>
-        <p class="text-gray-400 text-xs leading-relaxed ko">검색창에 타이핑할 법한 <strong>짧은 한국어/영어 키워드</strong>로 부탁하세요. 잡담처럼 길게 쓰면 결과가 흐려질 수 있어요.</p>
-        <p class="text-gray-400 text-xs leading-relaxed en hidden">Ask for <strong>short keyword-style probes</strong> like you’d type into Google—not long chatty paragraphs.</p>
+        <p class="text-gray-400 text-xs leading-relaxed ko">검색창에 타이핑할 법한 <strong>짧은 한국어/영어 키워드</strong>로 부탁하세요. 예: <em>「갤럭시 중고폰 최신 시세」</em>(일반 질문) · <em>「FastAPI CVE 2025」</em>(코드·보안·깊은 조사).</p>
+        <p class="text-gray-400 text-xs leading-relaxed en hidden">Use <strong>short keyword-style probes</strong>. e.g. <em>“used Galaxy phone prices”</em> (everyday) · <em>“FastAPI CVE 2025”</em> (code/security/deep dive).</p>
       </div>
       <div class="glass-card rounded-2xl p-5 border-t-4 border-t-purple-500 relative overflow-hidden">
         <div class="absolute top-3 right-3 text-5xl font-black text-white/[0.03] select-none">3</div>
@@ -1236,6 +1236,18 @@ maru-deep-pro-search init   # 프로젝트에 .maru 하네스</pre>
         <pre class="p-4 text-sm font-mono text-gray-300 overflow-x-auto">docker build -t maru-search .
 docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search</pre>
       </div>
+      <div class="glass-card rounded-2xl p-5 md:p-6 border border-amber-500/20 bg-amber-950/10">
+        <h3 class="text-amber-200 font-bold text-sm mb-2">
+          <i class="fas fa-arrow-up mr-2"></i>
+          <span class="ko">이미 설치했나요?</span>
+          <span class="en hidden">Already installed?</span>
+        </h3>
+        <p class="text-gray-400 text-xs mb-3 ko"><code class="text-amber-200/90">pip install -U</code>만으로는 Cursor·Claude 설정이 바뀌지 않습니다. 패키지 업데이트 후 에이전트 설정을 맞춰 주세요.</p>
+        <p class="text-gray-400 text-xs mb-3 en hidden"><code class="text-amber-200/90">pip install -U</code> does not refresh agent configs. Sync them after upgrading the package.</p>
+        <pre class="text-[11px] md:text-xs font-mono text-gray-300 leading-relaxed whitespace-pre-wrap">pip install -U maru-deep-pro-search
+maru-deep-pro-search update --with-setup
+maru-deep-pro-search setup --check</pre>
+      </div>
       <div class="mt-6">
         <div class="glass-card rounded-xl p-4 max-w-md mx-auto">
           <div class="text-maru-300 font-bold text-sm mb-2"><i class="fas fa-chart-bar mr-2"></i>Stats</div>
@@ -1257,7 +1269,7 @@ docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search</pre>
           <i class="fas fa-search text-white text-sm"></i>
         </div>
         <span class="font-bold">maru-deep-pro-search</span>
-        <span class="text-gray-600 text-sm">v0.19.0</span>
+        <span class="text-gray-600 text-sm">v0.19.1</span>
       </div>
       <div class="flex items-center gap-6 text-sm text-gray-500">
         <a href="#playbook" class="hover:text-white transition"><i class="fas fa-book-open mr-1"></i><span class="ko">플레이북</span><span class="en hidden">Playbook</span></a>

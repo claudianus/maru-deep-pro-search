@@ -122,7 +122,9 @@ class XEngine(SearchEngine):
 7. 머지 후 main pull → 태그 → publish.yml watch
 ```
 
-### cubic 루프 (필수 — 위반 시 머지 금지)
+### cubic 루프 (필수 — **코딩 에이전트가 직접** 수행)
+
+**사용자에게 “cubic 돌려 주세요”로 넘기지 않는다.** PR을 열었거나 머지 직전이면 **에이전트**가 아래 루프를 끝까지 돌린 뒤 결과만 보고한다.
 
 **`cubic · AI code reviewer`가 `pending`이거나 `get_pr_issues`에 open 이슈가 있으면 절대 머지하지 않는다.** pass 체크만으로는 부족하다.
 
@@ -130,17 +132,18 @@ class XEngine(SearchEngine):
 # 1) cubic check가 pass 될 때까지 대기 (수 분 소요 가능)
 gh pr checks <N> --watch  # 또는 60–120s 간격으로 gh pr checks <N> | rg cubic
 
-# 2) open 이슈 조회 (MCP get_pr_issues 또는 cubic UI)
+# 2) open 이슈 조회 — MCP `get_pr_issues` (owner, repo, pullNumber)
 # Open Issues > 0 이면 P1/P2부터 코드 수정 → commit → push → 1)부터 반복
 
 # 3) Open Issues = 0 이고 CI 전체 pass 일 때만:
 gh pr merge <N> --squash
 ```
 
+- **담당:** 코딩 에이전트 — 대기·`get_pr_issues`·수정·push·재대기·(조건 충족 시) 머지까지.
 - **반영:** 유효한 P1/P2는 코드로 고친다.
 - **기각:** 오탐만 PR 코멘트에 근거를 남긴다 (코드 변경 없이 닫을 수 없으면 cubic에 회신).
 - **재검:** push마다 cubic이 새 커밋을 리뷰할 때까지 다시 대기한다.
-- **금지:** cubic pending / open 이슈 상태에서 “나중에 고침” 머지.
+- **금지:** cubic pending / open 이슈 상태에서 “나중에 고침” 머지 · 사용자에게 cubic 루프만 안내하고 종료.
 
 **PR 브랜치에 cubic push한 뒤에는 반드시:**
 ```bash

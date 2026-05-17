@@ -32,12 +32,21 @@
 | | 에이전트 내장 검색 | maru-deep-pro-search |
 |---|---|---|
 | **엔진** | 1–2개, 폴오버 없음 | **9엔진 자동 폴오버** |
-| **랭킹** | 엔진 기본 순서 | **BM25 + 시맨틱 + 권위도/신선도/코드밀도** |
+| **랭킹** | 엔진 기본 순서 | **9엔진 결과를 한 번에 재정렬(RRF+BM25·시맨틱·권위/신선도)** |
 | **인용** | 환각 또는 없음 | **`[1]`, `[2]` 네이티브 ID + 실제 URL** |
 | **방어** | 없음 | **72시그니처 프롬프트 인젝션 + 제로폭 문자 정제** |
 | **강제** | "검색해주세요" (무시됨) | **3계층 기술적 게이트키핑 + 코드 검증** |
 | **에이전트** | 범용 | **20개 전용 어댑터 + 스킬 파일 주입** |
 | **비용** | 변동 | **영원히 $0 — API 키 불필요** |
+
+---
+
+## 3분 요약
+
+1. **설치** → `maru-deep-pro-search setup` → 사용 중인 에이전트(Cursor, Claude Code 등) **재시작**
+2. **일반 질문**(시세·추천·쇼핑) → 에이전트에게 평문으로 *「갤럭시 중고폰 최신 시세」* — 내부적으로 `answer`가 근거와 `[1]` 인용을 모읍니다
+3. **코드·보안·설계** → *「FastAPI vs Django 2025 아키텍처 비교」*처럼 기술·깊은 조사 — `deep_research`가 먼저 돌고(기본 **10개** 출처) 그다음 코드
+4. **이미 쓰는 중** → `pip install -U maru-deep-pro-search` 후 `maru-deep-pro-search update --with-setup` (또는 `setup --repair`) → `setup --check`로 확인
 
 ---
 
@@ -74,7 +83,7 @@ PyPI만 쓸 때는 `uv tool install --python 3.12 "maru-deep-pro-search[semantic
 ### 1. 설치 확인
 ```bash
 maru-deep-pro-search --version
-# 예: 0.17.2
+# 예: 0.19.1 (PyPI 최신)
 ```
 
 ### 2. 에이전트 설정
@@ -150,7 +159,17 @@ maru-deep-pro-search-init
 
 ## 🛠️ 18개 MCP 툴
 
-### 리서치 코어
+### 자주 쓰는 3개
+
+| 툴 | 한 줄 설명 | 예시 질문 |
+|------|-----------|-----------|
+| `answer` | 일반 웹 질문 — 랭킹된 출처 + 인용 패킷 | 갤럭시 중고 시세, 추천 |
+| `deep_research` | 다중 엔진 깊은 조사(기본 10소스) + 선택 자동 페치 | 라이브러리 비교, CVE, 아키텍처 |
+| `fetch_page` | 찾은 URL 본문 읽기(정제·방어 적용) | 공식 문서 링크 하나만 열기 |
+
+아래 표는 **고급·진단** 툴입니다. 대부분의 작업은 위 세 가지와 에이전트 대화만으로 충분합니다.
+
+### 리서치 코어 (고급)
 | 툴 | 용도 | 언제 사용 |
 |------|---------|-------------|
 | `answer` | Perplexity 스타일 answer-engine 패킷 + 랭킹 소스 + 페치 근거 | 일반 웹 질문, 시세, 추천, 한국어 소비자 검색 |
@@ -159,14 +178,14 @@ maru-deep-pro-search-init
 | `web_search` | 스크래핑 + 랭킹 + 인용 결과 반환 | 추가 타겟 소스 수집 |
 | `search_with_citations` | 학술 작성용 사전 번호 소스 | 논문, 엄격한 인용 필요 시 |
 
-### 페치 & 추출
+### 페치 & 추출 (고급)
 | 툴 | 용도 | 언제 사용 |
 |------|---------|-------------|
 | `fetch_page` | 단일 URL에서 깨끗한 콘텐츠 추출 (403 자동 스텔스 폴백) | 리서치로 찾은 문서 읽기 |
 | `fetch_bulk` | 중복 제거가 포함된 병렬 페치 | 2–10개 URL 동시 읽기 |
 | `stealthy_fetch` | 보호된 사이트용 안티봇 우회 | Cloudflare/DataDome 차단 시 (최후 수단) |
 
-### 검증 & 강제
+### 검증 & 강제 (고급)
 | 툴 | 용도 | 언제 사용 |
 |------|---------|-------------|
 | `generate_code` | **코드 검증 게이트** — 인용 없는 코드 차단 | 리서치 후 — 코드가 인용에 기반하는지 확인 |
@@ -175,7 +194,7 @@ maru-deep-pro-search-init
 | `query_knowledge` | 지식 저장소에서 과거 리서치 검색 | 웹 재검색 없이 리서치 재사용 |
 | `export_research` | 현재 세션 리서치를 마크다운 파일로 내보내기 | 리서치 결과 저장/공유 |
 
-### 엔진 & 인프라
+### 엔진 & 인프라 (진단)
 | 툴 | 용도 | 언제 사용 |
 |------|---------|-------------|
 | `list_engines` | 신뢰도 및 지연 시간 메타데이터와 함께 모든 검색 엔진 나열 | 적합한 엔진 선택 |
@@ -189,6 +208,7 @@ maru-deep-pro-search-init
 사용자 요청?
 ├── 일반 웹 질문 / 최신 시세 / 추천? → answer(query, mode="balanced")
 ├── 코드 / 보안 / 아키텍처 / 깊은 조사? → deep_research(query, auto_fetch=3)
+│   ├── 기본 max_sources=10; 더 필요하면 max_sources만 올리기
     ├── 다각도 분석? → parallel_search
     ├── 특정 URL 읽기? → fetch_page / fetch_bulk
     ├── 사이트 차단? → stealthy_fetch (최후 수단)
@@ -245,7 +265,7 @@ MCP 클라이언트 (Claude, Cursor, Kimi, Windsurf, ...)
 ┌──────────────────────────────────────────────────────────────┐
 │  maru-deep-pro-search MCP 서버                               │
 │  ├─ 18개 툴 (검색, 페치, 인용, 검증, 인트로스펙션)           │
-│  ├─ 9엔진 폴오버 레지스트리 (쿼리 인식 선택)                   │
+│  ├─ 9엔진 폴오버 + RRF 융합 (기본 10소스, 짧고 빠른 응답)      │
 │  ├─ 하이브리드 랭킹 (BM25 + 시맨틱 + 권위/신선도)            │
 │  ├─ 3계층 강제 + 리서치 품질 점수 (A-F)                        │
 │  ├─ 72시그니처 정제 + 제로폭 문자 방어                         │
@@ -392,6 +412,7 @@ maru-deep-pro-search setup --repair
 maru-deep-pro-search setup --list
 maru-deep-pro-search setup --restore
 maru-deep-pro-search update --with-setup
+# 업그레이드 후: maru-deep-pro-search setup --check
 
 # 프로젝트 하네스 초기화 (.maru만; 에이전트 설정은 하지 않음)
 maru-deep-pro-search init

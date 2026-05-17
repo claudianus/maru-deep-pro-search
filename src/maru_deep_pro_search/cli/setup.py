@@ -373,19 +373,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog=prog,
         description=(
-            "Setup tool for maru-deep-pro-search — installs MCP config and "
-            "injects research-first rules into 20 supported AI agents."
+            f"maru-deep-pro-search 설정 — MCP·리서치 우선 규칙을 "
+            f"{len(ADAPTER_REGISTRY)}개 에이전트 전역 경로에 주입합니다."
         ),
         epilog=(
-            "Examples:\n"
-            "  maru-deep-pro-search setup              # Auto-detect and configure all agents\n"
-            "  maru-deep-pro-search setup --agents cursor claude  # Configure specific agents\n"
-            "  maru-deep-pro-search setup --list       # Show detected agents\n"
-            "  maru-deep-pro-search setup --check      # Verify config status\n"
-            "  maru-deep-pro-search setup --repair     # Fix stale hooks / duplicate protocol\n"
-            "  maru-deep-pro-search setup --check --agents cursor  # Check specific agents\n"
-            "  maru-deep-pro-search setup --restore    # Restore from backup\n"
-            "\nSupported agents: " + ", ".join(sorted(ADAPTER_REGISTRY.keys()))
+            "예시:\n"
+            "  maru-deep-pro-search setup              # 감지된 에이전트 자동 설정\n"
+            "  maru-deep-pro-search setup --agents cursor claude\n"
+            "  maru-deep-pro-search setup --list       # 감지 목록\n"
+            "  maru-deep-pro-search setup --check      # 설정 진단 (읽기 전용)\n"
+            "  maru-deep-pro-search setup --repair     # 낡은 훅·중복 프로토콜 수리\n"
+            "  maru-deep-pro-search setup --repair --repair-skills  # SKILL까지 덮어쓰기\n"
+            "  maru-deep-pro-search setup --restore    # 백업에서 복원\n"
+            "  maru-deep-pro-search update --with-setup  # 업그레이드 후 자동 repair\n"
+            "\n지원 에이전트: " + ", ".join(sorted(ADAPTER_REGISTRY.keys()))
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -394,8 +395,8 @@ def main(argv: list[str] | None = None) -> int:
     # setup command (default)
     setup_parser = subparsers.add_parser(
         "setup",
-        help="Configure AI agents with MCP settings and research-first rules",
-        description="Auto-detect installed AI agents and inject MCP configuration.",
+        help="에이전트 MCP·리서치 우선 규칙 설정",
+        description="설치된 AI 에이전트를 감지하고 전역 MCP 설정을 주입합니다.",
     )
     setup_parser.add_argument(
         "--agents",

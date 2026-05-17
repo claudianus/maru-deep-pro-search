@@ -1,0 +1,82 @@
+src/maru_deep_pro_search/cli/agents/claude.py
+  s_15929f54bfa054::t_199db48cae07fc 18-21
+  s_15929f54bfa054::t_2f49acfc5cf18b 100,110,116-118,120-122,125-139
+src/maru_deep_pro_search/cli/doctor.py
+  s_15929f54bfa054::t_4ca2e6e881cb3c 9
+  s_15929f54bfa054::t_1d1e606f9ab46b 1-8,10-150
+src/maru_deep_pro_search/cli/update_cmd.py
+  s_15929f54bfa054::t_6acd96fa98d66a 70-71,73-81
+  s_15929f54bfa054::t_6c05a158def2a3 8-14
+  s_15929f54bfa054::t_4d363139aaf611 39-43
+src/maru_deep_pro_search/cli/hooks_templates.py
+  s_15929f54bfa054::t_7ef5c7bd83da0d 1-4,6-52,54-254,256-270
+  s_15929f54bfa054::t_8809f62a90e912 255
+  s_15929f54bfa054::t_1da50ccb385b89 5
+src/maru_deep_pro_search/cli/agents/kimi.py
+  s_15929f54bfa054::t_5b499c451466eb 93
+  s_15929f54bfa054::t_2a1bbdf77ee722 24
+  s_15929f54bfa054::t_7353312063f322 79-84
+src/maru_deep_pro_search/cli/agents/aider.py
+  s_15929f54bfa054::t_14e819fdeff01b 170-174,176
+  s_15929f54bfa054::t_38bd4437d9502d 218
+  s_15929f54bfa054::t_cca2fb82703bcd 15
+docs/agent_matrix.html
+  s_15929f54bfa054::t_abd9492eecff05 30
+src/maru_deep_pro_search/cli/setup.py
+  s_15929f54bfa054::t_9271266847d3d3 385
+  s_15929f54bfa054::t_0954545e1f6908 238,251-254,267-270,289-312,316
+  ai_agent 313-315
+  s_15929f54bfa054::t_45ef4c659e4cc2 274-288
+  s_15929f54bfa054::t_4cea1fb7d22c20 458-459
+  s_15929f54bfa054::t_37bb807c53028f 422-431
+README.en.md
+  s_15929f54bfa054::t_16f194b03eaa49 77
+pyproject.toml
+  s_15929f54bfa054::t_4ab7cf64243dfc 3
+src/maru_deep_pro_search/cli/agents/continue_.py
+  s_15929f54bfa054::t_0e755ebf8b71cf 211-223,225-232
+  s_15929f54bfa054::t_a444317b01ea94 242,248
+  ai_agent 204-206
+CHANGELOG.md
+  s_15929f54bfa054::t_11c700a0c51ef8 11-22
+uv.lock
+  ai_agent 1139
+src/maru_deep_pro_search/__init__.py
+  s_15929f54bfa054::t_a6cc6d5d3bf1fe 7
+src/maru_deep_pro_search/utils/updater.py
+  s_15929f54bfa054::t_94f6dbd6b61f34 134-145
+  s_15929f54bfa054::t_26d56d3ef4e19d 185,190-192
+  s_15929f54bfa054::t_9a62567bfe48a5 26-27
+src/maru_deep_pro_search/cli/agents/windsurf.py
+  ai_agent 146
+  s_15929f54bfa054::t_16f2e9b64ef8b3 138,142
+  s_15929f54bfa054::t_fd4cf0103c0306 113-118
+  s_15929f54bfa054::t_a5720daa66cccc 33
+README.md
+  s_15929f54bfa054::t_58f38aba33a5d0 385-386,389
+  s_15929f54bfa054::t_c7cd12ab991333 77,86-95
+src/maru_deep_pro_search/cli/agents/base.py
+  s_15929f54bfa054::t_7d2aaee749ba0a 154-171,175-177
+  s_15929f54bfa054::t_d11b458a4646c2 179
+  s_15929f54bfa054::t_9bd8bb955aae56 180-182
+docs/index.html
+  s_15929f54bfa054::t_13d0c6399ad063 1260
+  s_15929f54bfa054::t_c747578595d1c8 158-159
+  s_15929f54bfa054::t_5d6c3bfe7eec75 29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "86cbd03efb0fc1e046f0f83e1eb673d4f641d5e7",
+  "prompts": {},
+  "sessions": {
+    "s_15929f54bfa054": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "36ef6e70-4837-46d2-a0c1-50b0bc3b675a",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

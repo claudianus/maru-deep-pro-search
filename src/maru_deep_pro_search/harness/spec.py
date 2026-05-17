@@ -112,16 +112,16 @@ class HarnessSpec:
             research_protocol="""
 🔴 필수 리서치 프로토콜 — 절대 위반 금지
 
-규칙 1: 기술적 질문에 답변하기 전, 반드시 deep_research(query)를 호출해야 한다.
+규칙 1: 일반 사실·시세·추천 → answer(query). 코드·보안·깊은 조사 → deep_research(query).
 규칙 2: query에는 과거 연도를 포함하지 마라. 현재 연도 또는 "latest"만 사용.
 규칙 3: 리서치 결과를 [1], [2] 형태로 인용해야 한다.
-규칙 4: 추측 금지. 부족하면 refined query로 deep_research를 다시 호출.
+규칙 4: 추측 금지. 부족하면 refined query로 answer 또는 deep_research를 다시 호출.
 규칙 5: 코드/라이브러리 질문은 최신 버전과 API를 확인한 후 코드 작성.
-규칙 6: 너의 학습 데이터는 낡았다. 웹은 최신이다. deep_research로 항상 검증.
+규칙 6: 너의 학습 데이터는 낡았다. 웹은 최신이다. answer/deep_research로 항상 검증.
 """.strip(),
             tool_priority=[
-                "deep_research",
                 "answer",
+                "deep_research",
                 "parallel_search",
                 "web_search",
                 "fetch_page",
@@ -131,7 +131,7 @@ class HarnessSpec:
                 AgentCommand(
                     name="research",
                     description="주제에 대해 딥 리서치를 실행하고 인용된 답변을 받습니다.",
-                    prompt="Call deep_research with the user's current intent and return a cited summary.",
+                    prompt="Call answer for general questions or deep_research for technical work; return a cited summary.",
                 ),
                 AgentCommand(
                     name="verify",
@@ -144,7 +144,7 @@ class HarnessSpec:
                     event="post_tool_use",
                     matcher="Write|Edit",
                     action="prompt",
-                    prompt="The user just wrote/edited code. Verify that all code references are backed by research citations [1], [2]. If not, prompt the user to run deep_research first.",
+                    prompt="The user just wrote/edited code. Verify citations [1], [2]. If missing, prompt answer or deep_research first.",
                 ),
             ],
             quality_gates=[

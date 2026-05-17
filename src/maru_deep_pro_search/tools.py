@@ -15,7 +15,11 @@ from .exceptions import MaruSearchError, QueryRejectedError
 from .extraction.content import truncate_for_llm
 from .research.deep import deep_research, format_for_llm
 from .research.fetch_planner import plan_reads
-from .research.receipt import generate_research_id, write_receipt
+from .research.pipeline import (
+    answer_quality_suffix,
+    append_research_footer,
+    persist_research_artifacts,
+)
 from .utils.cache import cache_key, fetch_page_cache_key, get_fetch_cache, get_search_cache
 from .utils.locale_harness import optimize_for_engine
 from .utils.query_gate import (
@@ -535,16 +539,9 @@ async def tool_deep_research(
             "- Use web_search for faster results\n"
             "- Try a more specific query_"
         )
-    research_id = generate_research_id()
     planned = plan_reads(query, result.sources)
-    result_text = format_for_llm(result, planned_reads=planned)
-
-    try:
-        receipt_path = write_receipt(research_id, result, result_text, planned)
-        result_text += f"\n\n_research_id: {research_id}_\n_receipt: {receipt_path}_"
-    except OSError as exc:
-        logger.debug("Receipt write failed (non-critical): %s", exc)
-        result_text += f"\n\n_research_id: {research_id}_"
+    research_packet = format_for_llm(result, planned_reads=planned)
+    result_text = research_packet
 
     # Auto-fetch top results if requested (saves agent from separate fetch_page calls)
     if auto_fetch > 0 and result.sources:
@@ -583,27 +580,13 @@ async def tool_deep_research(
         result_text, source_url="deep-research:multiple-sources", report=report
     )
     result_text += format_query_meta(prep)
+    persisted = persist_research_artifacts(
+        result=result,
+        formatted_packet=research_packet,
+        knowledge_answer=result_text,
+    )
+    result_text = append_research_footer(result_text, persisted.research_id, persisted.receipt_path)
     cache.set(key, result_text)
-
-    # Persist to knowledge store for future retrieval
-    try:
-        from .harness.persistence import KnowledgeStore
-
-        sources = [
-            {
-                "url": s.url,
-                "title": s.title,
-                "snippet": s.snippet,
-                "quality": s.quality,
-                "engines_found": s.engines_found,
-                "relevance_score": s.relevance_score,
-            }
-            for s in result.sources
-        ]
-        KnowledgeStore().save(query=result.query, answer=result_text, sources=sources)
-    except Exception:
-        logger.debug("KnowledgeStore save failed (non-critical)", exc_info=True)
-
     return result_text
 
 
@@ -725,10 +708,11 @@ async def tool_answer(
                 fetch_lines.append(f"URL: {src.url}")
                 fetch_lines.append("")
 
+    quality = answer_quality_suffix(result)
     lines = [
         f"## Answer Engine: {query}",
         f"_mode: {mode} | sources: {len(result.sources)} | fetched: {fetched_count} | "
-        f"engine: {result.engine}_",
+        f"engine: {result.engine} | {quality}_",
         "",
         "### Host Synthesis Instructions",
         "- Answer the user's question directly using only the evidence below.",
@@ -741,7 +725,14 @@ async def tool_answer(
     if fetch_lines:
         lines.extend(["", *fetch_lines])
     lines.append(format_query_meta(prep).strip())
-    return "\n".join(line for line in lines if line is not None)
+    body = "\n".join(line for line in lines if line is not None)
+
+    persisted = persist_research_artifacts(
+        result=result,
+        formatted_packet=research_packet,
+        knowledge_answer=body,
+    )
+    return append_research_footer(body, persisted.research_id, persisted.receipt_path)
 
 
 # ═══════════════════════════════════════════════════════════════

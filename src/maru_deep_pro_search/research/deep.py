@@ -361,6 +361,14 @@ def _compute_research_quality(result: ResearchResult) -> int:
     )
 
 
+def research_quality_line(result: ResearchResult) -> str:
+    """One-line quality summary for answer-engine and tool headers."""
+    score = _compute_research_quality(result)
+    grade = _quality_grade(score)
+    grade_emoji = {"A": "🟢", "B": "🟡", "C": "🟠", "D": "🔴", "F": "⚫"}.get(grade, "⚪")
+    return f"quality: {grade_emoji} {grade} ({score}/100)"
+
+
 def _quality_grade(score: int) -> str:
     """Convert numeric score to letter grade."""
     if score >= 85:

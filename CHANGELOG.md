@@ -8,6 +8,23 @@
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-05-17
+
+### Added
+- **`docs/agent_matrix.html`** — 20 adapters × 3-layer enforcement 정적 매트릭스.
+- **벤치마크** — 한국어 answer 모드 쿼리(시세·추천) 3건 추가.
+
+## [0.17.0] - 2026-05-17
+
+### Added
+- **Evidence spine** — `research/pipeline.py`: `answer`와 `deep_research`가 동일하게 `write_receipt`·`KnowledgeStore`·`_research_id` 푸터 기록.
+- **Tiered drift** — lockfile만 변경 시 soft(정보); `pyproject.toml` 등 hard만 재조사 경고.
+- **`harness/constants.py`** — `RESEARCH_PRODUCING_TOOLS` 등 단일 상수; server/enforcer/hermes 공유.
+
+### Changed
+- **answer-first 문구** — `session_state`, `drift_status`, `query_knowledge`, harness 템플릿, Claude 훅 메시지 통일.
+- **`answer` 헤더** — `quality:` 라인(deep_research와 동일 언어).
+
 ## [0.16.2] - 2026-05-17
 
 ### Fixed

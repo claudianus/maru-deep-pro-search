@@ -44,8 +44,7 @@ def _check_research() -> tuple[bool, str]:
     """Return (ok: bool, message: str)."""
     if not SESSION_FILE.exists():
         return False, (
-            "No research session found. "
-            "Run /ask, /search, /compare, or /research <query> first."
+            "No research session found. Run /ask, /search, /compare, or /research <query> first."
         )
 
     try:
@@ -91,9 +90,9 @@ def register(ctx) -> None:
     The ``ctx`` object provides the Hermes plugin context API.
     """
 
-    from maru_deep_pro_search.harness.enforcer import SessionEnforcer
+    from maru_deep_pro_search.harness.constants import RESEARCH_PRODUCING_TOOLS
 
-    research_entry_tools = SessionEnforcer.RESEARCH_PRODUCING_TOOLS
+    research_entry_tools = set(RESEARCH_PRODUCING_TOOLS)
 
     # ── Hook: pre_tool_call ─────────────────────────────────────────
     def on_pre_tool_call(tool_name: str, params: dict, **kwargs) -> dict | None:

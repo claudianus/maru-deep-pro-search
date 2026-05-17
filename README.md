@@ -74,7 +74,7 @@ PyPI만 쓸 때는 `uv tool install --python 3.12 "maru-deep-pro-search[semantic
 ### 1. 설치 확인
 ```bash
 maru-deep-pro-search --version
-# 예: 0.16.2
+# 예: 0.17.1
 ```
 
 ### 2. 에이전트 설정
@@ -115,7 +115,7 @@ maru-deep-pro-search-init
 검색 툴은 **키워드형**(제품/라이브러리·주제·연도 등 3–12어절) 쿼리를 선호하지만, 일반 영어/한국어 질문은 가능한 한 먼저 검색용 키워드로 정규화합니다. 예: *「갤럭시 중고폰 최신 시세 추천」*은 거절하지 않고 최신 시세 검색으로 바꿉니다.
 
 - 거절 끄기(최적화만): `export MARU_STRICT_QUERY=0`
-- `deep_research` 이후 영수증은 `~/.maru/receipts/`에 저장됩니다. 락파일 등 **드리프트**가 있으면 툴 출력에 경고가 붙습니다. 웹 없이 확인하려면 `drift_status`를 호출합니다.
+- `answer` / `deep_research` 이후 영수증은 `~/.maru/receipts/`에 저장됩니다. **드리프트**는 hard(`pyproject.toml` 등)와 soft(락파일만)로 구분됩니다 — soft만 바뀌면 재조사 경고가 뜨지 않습니다. 웹 없이 확인: `drift_status`.
 - 팀 캐시 공유: `maru-deep-pro-search-knowledge export -o bundle.json` / `import bundle.json`
 
 `deep_research`에서 **한글·중문** 쿼리는 네이버/바이두 로컬 하네스로 보강됩니다.

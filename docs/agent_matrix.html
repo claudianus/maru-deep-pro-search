@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>maru-deep-pro-search — Agent Compatibility Matrix</title>
+<meta name="description" content="20 agent adapters × 3-layer enforcement: server marking, client hooks, generate_code validation.">
+<link rel="canonical" href="https://claudianus.github.io/maru-deep-pro-search/agent_matrix.html">
+<style>
+  :root { --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --muted: #94a3b8; --accent: #2dd4bf; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 2rem; line-height: 1.5; }
+  h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+  .sub { color: var(--muted); margin-bottom: 2rem; }
+  a { color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; font-size: 0.9rem; }
+  th, td { padding: 0.65rem 0.75rem; text-align: left; border-bottom: 1px solid #334155; vertical-align: top; }
+  th { background: #334155; font-weight: 600; }
+  tr:hover td { background: #263045; }
+  .layer { margin-top: 2.5rem; }
+  .layer h2 { font-size: 1.2rem; color: var(--accent); }
+  .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .strong { background: #065f46; color: #6ee7b7; }
+  .medium { background: #713f12; color: #fcd34d; }
+  .weak { background: #4c1d95; color: #c4b5fd; }
+</style>
+</head>
+<body>
+<h1>Agent Compatibility Matrix</h1>
+<p class="sub">maru-deep-pro-search v0.17.1 — 20 adapters · 3 layers · answer-first entry</p>
+<p><a href="index.html">← Product home</a> · <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/AGENT_COMPATIBILITY.md">AGENT_COMPATIBILITY.md</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Agent</th>
+      <th>Layer 1 (MCP)</th>
+      <th>Layer 2 (hooks)</th>
+      <th>Strength</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Claude Code</td><td>✓</td><td>PreToolUse + PostToolUse + SessionStart</td><td><span class="badge medium">Medium–Strong</span></td><td>Write/Edit PreToolUse bug; dual protection</td></tr>
+    <tr><td>Aider</td><td>✓</td><td>lint-cmd / test-cmd (14 langs)</td><td><span class="badge strong">Strong</span></td><td>Edit rollback on lint fail</td></tr>
+    <tr><td>Cursor</td><td>✓</td><td>onPreEdit (2026+) + rules</td><td><span class="badge medium">Medium–Strong</span></td><td>Legacy: rules only</td></tr>
+    <tr><td>Hermes</td><td>✓</td><td>pre_tool_call plugin</td><td><span class="badge strong">Strong</span></td><td>Native tool block</td></tr>
+    <tr><td>Windsurf</td><td>✓</td><td>defaultInstructions</td><td><span class="badge weak">Weak</span></td><td>Protocol injection</td></tr>
+    <tr><td>Zed</td><td>✓</td><td>default_instructions</td><td><span class="badge weak">Weak</span></td><td>Protocol injection</td></tr>
+    <tr><td>Continue</td><td>✓</td><td>/ask /search /compare /research /verify</td><td><span class="badge weak">Weak</span></td><td>Commands + server gate</td></tr>
+    <tr><td>JetBrains</td><td>✓</td><td>mcp.autoEnableTools</td><td><span class="badge weak">Weak</span></td><td>Server gate primary</td></tr>
+    <tr><td>Copilot</td><td>✓</td><td>defaultInstructions</td><td><span class="badge weak">Weak</span></td><td>VS Code settings</td></tr>
+    <tr><td>Cline</td><td>✓</td><td>defaultInstructions</td><td><span class="badge weak">Weak</span></td><td>VS Code settings</td></tr>
+    <tr><td>Devin</td><td>✓</td><td>devin.json</td><td><span class="badge weak">Weak</span></td><td>Config injection</td></tr>
+    <tr><td>Amazon Q</td><td>✓</td><td>amazonq.json</td><td><span class="badge weak">Weak</span></td><td>Config injection</td></tr>
+    <tr><td>Cody</td><td>✓</td><td>cody.json</td><td><span class="badge weak">Weak</span></td><td>Config injection</td></tr>
+    <tr><td>Codeium</td><td>✓</td><td>codeium.json</td><td><span class="badge weak">Weak</span></td><td>Config injection</td></tr>
+    <tr><td>Supermaven</td><td>✓</td><td>supermaven.json</td><td><span class="badge weak">Weak</span></td><td>Config injection</td></tr>
+    <tr><td>Tabnine</td><td>✓</td><td>tabnine.json</td><td><span class="badge weak">Weak</span></td><td>Config injection</td></tr>
+    <tr><td>OpenCode</td><td>✓</td><td>opencode.json</td><td><span class="badge weak">Weak</span></td><td>Config injection</td></tr>
+    <tr><td>Kimi</td><td>✓</td><td>~/.kimi/config</td><td><span class="badge weak">Weak</span></td><td>Config injection</td></tr>
+    <tr><td>Kilo</td><td>✓</td><td>kilo.json</td><td><span class="badge weak">Weak</span></td><td>Config injection</td></tr>
+    <tr><td>AntiGravity</td><td>✓</td><td>antigravity.json</td><td><span class="badge weak">Weak</span></td><td>Config injection</td></tr>
+    <tr><td>Codex</td><td>✓</td><td>config.toml + AGENTS.md</td><td><span class="badge medium">Weak–Medium</span></td><td>Optional codex_hooks</td></tr>
+  </tbody>
+</table>
+
+<div class="layer">
+  <h2>Layer 1 — Server session marking</h2>
+  <p>First call to <code>answer</code>, <code>deep_research</code>, or other research-producing tools marks the session. Receipts land in <code>~/.maru/receipts/</code>. Tiered drift: lockfile-only = soft; <code>pyproject.toml</code> / <code>package.json</code> = hard.</p>
+</div>
+<div class="layer">
+  <h2>Layer 2 — Client hooks</h2>
+  <p>Four agents with physical or near-physical blocks: Aider, Hermes, Claude Code, Cursor (2026+). Others rely on protocol injection + Layer 1.</p>
+</div>
+<div class="layer">
+  <h2>Layer 3 — <code>generate_code</code></h2>
+  <p>Requires matching <code>research_id</code> and citation <code>[N]</code> from the session research packet (from <code>answer</code> or <code>deep_research</code>).</p>
+</div>
+</body>
+</html>

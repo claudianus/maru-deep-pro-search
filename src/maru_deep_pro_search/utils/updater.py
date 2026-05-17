@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 PACKAGE_NAME = "maru-deep-pro-search"
 PYPI_URL = f"https://pypi.org/pypi/{PACKAGE_NAME}/json"
 
+SETUP_REPAIR_HINT = "Run: maru-deep-pro-search setup --repair"
+
 
 def _get_installed_version() -> str:
     """Return the currently installed version."""
@@ -129,7 +131,18 @@ def get_update_notice(result: UpdateCheckResult) -> str | None:
     )
 
 
-def perform_update(dry_run: bool = False) -> tuple[bool, str]:
+def auto_setup_enabled(cli_with_setup: bool = False) -> bool:
+    """True when post-update agent repair should run."""
+    if cli_with_setup:
+        return True
+    return os.environ.get("MARU_UPDATE_AUTO_SETUP", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
+
+def perform_update(dry_run: bool = False, *, with_setup: bool = False) -> tuple[bool, str]:
     """Attempt to update the package in-place.
 
     Returns (success, message).
@@ -169,11 +182,14 @@ def perform_update(dry_run: bool = False) -> tuple[bool, str]:
                 timeout=120,
             )
             if result.returncode == 0:
-                return True, (
+                msg = (
                     f"✅ Updated {PACKAGE_NAME}\n"
                     f"   {current} → {latest}\n"
                     f"   Please restart the server."
                 )
+                if not auto_setup_enabled(with_setup):
+                    msg += f"\n   {SETUP_REPAIR_HINT}"
+                return True, msg
             else:
                 logger.debug("Command failed: %s", result.stderr)
                 continue

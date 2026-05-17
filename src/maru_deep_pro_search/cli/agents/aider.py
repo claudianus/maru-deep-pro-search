@@ -12,74 +12,10 @@ from ..backup import (
     sorted_backup_paths,
     write_text_safe,
 )
+from ..hooks_templates import template_body, write_managed_hook
 from ..idempotent import lines_contain
 from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
-
-# ── Research gate script injected into aider's lint-cmd ─────────────
-# Exit 0 = research completed, exit 1 = block un-researched edits
-_RESEARCH_GATE_SCRIPT = '''#!/usr/bin/env python3
-"""Aider lint-cmd research gate — blocks edits when research incomplete."""
-import json
-import os
-import sys
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
-
-SESSION_FILE = Path.home() / ".maru" / "session_research.json"
-SESSION_TTL_MINUTES = int(os.environ.get("MARU_RESEARCH_TTL", "30"))
-
-
-def _fail(msg: str) -> None:
-    print(f"[MARU-RESEARCH-GATE] ERROR: {msg}", file=sys.stderr)
-    print(
-        "[MARU-RESEARCH-GATE] Run research first: /research <query>",
-        file=sys.stderr,
-    )
-    sys.exit(1)
-
-
-def main() -> int:
-    # 1. Check session research file
-    if not SESSION_FILE.exists():
-        _fail("No research session found. Research must be completed before editing.")
-
-    try:
-        data = json.loads(SESSION_FILE.read_text())
-    except Exception:
-        _fail("Corrupted session research file.")
-
-    completed_at = data.get("completed_at")
-    if not completed_at:
-        _fail("Research not marked as completed.")
-
-    try:
-        ts = datetime.fromisoformat(completed_at)
-        if ts.tzinfo is None:
-            ts = ts.replace(tzinfo=timezone.utc)
-    except Exception:
-        _fail(f"Invalid timestamp: {completed_at}")
-
-    # 2. TTL check
-    now = datetime.now(timezone.utc)
-    if now - ts > timedelta(minutes=SESSION_TTL_MINUTES):
-        _fail(
-            f"Research expired (TTL={SESSION_TTL_MINUTES}min). "
-            "Re-run research before editing."
-        )
-
-    # 3. Optional: verify research_id format
-    rid = data.get("research_id", "")
-    if not rid.startswith("RSCH-"):
-        _fail(f"Invalid research_id format: {rid}")
-
-    print(f"[MARU-RESEARCH-GATE] OK — research {rid} valid.")
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
-'''
 
 
 def _detect_quality_tools(root: Path = Path(".")) -> dict[str, str]:
@@ -231,8 +167,13 @@ class AiderAdapter(AgentAdapter):
     def install_mcp(self, scope: str = "user") -> bool:
         return self.inject_rules(scope)
 
+    def refresh_managed_hooks(self, *, repair: bool = False) -> bool:
+        gate_script = Path.home() / ".maru" / "aider_research_gate.py"
+        write_managed_hook(gate_script, template_body("aider_research_gate"), force=repair)
+        return True
+
     # ── inject rules ─────────────────────────────────────────────
-    def inject_rules(self, scope: str = "user") -> bool:
+    def inject_rules(self, scope: str = "user", *, repair: bool = False) -> bool:
         root = Path(".") if scope == "project" else Path.home()
 
         # 1. CONVENTIONS.md
@@ -274,8 +215,7 @@ class AiderAdapter(AgentAdapter):
         # script that fails (exit 1) if research hasn't been completed
         # in this session, effectively blocking un-researched edits.
         gate_script = Path.home() / ".maru" / "aider_research_gate.py"
-        gate_script.parent.mkdir(parents=True, exist_ok=True)
-        gate_script.write_text(_RESEARCH_GATE_SCRIPT)
+        write_managed_hook(gate_script, template_body("aider_research_gate"), force=repair)
 
         # Insert research gate as FIRST lint-cmd AND test-cmd
         gate_cmd = f"python: python {gate_script}"

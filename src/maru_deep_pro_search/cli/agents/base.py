@@ -151,13 +151,35 @@ class AgentAdapter(ABC):
 
         return verify_adapter(self, scope)
 
-    def configure(self, scope: str = "user") -> dict[str, Any]:
+    def refresh_managed_hooks(self, *, repair: bool = False) -> bool:
+        """Overwrite maru-managed hook scripts when *repair* is True. Override in adapters."""
+        _ = repair
+        return True
+
+    def _inject_rules_with_repair(self, scope: str, *, repair: bool) -> bool:
+        try:
+            return self.inject_rules(scope, repair=repair)  # type: ignore[call-arg]
+        except TypeError:
+            return self.inject_rules(scope)
+
+    def configure(
+        self,
+        scope: str = "user",
+        *,
+        repair: bool = False,
+        repair_skills: bool = False,
+    ) -> dict[str, Any]:
         """Full setup: backup → install MCP → inject rules → install skills."""
         backups = self.backup()
         mcp_ok = self.install_mcp(scope)
-        rules_ok = self.inject_rules(scope)
+        if repair:
+            self.refresh_managed_hooks(repair=True)
+        rules_ok = self._inject_rules_with_repair(scope, repair=repair)
         skills_dir = self._skills_dir(scope)
-        skills_ok = self.install_skills(scope) if skills_dir is not None else None
+        if skills_dir is None or (repair and not repair_skills):
+            skills_ok = None
+        else:
+            skills_ok = self.install_skills(scope)
         return {
             "backups": [str(b) for b in backups if b],
             "mcp_installed": mcp_ok,

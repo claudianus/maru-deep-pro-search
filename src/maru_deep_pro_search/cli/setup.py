@@ -235,7 +235,7 @@ def cmd_restore(args: argparse.Namespace) -> int:
 
 def cmd_check(args: argparse.Namespace) -> int:
     """Verify configs (read-only; does not modify files)."""
-    from .verify_status import verify_adapter
+    from .doctor import diagnose_adapter, format_diagnosis_line
 
     print("\n🔍 설정 상태 확인 중 (읽기 전용)...\n")
     all_ok = True
@@ -248,16 +248,10 @@ def cmd_check(args: argparse.Namespace) -> int:
         if not adapter.detect():
             continue
         verified += 1
-        status = verify_adapter(adapter, scope="user")
-        ok = status["mcp"] and status["rules"]
-        detail = []
-        if not status["mcp"]:
-            detail.append("MCP")
-        if not status["rules"]:
-            detail.append("rules")
-        suffix = f" ({', '.join(detail)} missing)" if detail else ""
-        print(f"   {'✓' if ok else '✗'} {adapter.display_name}{suffix}")
-        if not ok:
+        diag = diagnose_adapter(adapter, scope="user")
+        healthy, line = format_diagnosis_line(adapter.display_name, diag)
+        print(f"   {line}")
+        if not healthy:
             all_ok = False
     if only is not None and verified == 0:
         print(
@@ -270,8 +264,56 @@ def cmd_check(args: argparse.Namespace) -> int:
     if all_ok:
         print(f"\n{green('✅ 모든 감지된 에이전트 설정이 정상입니다.')}")
     else:
-        print(f"\n{yellow('일부 에이전트 설정이 누락되었습니다. setup을 다시 실행하세요.')}")
+        print(
+            f"\n{yellow('일부 항목에 문제가 있습니다.')} "
+            f"{bold('maru-deep-pro-search setup --repair')} 로 자동 수리할 수 있습니다."
+        )
     return 0 if all_ok else 1
+
+
+def run_repair_after_update(*, repair_skills: bool = False) -> int:
+    """Repair all detected agents (used by ``update --with-setup``)."""
+    agents = detect_agents()
+    installed = [name for name, detected in agents.items() if detected]
+    if not installed:
+        return 0
+    ok_count = 0
+    for name in installed:
+        adapter = ADAPTER_REGISTRY[name]()  # type: ignore[abstract]
+        result = adapter.configure(scope="user", repair=True, repair_skills=repair_skills)
+        if result.get("success"):
+            ok_count += 1
+    return 0 if ok_count == len(installed) else 1
+
+
+def cmd_repair(args: argparse.Namespace) -> int:
+    """Repair agent configs: refresh protocols, hooks, and MCP registration."""
+    print("\n🔧 에이전트 설정 수리 중...\n")
+    agents = detect_agents()
+    installed = [name for name, detected in agents.items() if detected]
+    selected = args.agents if args.agents else installed
+    selected = [s for s in selected if s in installed]
+    if not selected:
+        print(red("  수리할 설치된 에이전트가 없습니다."))
+        return 1
+
+    repair_skills = bool(getattr(args, "repair_skills", False))
+    scope = "user"
+    ok_count = 0
+    for name in selected:
+        adapter_cls = ADAPTER_REGISTRY[name]
+        adapter = adapter_cls()  # type: ignore[abstract]
+        print(f"⚙️  {adapter.display_name} 수리 중...")
+        result = adapter.configure(scope=scope, repair=True, repair_skills=repair_skills)
+        if result.get("success"):
+            print("   ✓ 수리 완료")
+            ok_count += 1
+        else:
+            print(yellow("   ! 일부 단계 실패 — setup --check 로 확인하세요"))
+    print(
+        f"\n{green(f'✅ {ok_count}/{len(selected)} 에이전트 수리 완료.')} 에이전트를 재시작하세요."
+    )
+    return 0 if ok_count == len(selected) else 1
 
 
 def cmd_sync(args: argparse.Namespace) -> int:
@@ -340,6 +382,7 @@ def main(argv: list[str] | None = None) -> int:
             "  maru-deep-pro-search setup --agents cursor claude  # Configure specific agents\n"
             "  maru-deep-pro-search setup --list       # Show detected agents\n"
             "  maru-deep-pro-search setup --check      # Verify config status\n"
+            "  maru-deep-pro-search setup --repair     # Fix stale hooks / duplicate protocol\n"
             "  maru-deep-pro-search setup --check --agents cursor  # Check specific agents\n"
             "  maru-deep-pro-search setup --restore    # Restore from backup\n"
             "\nSupported agents: " + ", ".join(sorted(ADAPTER_REGISTRY.keys()))
@@ -376,6 +419,16 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Check if MCP configs are correctly installed",
     )
+    setup_parser.add_argument(
+        "--repair",
+        action="store_true",
+        help="Repair configs (refresh protocol, hooks, MCP; skips skills unless --repair-skills)",
+    )
+    setup_parser.add_argument(
+        "--repair-skills",
+        action="store_true",
+        help="With --repair, also overwrite packaged SKILL.md files",
+    )
 
     # sync command
     subparsers.add_parser(
@@ -402,6 +455,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_restore(args)
         if args.check:
             return cmd_check(args)
+        if args.repair:
+            return cmd_repair(args)
         return cmd_setup(args)
 
     if args.command == "sync":

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -77,9 +78,30 @@ def persist_research_artifacts(
     )
 
 
+def save_research_knowledge(result: ResearchResult, answer: str) -> None:
+    """Persist final tool output (including footers) to KnowledgeStore."""
+    try:
+        from ..harness.persistence import KnowledgeStore
+
+        sources: list[dict[str, Any]] = [
+            {
+                "url": s.url,
+                "title": s.title,
+                "snippet": s.snippet,
+                "quality": s.quality,
+                "engines_found": s.engines_found,
+                "relevance_score": s.relevance_score,
+            }
+            for s in result.sources
+        ]
+        KnowledgeStore().save(query=result.query, answer=answer, sources=sources)
+    except Exception:
+        logger.debug("KnowledgeStore save failed (non-critical)", exc_info=True)
+
+
 def append_research_footer(text: str, research_id: str, receipt_path: Path | None) -> str:
     """Append standard research_id / receipt footers for MCP output."""
-    if "_research_id:" in text:
+    if re.search(r"_research_id:\s*RSCH-[A-F0-9]+_", text, re.I):
         return text
     footer = f"\n\n_research_id: {research_id}_"
     if receipt_path is not None:

@@ -297,10 +297,11 @@ class SessionEnforcer:
         """Read-only drift report for drift_status tool."""
         state = self.get_or_create(session_id)
         current = snapshot_workspace()
+        empty_baseline = WorkspaceSnapshot(root=current.root)
         tiered = (
             compare_snapshots_tiered(state.workspace_snapshot, current)
             if state.workspace_snapshot.files
-            else compare_snapshots_tiered(WorkspaceSnapshot(root=current.root), current)
+            else compare_snapshots_tiered(empty_baseline, empty_baseline)
         )
         hard_reasons = list(tiered.hard)
         soft_reasons = list(tiered.soft)

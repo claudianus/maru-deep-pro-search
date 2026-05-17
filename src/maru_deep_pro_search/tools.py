@@ -19,6 +19,7 @@ from .research.pipeline import (
     answer_quality_suffix,
     append_research_footer,
     persist_research_artifacts,
+    save_research_knowledge,
 )
 from .utils.cache import cache_key, fetch_page_cache_key, get_fetch_cache, get_search_cache
 from .utils.locale_harness import optimize_for_engine
@@ -583,9 +584,10 @@ async def tool_deep_research(
     persisted = persist_research_artifacts(
         result=result,
         formatted_packet=research_packet,
-        knowledge_answer=result_text,
+        save_knowledge=False,
     )
     result_text = append_research_footer(result_text, persisted.research_id, persisted.receipt_path)
+    save_research_knowledge(result, result_text)
     cache.set(key, result_text)
     return result_text
 
@@ -730,9 +732,11 @@ async def tool_answer(
     persisted = persist_research_artifacts(
         result=result,
         formatted_packet=research_packet,
-        knowledge_answer=body,
+        save_knowledge=False,
     )
-    return append_research_footer(body, persisted.research_id, persisted.receipt_path)
+    final = append_research_footer(body, persisted.research_id, persisted.receipt_path)
+    save_research_knowledge(result, final)
+    return final
 
 
 # ═══════════════════════════════════════════════════════════════

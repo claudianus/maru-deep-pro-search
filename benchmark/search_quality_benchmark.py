@@ -399,18 +399,11 @@ async def main() -> int:
         delta_str = f"+{delta:.3f}" if delta >= 0 else f"{delta:.3f}"
         print(f"{key:<25} {web[key]:>12.3f} {deep[key]:>15.3f} {delta_str:>10}")
 
-    # Save comparative report
     report_path = Path("benchmark/search_quality_report.json")
-    report_path.write_text(
-        json.dumps(
-            {
-                "web_search": {"summary": web, "results": [asdict(m) for m in web_metrics]},
-                "deep_research": {"summary": deep, "results": [asdict(m) for m in deep_metrics]},
-            },
-            indent=2,
-        )
-    )
-    print(f"\nReport saved: {report_path}")
+    report_data: dict[str, object] = {
+        "web_search": {"summary": web, "results": [asdict(m) for m in web_metrics]},
+        "deep_research": {"summary": deep, "results": [asdict(m) for m in deep_metrics]},
+    }
 
     answer_queries = list(ANSWER_GROUND_TRUTH.keys())
     if answer_queries:
@@ -421,10 +414,17 @@ async def main() -> int:
         await asyncio.sleep(5)
         answer_metrics = await run_benchmark_mode(answer_queries, "deep_research")
         answer_summary = summarize(answer_metrics)
+        report_data["answer_pipeline"] = {
+            "summary": answer_summary,
+            "results": [asdict(m) for m in answer_metrics],
+        }
         print(f"\n{'Metric':<25} {'answer_pipeline':>15}")
         print("-" * 42)
         for key, val in answer_summary.items():
             print(f"{key:<25} {val:>15.3f}")
+
+    report_path.write_text(json.dumps(report_data, indent=2))
+    print(f"\nReport saved: {report_path}")
 
     return 0
 

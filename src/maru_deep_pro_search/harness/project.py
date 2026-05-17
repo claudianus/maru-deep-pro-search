@@ -37,7 +37,7 @@ Previous research results are cached and reused when relevant.
 ## Research Checklist
 
 Before writing ANY code:
-- [ ] Called `answer` or `deep_research` on the topic
+- [ ] Called `deep_research` for technical/code decisions (use `answer` only for non-technical questions)
 - [ ] Verified library versions are current
 - [ ] Checked for known security issues
 - [ ] Confirmed API signatures match latest docs

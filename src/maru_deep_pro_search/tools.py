@@ -16,7 +16,7 @@ from .extraction.content import truncate_for_llm
 from .research.deep import deep_research, format_for_llm
 from .research.fetch_planner import plan_reads
 from .research.receipt import generate_research_id, write_receipt
-from .utils.cache import cache_key, get_fetch_cache, get_search_cache
+from .utils.cache import cache_key, fetch_page_cache_key, get_fetch_cache, get_search_cache
 from .utils.locale_harness import optimize_for_engine
 from .utils.query_gate import (
     QueryPrepResult,
@@ -203,7 +203,7 @@ async def tool_fetch_page(
 
     # Check cache
     cache = get_fetch_cache()
-    key = cache_key("fetch", norm_url, str(stealth))
+    key = fetch_page_cache_key(norm_url, stealth, max_tokens)
     cached = cache.get(key)
     if cached is not None:
         logger.debug("Cache hit for fetch: %s", norm_url)

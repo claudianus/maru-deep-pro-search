@@ -94,3 +94,8 @@ def get_fetch_cache() -> TTLCache:
 def cache_key(*parts: str) -> str:
     """Build a deterministic cache key from parts."""
     return "|".join(str(p) for p in parts)
+
+
+def fetch_page_cache_key(norm_url: str, stealth: bool, max_tokens: int) -> str:
+    """Cache key for truncated fetch_page markdown (includes token budget)."""
+    return cache_key("fetch", norm_url, str(stealth), str(max_tokens))

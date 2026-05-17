@@ -8,6 +8,18 @@
 
 ## [Unreleased]
 
+## [0.16.2] - 2026-05-17
+
+### Fixed
+- **`fetch_page` 캐시** — `max_tokens`를 캐시 키에 포함해 answer 소형 fetch가 대형 요청을 오염시키지 않음.
+- **Hermes 플러그인** — `RESEARCH_PRODUCING_TOOLS`와 동일 면제 목록; `/ask`·`/research` 안내 문구.
+- **Continue setup** — 기존 `ask`/`search`/`compare`/`research` 프롬프트 내용 갱신.
+
+### Documentation
+- **GitHub Pages** — v0.16.2·answer-engine 히어로 배지.
+- **`AGENT_COMPATIBILITY.md`** — answer-first·리서치 생산 툴·슬래시 커맨드 동기화.
+- **`ROADMAP.md`** — 0.16.x 현황 반영.
+
 ## [0.16.1] - 2026-05-17
 
 ### Fixed

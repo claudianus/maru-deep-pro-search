@@ -43,7 +43,10 @@ SESSION_TTL_MINUTES = int(os.environ.get("MARU_RESEARCH_TTL", "30"))
 def _check_research() -> tuple[bool, str]:
     """Return (ok: bool, message: str)."""
     if not SESSION_FILE.exists():
-        return False, "No research session found. Run /research <query> first."
+        return False, (
+            "No research session found. "
+            "Run /ask, /search, /compare, or /research <query> first."
+        )
 
     try:
         data = json.loads(SESSION_FILE.read_text())
@@ -65,7 +68,8 @@ def _check_research() -> tuple[bool, str]:
     if now - ts > timedelta(minutes=SESSION_TTL_MINUTES):
         return (
             False,
-            f"Research expired (TTL={SESSION_TTL_MINUTES}min). Re-run /research.",
+            f"Research expired (TTL={SESSION_TTL_MINUTES}min). "
+            "Re-run /ask, /search, /compare, or /research.",
         )
 
     rid = data.get("research_id", "")
@@ -87,15 +91,18 @@ def register(ctx) -> None:
     The ``ctx`` object provides the Hermes plugin context API.
     """
 
+    from maru_deep_pro_search.harness.enforcer import SessionEnforcer
+
+    research_entry_tools = SessionEnforcer.RESEARCH_PRODUCING_TOOLS
+
     # ── Hook: pre_tool_call ─────────────────────────────────────────
     def on_pre_tool_call(tool_name: str, params: dict, **kwargs) -> dict | None:
-        """Block any tool call before deep_research has been done.
+        """Block any tool call before research has been done.
 
         Returning ``{"action": "block", "reason": "..."}`` aborts the
         tool execution and sends the reason back to the model.
         """
-        # deep_research itself is exempt — it *is* the research step
-        if tool_name == "deep_research":
+        if tool_name in research_entry_tools:
             return None
 
         ok, msg = _check_research()
@@ -104,7 +111,7 @@ def register(ctx) -> None:
                 "action": "block",
                 "reason": (
                     f"[MARU-RESEARCH-GATE] BLOCKED '{tool_name}': {msg} "
-                    f"Run /research <query> to unlock."
+                    "Run /ask, /search, /compare, or /research <query> to unlock."
                 ),
             }
 
@@ -149,7 +156,7 @@ def register(ctx) -> None:
                 SESSION_FILE.unlink()
         ctx.inject_message(
             "[MARU-RESEARCH-GATE] New session started. "
-            "Run /research <query> before using any tools.",
+            "Run /ask, /search, /compare, or /research <query> before using other tools.",
             role="system",
         )
 

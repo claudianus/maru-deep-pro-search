@@ -138,6 +138,18 @@ class ContinueAdapter(AgentAdapter):
         return True
 
     @staticmethod
+    def _upsert_named_spec(items: list[Any], spec: dict[str, str]) -> None:
+        """Merge maru fields into an existing named prompt/command or append if missing."""
+        for index, item in enumerate(items):
+            if isinstance(item, dict) and item.get("name") == spec["name"]:
+                merged = dict(item)
+                merged.update(spec)
+                if merged != item:
+                    items[index] = merged
+                return
+        items.append(dict(spec))
+
+    @staticmethod
     def _research_prompts() -> list[dict[str, str]]:
         return [
             {
@@ -208,12 +220,8 @@ class ContinueAdapter(AgentAdapter):
             prompts = []
             data["prompts"] = prompts
 
-        def _has_name(name: str) -> bool:
-            return any(isinstance(p, dict) and p.get("name") == name for p in prompts)
-
         for spec in self._research_prompts():
-            if not _has_name(spec["name"]):
-                prompts.append(spec)
+            self._upsert_named_spec(prompts, spec)
 
     def inject_rules(self, scope: str = "user") -> bool:
         protocol = get_protocol_for_agent(self.name)
@@ -228,10 +236,8 @@ class ContinueAdapter(AgentAdapter):
             if "custom_commands" not in config:
                 config["custom_commands"] = []
             cmds = cast(list[Any], config["custom_commands"])
-            names = [c.get("name", "") for c in cmds if isinstance(c, dict)]
             for spec in self._research_prompts():
-                if spec["name"] not in names:
-                    cmds.append(spec)
+                self._upsert_named_spec(cmds, spec)
 
             current = config.get("system_message", "")
             if isinstance(current, str):

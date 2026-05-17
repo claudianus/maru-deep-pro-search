@@ -107,8 +107,10 @@ class SessionState:
             )
         )
         cap = DEFAULT_CONFIG.research_context_max_chars
+        marker = "\n\n_[research context truncated]_"
         if len(combined) > cap:
-            combined = combined[:cap] + "\n\n_[research context truncated]_"
+            keep = max(0, cap - len(marker))
+            combined = (combined[:keep] + marker)[:cap]
         self.research_result = combined
         self.research_timestamp = time.time()
 

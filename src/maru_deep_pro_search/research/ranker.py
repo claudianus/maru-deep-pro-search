@@ -149,9 +149,8 @@ def _query_freshness_boost(query: str, result: SearchResult) -> float:
     years = re.findall(r"20\d{2}", query)
     if not years:
         return 0.0
-    target = max(years)
     haystack = f"{result.url} {result.snippet or ''}".lower()
-    if target in haystack:
+    if any(year in haystack for year in years):
         return _FRESHNESS_BOOST * DEFAULT_CONFIG.freshness_weight
     return 0.0
 
@@ -325,15 +324,10 @@ def merge_results(
     merged: list[SearchResult] = []
     for norm, r in url_to_result.items():
         r.engines_found = url_to_engines.get(norm, [])
-        r.cross_engine_score = min(len(r.engines_found) * _CROSS_ENGINE_BOOST, 1.5)
         merged.append(r)
 
     # Phase 2: Fuzzy dedupe — catch same content on different URLs
     merged = _fuzzy_dedupe(merged)
-
-    # Recompute cross-engine scores after fuzzy merge
-    for r in merged:
-        r.cross_engine_score = min(len(r.engines_found) * _CROSS_ENGINE_BOOST, 1.5)
 
     # Phase 2b: Auto-classify source type for results missing it
     for r in merged:
@@ -374,7 +368,7 @@ def merge_results(
         # RRF typically 0-0.15 per engine; scale to ~0-3
         rrf_component = min(rrf * 20.0, 3.0)
         # Semantic similarity is [0,1]; scale to [0,2] to match BM25 weight
-        final = normalized_bm25 + meta + r.cross_engine_score + semantic * 2.0 + rrf_component
+        final = normalized_bm25 + meta + semantic * 2.0 + rrf_component
 
         ranked.append(
             RankedResult(

@@ -55,7 +55,13 @@ def detect_gaps(query: str, sources: list) -> list[str]:
     suggestions: list[str] = []
 
     for entity in _required_entities(query):
-        if entity.lower() not in source_text:
+        normalized = entity.lower()
+        if re.fullmatch(r"v?\d+\.\d+(?:\.\d+)?", normalized):
+            core = normalized[1:] if normalized.startswith("v") else normalized
+            pattern = rf"(?<![a-z0-9])v?{re.escape(core)}(?![a-z0-9])"
+        else:
+            pattern = rf"(?<![a-z0-9]){re.escape(normalized)}(?![a-z0-9])"
+        if not re.search(pattern, source_text):
             suggestions.append(f"{query} {entity}".strip())
             if len(suggestions) >= 3:
                 return suggestions[:3]

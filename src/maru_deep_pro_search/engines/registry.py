@@ -8,6 +8,9 @@ from .base import SearchEngine
 
 logger = logging.getLogger(__name__)
 
+# Fetch-only aliases — must not appear in SERP recommend_engines().
+_FETCH_ONLY_ENGINES = frozenset({"duckduckgo_fetch"})
+
 
 class SearchEngineRegistry:
     """Registry for search engine implementations."""
@@ -88,6 +91,8 @@ class SearchEngineRegistry:
                 locale_boosts["startpage"] = locale_boosts.get("startpage", 0.0) + 0.5
 
         for name in engines:
+            if name in _FETCH_ONLY_ENGINES:
+                continue
             try:
                 eng_cls = cls.get(name)
                 reliability = eng_cls.reliability_score + locale_boosts.get(name, 0.0)

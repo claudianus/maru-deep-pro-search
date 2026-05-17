@@ -135,11 +135,11 @@ class ClaudeAdapter(AgentAdapter):
                 "        sys.exit(0)\n"
                 '    marker = os.path.expanduser("~/.maru/last_research")\n'
                 "    if not os.path.exists(marker):\n"
-                '        print("[MARU] Research required. Call deep_research(query=...) before running commands.", file=sys.stderr)\n'
+                '        print("[MARU] Research required. Call answer or deep_research before running commands.", file=sys.stderr)\n'
                 "        sys.exit(2)\n"
                 "    elapsed = time.time() - os.path.getmtime(marker)\n"
                 "    if elapsed > 1800:\n"
-                '        print(f"[MARU] Research expired ({elapsed/60:.0f}min ago). Re-run deep_research.", file=sys.stderr)\n'
+                '        print(f"[MARU] Research expired ({elapsed/60:.0f}min ago). Re-run answer or deep_research.", file=sys.stderr)\n'
                 "        sys.exit(2)\n"
                 "    sys.exit(0)\n\n"
                 'if __name__ == "__main__":\n'

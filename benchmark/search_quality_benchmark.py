@@ -73,6 +73,26 @@ GROUND_TRUTH: dict[str, list[str]] = {
     ],
 }
 
+# Answer-engine style queries (Korean consumer / price / recommendations)
+ANSWER_GROUND_TRUTH: dict[str, list[str]] = {
+    "갤럭시 중고폰 최신 시세 추천 2026": [
+        "danawa.com",
+        "naver.com",
+        "coupang.com",
+        "joongna.com",
+    ],
+    "아이폰 15 프로 중고 가격 비교": [
+        "danawa.com",
+        "naver.com",
+        "apple.com",
+    ],
+    "서울 맛집 추천 강남역 2026": [
+        "naver.com",
+        "mangoplate.com",
+        "diningcode.com",
+    ],
+}
+
 
 @dataclass
 class QueryResult:
@@ -99,7 +119,7 @@ class MetricResult:
 
 
 def is_relevant(url: str, query: str) -> bool:
-    patterns = GROUND_TRUTH.get(query, [])
+    patterns = GROUND_TRUTH.get(query) or ANSWER_GROUND_TRUTH.get(query, [])
     url_lower = url.lower()
     return any(pat.lower() in url_lower for pat in patterns)
 
@@ -379,17 +399,31 @@ async def main() -> int:
         delta_str = f"+{delta:.3f}" if delta >= 0 else f"{delta:.3f}"
         print(f"{key:<25} {web[key]:>12.3f} {deep[key]:>15.3f} {delta_str:>10}")
 
-    # Save comparative report
     report_path = Path("benchmark/search_quality_report.json")
-    report_path.write_text(
-        json.dumps(
-            {
-                "web_search": {"summary": web, "results": [asdict(m) for m in web_metrics]},
-                "deep_research": {"summary": deep, "results": [asdict(m) for m in deep_metrics]},
-            },
-            indent=2,
-        )
-    )
+    report_data: dict[str, object] = {
+        "web_search": {"summary": web, "results": [asdict(m) for m in web_metrics]},
+        "deep_research": {"summary": deep, "results": [asdict(m) for m in deep_metrics]},
+    }
+
+    answer_queries = list(ANSWER_GROUND_TRUTH.keys())
+    if answer_queries:
+        print(f"\n{'=' * 80}")
+        print(f"ANSWER-MODE QUERIES ({len(answer_queries)} Korean consumer / price queries)")
+        print(f"{'=' * 80}")
+        print("\n  [recovery] Waiting 5s before answer-mode benchmark...")
+        await asyncio.sleep(5)
+        answer_metrics = await run_benchmark_mode(answer_queries, "deep_research")
+        answer_summary = summarize(answer_metrics)
+        report_data["answer_pipeline"] = {
+            "summary": answer_summary,
+            "results": [asdict(m) for m in answer_metrics],
+        }
+        print(f"\n{'Metric':<25} {'answer_pipeline':>15}")
+        print("-" * 42)
+        for key, val in answer_summary.items():
+            print(f"{key:<25} {val:>15.3f}")
+
+    report_path.write_text(json.dumps(report_data, indent=2))
     print(f"\nReport saved: {report_path}")
 
     return 0

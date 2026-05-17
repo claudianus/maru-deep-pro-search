@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 from mcp.server.fastmcp import Context, FastMCP
 
 from .config import DEFAULT_CONFIG
+from .harness.constants import RESEARCH_AUGMENTING_TOOLS, RESEARCH_PRODUCING_TOOLS
 
 mcp = FastMCP("maru-search")
 
@@ -199,18 +200,8 @@ def _get_session_id(ctx: Context | None) -> str:
     return f"request:{getattr(ctx, 'request_id', 'unknown')}"
 
 
-_RESEARCH_PRODUCING_TOOLS: set[str] = {
-    "deep_research",
-    "answer",
-    "web_search",
-    "search_with_citations",
-    "parallel_search",
-    "fetch_page",
-    "fetch_bulk",
-    "stealthy_fetch",
-}
-
-_RESEARCH_AUGMENTING_TOOLS: set[str] = {"fetch_page", "fetch_bulk", "stealthy_fetch"}
+_RESEARCH_PRODUCING_TOOLS: set[str] = set(RESEARCH_PRODUCING_TOOLS)
+_RESEARCH_AUGMENTING_TOOLS: set[str] = set(RESEARCH_AUGMENTING_TOOLS)
 
 
 def _tool_query(name: str, args: tuple, kwargs: dict) -> str:
@@ -1051,7 +1042,7 @@ async def query_knowledge(
         return (
             f"## No prior research found for: '{query}'\n\n"
             "This topic hasn't been researched in the knowledge base yet. "
-            "Run `deep_research(query=...)` first to populate it."
+            "Run `answer(query=...)` or `deep_research(query=...)` first to populate it."
         )
 
     lines = [f"## Prior Research Results ({len(entries)} found)", ""]
@@ -1069,7 +1060,7 @@ async def query_knowledge(
 
     lines.append(
         "💡 Tip: These results are from prior research sessions. "
-        "If the information is stale, run `deep_research()` again to refresh."
+        "If the information is stale, run `answer()` or `deep_research()` again to refresh."
     )
     return "\n".join(lines)
 
@@ -1121,18 +1112,30 @@ async def session_state(
 
     lines.append("")
     if not state.research_done:
-        lines.append("🔴 **No research in this session.** Call `deep_research(query=...) first.")
+        lines.append(
+            "🔴 **No research in this session.** Call `answer(query=...)` for general questions "
+            "or `deep_research(query=...)` for coding/security work first."
+        )
     elif not state.is_fresh:
-        lines.append("🟡 **Research is stale.** Re-run `deep_research()` before dependent tools.")
+        lines.append(
+            "🟡 **Research is stale.** Re-run `answer()` or `deep_research()` before dependent tools."
+        )
     else:
         lines.append("🟢 **Session is research-ready.** You may call dependent tools.")
 
     summary = enforcer.drift_summary(session_id)
-    if summary.get("drift_detected"):
+    if summary.get("drift_detected") or summary.get("soft_drift_detected"):
         lines.append("")
-        lines.append("🟠 **Drift**: manifest or error pattern changed since last research.")
-        for change in summary.get("manifest_changes", []):
-            lines.append(f"  - {change}")
+        if summary.get("drift_detected"):
+            lines.append(
+                "🟠 **Hard drift**: dependency intent or errors changed since last research."
+            )
+            for change in summary.get("hard_manifest_changes", []):
+                lines.append(f"  - {change}")
+        if summary.get("soft_drift_detected"):
+            lines.append("ℹ️ **Soft drift**: lockfiles changed (informational only).")
+            for change in summary.get("soft_manifest_changes", []):
+                lines.append(f"  - {change}")
 
     return "\n".join(lines)
 
@@ -1144,10 +1147,10 @@ async def session_state(
 async def drift_status(
     ctx: Context | None = None,
 ) -> str:
-    """Check workspace drift since last deep_research (no web search).
+    """Check workspace drift since last answer/deep_research (no web search).
 
-    Compares dependency manifest fingerprints and error signatures.
-    Returns suggested micro-queries for the host LLM to pass to deep_research.
+    Compares dependency manifest fingerprints (soft vs hard tier) and error signatures.
+    Returns suggested micro-queries for the host LLM to pass to answer or deep_research.
     """
     from .harness.enforcer import get_enforcer
 
@@ -1161,13 +1164,27 @@ async def drift_status(
         f"**Research ID**: `{summary.get('research_id') or '(none)'}`",
         f"**Workspace**: `{summary.get('workspace_root', '')}`",
         f"**Manifests tracked**: {len(summary.get('manifest_files_tracked', []))}",
-        f"**Drift detected**: {'yes' if summary.get('drift_detected') else 'no'}",
+        f"**Hard drift**: {'yes' if summary.get('drift_detected') else 'no'}",
+        f"**Soft drift (lockfiles)**: {'yes' if summary.get('soft_drift_detected') else 'no'}",
     ]
-    changes = summary.get("manifest_changes", [])
-    if changes:
+    baseline_fp = summary.get("baseline_fingerprint") or ""
+    current_fp = summary.get("current_fingerprint") or ""
+    if baseline_fp or current_fp:
         lines.append("")
-        lines.append("**Manifest changes:**")
-        for c in changes:
+        lines.append(
+            f"**Snapshot**: baseline `{baseline_fp or '(none)'}` → current `{current_fp or '(none)'}`"
+        )
+    hard_changes = summary.get("hard_manifest_changes", [])
+    soft_changes = summary.get("soft_manifest_changes", [])
+    if hard_changes:
+        lines.append("")
+        lines.append("**Hard manifest changes (re-research recommended):**")
+        for c in hard_changes:
+            lines.append(f"- {c}")
+    if soft_changes:
+        lines.append("")
+        lines.append("**Soft manifest changes (lockfiles only):**")
+        for c in soft_changes:
             lines.append(f"- {c}")
     if summary.get("error_signature_changed"):
         lines.append("")
@@ -1175,12 +1192,14 @@ async def drift_status(
     suggestions = summary.get("suggested_queries", [])
     if suggestions:
         lines.append("")
-        lines.append("**Suggested deep_research queries (host synthesizes):**")
+        lines.append("**Suggested answer/deep_research queries (host synthesizes):**")
         for s in suggestions:
             lines.append(f"- `{s}`")
     if not summary["research_done"]:
         lines.append("")
-        lines.append("Run `deep_research(query=...)` first to establish a baseline snapshot.")
+        lines.append(
+            "Run `answer(query=...)` or `deep_research(query=...)` first to establish a baseline snapshot."
+        )
     return "\n".join(lines)
 
 
@@ -1273,7 +1292,9 @@ async def export_research(
     state = enforcer.get_or_create(session_id)
 
     if not state.research_done:
-        return "❌ No research to export. Run `deep_research(query=...)` first."
+        return (
+            "❌ No research to export. Run `answer(query=...)` or `deep_research(query=...)` first."
+        )
 
     lines = [
         f"# Research Export: {state.research_query}",

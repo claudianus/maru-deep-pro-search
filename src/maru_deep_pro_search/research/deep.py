@@ -269,10 +269,7 @@ def format_for_llm(
 
     coverage_str = " ".join(f"{k}={v}" for k, v in result.search_coverage.items())
 
-    # Compute research quality score
-    quality_score = _compute_research_quality(result)
-    grade = _quality_grade(quality_score)
-    grade_emoji = {"A": "🟢", "B": "🟡", "C": "🟠", "D": "🔴", "F": "⚫"}.get(grade, "⚪")
+    grade_emoji, grade, quality_score = _research_quality_display(result)
 
     lines.append(
         f"_engines: {coverage_str} | sources: {result.total_sources} | "
@@ -359,6 +356,20 @@ def _compute_research_quality(result: ResearchResult) -> int:
     return min(
         coverage_score + authority_score + primary_score + quality_score + diversity_score, 100
     )
+
+
+def _research_quality_display(result: ResearchResult) -> tuple[str, str, int]:
+    """Shared emoji, letter grade, and numeric score for quality lines."""
+    score = _compute_research_quality(result)
+    grade = _quality_grade(score)
+    grade_emoji = {"A": "🟢", "B": "🟡", "C": "🟠", "D": "🔴", "F": "⚫"}.get(grade, "⚪")
+    return grade_emoji, grade, score
+
+
+def research_quality_line(result: ResearchResult) -> str:
+    """One-line quality summary for answer-engine and tool headers."""
+    grade_emoji, grade, score = _research_quality_display(result)
+    return f"quality: {grade_emoji} {grade} ({score}/100)"
 
 
 def _quality_grade(score: int) -> str:

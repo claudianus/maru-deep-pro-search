@@ -14,11 +14,17 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ..exceptions import MaruSearchError
+from .constants import (
+    FRESH_RESEARCH_REQUIRED_TOOLS,
+    RESEARCH_EXEMPT_META_TOOLS,
+    RESEARCH_PRODUCING_TOOLS,
+)
 from .drift import (
     WorkspaceSnapshot,
-    compare_snapshots,
+    compare_snapshots_tiered,
     extract_error_signature,
     format_drift_warning,
+    format_soft_drift_note,
     snapshot_workspace,
     suggest_research_queries,
 )
@@ -143,32 +149,9 @@ class SessionState:
 class SessionEnforcer:
     """Tracks every MCP session and enforces research-before-action policies."""
 
-    # Tools that create useful research state and can be the first tool call.
-    RESEARCH_PRODUCING_TOOLS: set[str] = {
-        "deep_research",
-        "answer",
-        "web_search",
-        "search_with_citations",
-        "parallel_search",
-        "fetch_page",
-        "fetch_bulk",
-        "stealthy_fetch",
-    }
-
-    # Tools that can be called WITHOUT prior research.
-    RESEARCH_EXEMPT_TOOLS: set[str] = {
-        "version",
-        "list_engines",
-        "engine_health",
-        "session_state",
-        "drift_status",
-        "query_knowledge",
-        "cache_stats",
-        "clear_caches",
-    } | RESEARCH_PRODUCING_TOOLS
-
-    # Tools that consume prior evidence and therefore need fresh research.
-    FRESH_RESEARCH_REQUIRED_TOOLS: set[str] = {"generate_code", "export_research"}
+    RESEARCH_PRODUCING_TOOLS: set[str] = set(RESEARCH_PRODUCING_TOOLS)
+    RESEARCH_EXEMPT_TOOLS: set[str] = set(RESEARCH_EXEMPT_META_TOOLS) | RESEARCH_PRODUCING_TOOLS
+    FRESH_RESEARCH_REQUIRED_TOOLS: set[str] = set(FRESH_RESEARCH_REQUIRED_TOOLS)
 
     # Mid-task enforcement: warn after N non-research tools without fresh research
     MAX_TOOLS_WITHOUT_RESEARCH: int = 5
@@ -245,7 +228,7 @@ class SessionEnforcer:
                 raise ResearchRequiredError(tool_name)
             if not state.is_fresh:
                 raise ResearchRequiredError(
-                    f"{tool_name} (research expired after 30min — run deep_research again)"
+                    f"{tool_name} (research expired after 30min — run answer or deep_research again)"
                 )
             return state
 
@@ -269,37 +252,43 @@ class SessionEnforcer:
 
         non_research_tools = [t for t in state.tools_called if t not in self.RESEARCH_EXEMPT_TOOLS]
 
-        drift_reasons: list[str] = []
-        if state.workspace_snapshot.files:
-            drift_reasons = compare_snapshots(state.workspace_snapshot)
+        tiered = (
+            compare_snapshots_tiered(state.workspace_snapshot)
+            if state.workspace_snapshot.files
+            else compare_snapshots_tiered(WorkspaceSnapshot(root=state.workspace_snapshot.root))
+        )
+        hard_reasons = list(tiered.hard)
+        soft_reasons = list(tiered.soft)
 
         error_drift = bool(
             state.last_error_signature
             and state.research_error_signature != state.last_error_signature
         )
 
-        if drift_reasons or error_drift:
-            error_line = ""
-            if error_drift:
-                error_line = "recent tool error"
+        if hard_reasons or error_drift:
+            error_line = "recent tool error" if error_drift else ""
             return format_drift_warning(
-                drift_reasons,
-                suggest_research_queries(drift_reasons, state.research_query, error_line),
+                hard_reasons,
+                suggest_research_queries(hard_reasons, state.research_query, error_line),
+                soft_reasons=soft_reasons,
                 error_drift=error_drift,
             )
+
+        if soft_reasons:
+            return format_soft_drift_note(soft_reasons)
 
         if len(non_research_tools) >= self.MAX_TOOLS_WITHOUT_RESEARCH:
             return (
                 f"\n\n🟡 **Mid-task warning**: You have called {len(non_research_tools)} tools "
-                f"since your last research. Consider re-running `deep_research()` to refresh "
-                f"your knowledge before continuing."
+                "since your last research. Consider `answer()` or `deep_research()` to refresh "
+                "your knowledge before continuing."
             )
 
         if state.research_age_seconds > 900 and len(non_research_tools) >= 2:
             return (
                 "\n\n🟡 **Research aging**: Last research was "
                 f"{int(state.research_age_seconds // 60)}+ minutes ago. "
-                "Consider `deep_research()` if you changed direction or dependencies."
+                "Consider `answer()` or `deep_research()` if you changed direction or dependencies."
             )
 
         return None
@@ -308,8 +297,17 @@ class SessionEnforcer:
         """Read-only drift report for drift_status tool."""
         state = self.get_or_create(session_id)
         current = snapshot_workspace()
-        reasons = (
-            compare_snapshots(state.workspace_snapshot) if state.workspace_snapshot.files else []
+        empty_baseline = WorkspaceSnapshot(root=current.root)
+        tiered = (
+            compare_snapshots_tiered(state.workspace_snapshot, current)
+            if state.workspace_snapshot.files
+            else compare_snapshots_tiered(empty_baseline, empty_baseline)
+        )
+        hard_reasons = list(tiered.hard)
+        soft_reasons = list(tiered.soft)
+        error_changed = bool(
+            state.last_error_signature
+            and state.research_error_signature != state.last_error_signature
         )
         return {
             "research_done": state.research_done,
@@ -318,17 +316,17 @@ class SessionEnforcer:
             "research_age_seconds": state.research_age_seconds,
             "workspace_root": current.root,
             "manifest_files_tracked": list(current.files.keys()),
-            "drift_detected": bool(reasons)
-            or (
-                state.last_error_signature
-                and state.research_error_signature != state.last_error_signature
-            ),
-            "manifest_changes": reasons,
-            "error_signature_changed": bool(
-                state.last_error_signature
-                and state.research_error_signature != state.last_error_signature
-            ),
-            "suggested_queries": suggest_research_queries(reasons, state.research_query),
+            "drift_detected": bool(hard_reasons) or error_changed,
+            "soft_drift_detected": bool(soft_reasons),
+            "manifest_changes": hard_reasons + soft_reasons,
+            "soft_manifest_changes": soft_reasons,
+            "hard_manifest_changes": hard_reasons,
+            "error_signature_changed": error_changed,
+            "suggested_queries": suggest_research_queries(hard_reasons, state.research_query),
+            "baseline_fingerprint": state.workspace_snapshot.fingerprint()
+            if state.workspace_snapshot.files
+            else "",
+            "current_fingerprint": current.fingerprint(),
         }
 
     async def validate_code_generation(
@@ -349,12 +347,14 @@ class SessionEnforcer:
             raise CodeGenerationBlockedError("no research has been performed in this session.")
 
         if not state.is_fresh:
-            raise CodeGenerationBlockedError("research is stale (>30min). Re-run deep_research.")
+            raise CodeGenerationBlockedError(
+                "research is stale (>30min). Re-run answer or deep_research."
+            )
 
         if research_id != state.research_id:
             raise CodeGenerationBlockedError(
                 f"research_id mismatch. Expected '{state.research_id}', got '{research_id}'. "
-                "Use the research_id returned by deep_research()."
+                "Use the research_id returned by answer() or deep_research()."
             )
 
         # Check for citations in proposed code

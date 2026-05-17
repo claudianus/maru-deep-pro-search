@@ -19,12 +19,12 @@ DEFAULT_AGENTS_MD = """# Agent Instructions
 **NEVER write code based solely on training data.**
 
 Your training knowledge has a cutoff date. Libraries evolve. APIs change.
-Always call `deep_research(query)` BEFORE making technical decisions.
+Call `answer(query)` for general questions or `deep_research(query)` before technical decisions.
 
 ## Tool Priority
 
-1. `deep_research` — ALWAYS start here
-2. `answer` — Quick factual checks
+1. `answer` — General facts, prices, recommendations
+2. `deep_research` — Code, security, architecture, deep investigation
 3. `parallel_search` — Multiple angles simultaneously
 4. `fetch_page` / `fetch_bulk` — Read specific URLs
 5. `stealthy_fetch` — Last resort for blocked sites
@@ -37,7 +37,7 @@ Previous research results are cached and reused when relevant.
 ## Research Checklist
 
 Before writing ANY code:
-- [ ] Called `deep_research` on the topic
+- [ ] Called `deep_research` for technical/code decisions (use `answer` only for non-technical questions)
 - [ ] Verified library versions are current
 - [ ] Checked for known security issues
 - [ ] Confirmed API signatures match latest docs

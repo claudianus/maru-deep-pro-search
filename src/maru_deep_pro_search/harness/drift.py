@@ -10,6 +10,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .constants import SOFT_DRIFT_FILES
+
 # Cap bytes read per file to keep I/O bounded on large lockfiles.
 _MAX_BYTES = 8192
 
@@ -41,6 +43,22 @@ _ERROR_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"\bCVE-\d{4}-\d+\b", re.I),
     re.compile(r"No module named\s+'[^']+'", re.I),
 )
+
+
+@dataclass(frozen=True)
+class DriftComparison:
+    """Tiered manifest drift since baseline research."""
+
+    soft: tuple[str, ...] = ()
+    hard: tuple[str, ...] = ()
+
+    @property
+    def has_hard(self) -> bool:
+        return bool(self.hard)
+
+    @property
+    def has_any(self) -> bool:
+        return bool(self.soft or self.hard)
 
 
 @dataclass
@@ -81,25 +99,41 @@ def snapshot_workspace(root: Path | None = None) -> WorkspaceSnapshot:
     return WorkspaceSnapshot(root=str(base), files=files)
 
 
-def compare_snapshots(
+def _change_message(name: str, old: str | None, new: str | None) -> str:
+    if old is None:
+        return f"`{name}` added"
+    if new is None:
+        return f"`{name}` removed"
+    return f"`{name}` modified"
+
+
+def compare_snapshots_tiered(
     baseline: WorkspaceSnapshot, current: WorkspaceSnapshot | None = None
-) -> list[str]:
-    """Return human-readable drift reasons (empty if none)."""
+) -> DriftComparison:
+    """Classify manifest drift as soft (lockfiles) or hard (dependency intent)."""
     current = current or snapshot_workspace(Path(baseline.root) if baseline.root else None)
-    reasons: list[str] = []
+    soft: list[str] = []
+    hard: list[str] = []
     all_names = set(baseline.files) | set(current.files)
     for name in sorted(all_names):
         old = baseline.files.get(name)
         new = current.files.get(name)
         if old == new:
             continue
-        if old is None:
-            reasons.append(f"`{name}` added")
-        elif new is None:
-            reasons.append(f"`{name}` removed")
+        msg = _change_message(name, old, new)
+        if name in SOFT_DRIFT_FILES:
+            soft.append(msg)
         else:
-            reasons.append(f"`{name}` modified")
-    return reasons
+            hard.append(msg)
+    return DriftComparison(soft=tuple(soft), hard=tuple(hard))
+
+
+def compare_snapshots(
+    baseline: WorkspaceSnapshot, current: WorkspaceSnapshot | None = None
+) -> list[str]:
+    """Return all manifest drift reasons (soft + hard) for display."""
+    tiered = compare_snapshots_tiered(baseline, current)
+    return list(tiered.soft) + list(tiered.hard)
 
 
 def extract_error_signature(text: str) -> str:
@@ -137,29 +171,53 @@ def suggest_research_queries(
 
 
 def format_drift_warning(
-    drift_reasons: list[str],
+    hard_reasons: list[str],
     suggestions: list[str],
     *,
+    soft_reasons: list[str] | None = None,
     error_drift: bool = False,
 ) -> str:
     """Markdown appendix for tool responses."""
-    lines = [
+    soft = soft_reasons or []
+    lines: list[str] = [
         "",
-        "🟠 **Research drift detected** — workspace changed since your last `deep_research`.",
+        "🟠 **Research drift detected** — workspace changed since your last "
+        "`answer` or `deep_research`.",
         "",
     ]
-    if drift_reasons:
-        lines.append("**Manifest changes:**")
-        for r in drift_reasons:
+    if hard_reasons:
+        lines.append("**Manifest changes (re-research recommended):**")
+        for r in hard_reasons:
+            lines.append(f"- {r}")
+        lines.append("")
+    if soft:
+        lines.append("**Lockfile-only changes (informational):**")
+        for r in soft:
             lines.append(f"- {r}")
         lines.append("")
     if error_drift:
         lines.append("**New error pattern** detected in a recent tool result.")
         lines.append("")
     if suggestions:
-        lines.append("**Suggested `deep_research` queries (host decides):**")
+        lines.append("**Suggested queries — `answer` or `deep_research` (host decides):**")
         for s in suggestions:
             lines.append(f"- `{s}`")
         lines.append("")
     lines.append("_Call `drift_status` for details without re-searching the web._")
+    return "\n".join(lines)
+
+
+def format_soft_drift_note(soft_reasons: list[str]) -> str:
+    """Informational note when only lockfiles changed (no re-research gate)."""
+    if not soft_reasons:
+        return ""
+    lines = [
+        "",
+        "ℹ️ **Soft drift** — lockfiles changed since last research (no re-research required).",
+        "",
+    ]
+    for r in soft_reasons:
+        lines.append(f"- {r}")
+    lines.append("")
+    lines.append("_Run `drift_status` to compare baseline vs current manifests._")
     return "\n".join(lines)

@@ -4,4 +4,4 @@ Perplexity-level web search with zero API keys.
 Multi-engine scraping, intelligent ranking, and citation-native answers.
 """
 
-__version__ = "0.16.2"
+__version__ = "0.17.1"

@@ -1,0 +1,103 @@
+pyproject.toml
+  s_15929f54bfa054::t_11890306565058 3
+uv.lock
+  ai_agent 1139
+README.en.md
+  s_15929f54bfa054::t_a8fa6d3977e34d 77
+src/maru_deep_pro_search/research/deep.py
+  s_15929f54bfa054::t_24adaa594d4069 364-371
+docs/agent_matrix.html
+  s_15929f54bfa054::t_a7d34b1e74b8ab 1-70,72-74,76-81
+  s_15929f54bfa054::t_935cd2626dd02e 71
+  s_15929f54bfa054::t_0e9bf9a6110ac8 75
+src/maru_deep_pro_search/server.py
+  s_15929f54bfa054::t_a7b9b93ae985df 1127,1129,1133-1138
+  s_15929f54bfa054::t_f9cfc7abab343d 1295-1297
+  s_15929f54bfa054::t_bce4b6c7d7ac95 16
+  s_15929f54bfa054::t_52dc6ddde8c032 1045
+  s_15929f54bfa054::t_3ac29402555d5f 203-204
+  s_15929f54bfa054::t_7d2002d27d5e9b 1130-1132
+  s_15929f54bfa054::t_e99bc552cf546c 1115-1118,1120-1122
+  s_15929f54bfa054::t_cc6c50959b1642 1150,1152-1153
+  s_15929f54bfa054::t_ee359e0c2f53f7 1063
+  s_15929f54bfa054::t_c420e7929627f5 1167-1168,1170-1184,1186-1187
+  s_15929f54bfa054::t_88537841ec6e2e 1195
+  s_15929f54bfa054::t_217a4a513ce814 1200-1202
+src/maru_deep_pro_search/harness/enforcer.py
+  s_15929f54bfa054::t_233b167fac666a 349-351
+  s_15929f54bfa054::t_394aa5e29552fe 17-21,24,27
+  s_15929f54bfa054::t_10d513456edbbd 231
+  s_15929f54bfa054::t_7d2002d27d5e9b 258,324
+  s_15929f54bfa054::t_c6c7ca2ddf02ef 356
+  s_15929f54bfa054::t_aec6d64dd86d2b 255-257,259-261,268-269,271-273,277-279,283-284,291
+  s_15929f54bfa054::t_57dd67cbf959d1 152-154
+  s_15929f54bfa054::t_c59320bde9408d 300-309,318-323,325-328
+CHANGELOG.md
+  s_15929f54bfa054::t_c0b34e54fe3df8 11-27
+src/maru_deep_pro_search/harness/spec.py
+  s_15929f54bfa054::t_0236503525d35e 147
+  s_15929f54bfa054::t_abefc15019e765 115,118,120
+  s_15929f54bfa054::t_f1be1e4d181b6a 124
+  s_15929f54bfa054::t_470d2c00353da5 134
+README.md
+  s_15929f54bfa054::t_838d7aba1b1bfd 77
+  s_15929f54bfa054::t_2d97c045a9938e 118
+src/maru_deep_pro_search/research/pipeline.py
+  s_15929f54bfa054::t_7d2002d27d5e9b 39-43
+  s_15929f54bfa054::t_34751a849d67ac 1-38,44-92
+src/maru_deep_pro_search/cli/agents/claude.py
+  s_15929f54bfa054::t_419b0c44b369f6 138
+  s_15929f54bfa054::t_74845358628ba1 142
+src/maru_deep_pro_search/harness/project.py
+  s_15929f54bfa054::t_d104b51f305b61 22,26-27
+  s_15929f54bfa054::t_f78cc09a19dfb1 40
+src/maru_deep_pro_search/tools.py
+  s_15929f54bfa054::t_7d2002d27d5e9b 588
+  s_15929f54bfa054::t_fd6962dac3f929 18-22
+  s_15929f54bfa054::t_04e710a0b01ed9 543-544
+  s_15929f54bfa054::t_3fa032c8cc0e3f 583-584,586-587
+  s_15929f54bfa054::t_81c0cdfbd5bf7a 585
+  s_15929f54bfa054::t_9879be60b0150c 711,715,728-735
+src/maru_deep_pro_search/harness/drift.py
+  s_15929f54bfa054::t_14e81147f68623 13
+  s_15929f54bfa054::t_0ace83c7f53b8b 14
+  s_15929f54bfa054::t_9d4aaf7221f021 102-110,112-113,115-116,123-125,127-136
+  s_15929f54bfa054::t_65c542041be810 174,177,181-182,184-185,188-195,202,208-222
+  s_15929f54bfa054::t_31430f65f7cb9f 48-63
+src/maru_deep_pro_search/__init__.py
+  s_15929f54bfa054::t_ba6878849f4596 7
+docs/index.html
+  s_15929f54bfa054::t_bac576c1e79faa 29
+  s_15929f54bfa054::t_9f09d3d1195698 158-159
+  s_15929f54bfa054::t_8ea3fd6452457c 1260
+  s_15929f54bfa054::t_b4fccfdd33b05d 855-856
+src/maru_deep_pro_search/research/__init__.py
+  s_15929f54bfa054::t_5814db1369f806 6-11,16-19
+  s_15929f54bfa054::t_6e186c58744b7c 3
+  s_15929f54bfa054::t_55d1334a88562a 32
+benchmark/search_quality_benchmark.py
+  s_15929f54bfa054::t_1da380ccdca535 122
+  s_15929f54bfa054::t_060bb5e691ac63 415-428
+  s_15929f54bfa054::t_c5e77fb2cd7811 76-95
+src/maru_deep_pro_search/cli/agents/hermes_plugin.py
+  s_15929f54bfa054::t_d7803ba1e564a4 93,95
+  s_15929f54bfa054::t_7d2002d27d5e9b 47
+src/maru_deep_pro_search/harness/constants.py
+  s_15929f54bfa054::t_4bca9803352865 1-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "6816214c0ec1c32152cf15b4cbd5988c8efa7bfc",
+  "prompts": {},
+  "sessions": {
+    "s_15929f54bfa054": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "36ef6e70-4837-46d2-a0c1-50b0bc3b675a",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+CHANGELOG.md
+  s_15929f54bfa054::t_d0cade4b384038 11-15,17-21,24
+pyproject.toml
+  s_15929f54bfa054::t_3dacb2cbd7a904 3
+docs/index.html
+  s_15929f54bfa054::t_707ebfc4293a8f 29,158-159,855-856,919-922,1005-1006,1109-1110,1170-1172,1260
+src/maru_deep_pro_search/__init__.py
+  s_15929f54bfa054::t_0c6e17ac992193 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "1c59e341552e28e29a3319ff94793e79000835d4",
+  "prompts": {},
+  "sessions": {
+    "s_15929f54bfa054": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "36ef6e70-4837-46d2-a0c1-50b0bc3b675a",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

@@ -521,7 +521,7 @@ See `always_research_first` for the full protocol.
 | Known URLs | `fetch_page` / `fetch_bulk` |
 | Blocked fetch | `fetch_page(stealth=True)` → `stealthy_fetch` |
 
-Default `deep_research` returns top 10 ranked sources (override with `max_sources`). Use `[N]` citations in every answer.
+Default `deep_research` returns top ranked sources per server config (override with `max_sources`). Use `[N]` citations in every answer.
 """
 
 
@@ -633,12 +633,13 @@ async def fetch_bulk(
     stealth: bool = False,
     max_concurrent: int = DEFAULT_CONFIG.max_concurrent_fetches,
     max_tokens: int = 3000,
+    query: str = "",
     ctx: Context | None = None,
 ) -> str:
     """Parallel fetch multiple known URLs with deduplication."""
     from .tools import tool_fetch_bulk
 
-    return await tool_fetch_bulk(urls, stealth, max_concurrent, max_tokens)
+    return await tool_fetch_bulk(urls, stealth, max_concurrent, max_tokens, query)
 
 
 @mcp.tool()

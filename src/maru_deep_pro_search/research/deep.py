@@ -335,20 +335,22 @@ def format_for_llm(
 
 def _format_snippet_conflicts(sources: list) -> str:
     """Surface contradictory version/year hints across top snippets."""
-    version_hits: dict[str, list[int]] = {}
-    year_hits: dict[str, list[int]] = {}
+    version_hits: dict[str, set[int]] = {}
+    year_hits: dict[str, set[int]] = {}
     for src in sources[:10]:
         text = src.snippet or ""
-        for ver in re.findall(r"\bv?\d+\.\d+(?:\.\d+)?\b", text):
-            version_hits.setdefault(ver, []).append(src.citation_id)
-        for year in re.findall(r"20\d{2}", text):
-            year_hits.setdefault(year, []).append(src.citation_id)
+        for ver in set(re.findall(r"\bv?\d+\.\d+(?:\.\d+)?\b", text)):
+            version_hits.setdefault(ver, set()).add(src.citation_id)
+        for year in set(re.findall(r"20\d{2}", text)):
+            year_hits.setdefault(year, set()).add(src.citation_id)
     conflicts: list[str] = []
-    if len(version_hits) > 1:
-        parts = [f"{v} [{', '.join(f'#{i}' for i in ids)}]" for v, ids in version_hits.items()]
+    if len(version_hits) > 1 and len({cid for ids in version_hits.values() for cid in ids}) > 1:
+        parts = [
+            f"{v} [{', '.join(f'#{i}' for i in sorted(ids))}]" for v, ids in version_hits.items()
+        ]
         conflicts.append("- Version hints differ: " + "; ".join(parts[:4]))
-    if len(year_hits) > 1:
-        parts = [f"{y} [{', '.join(f'#{i}' for i in ids)}]" for y, ids in year_hits.items()]
+    if len(year_hits) > 1 and len({cid for ids in year_hits.values() for cid in ids}) > 1:
+        parts = [f"{y} [{', '.join(f'#{i}' for i in sorted(ids))}]" for y, ids in year_hits.items()]
         conflicts.append("- Year hints differ: " + "; ".join(parts[:4]))
     if not conflicts:
         return ""

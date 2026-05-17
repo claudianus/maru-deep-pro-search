@@ -89,12 +89,19 @@ async def _fetch_body_markdown(
 
     fetch_timeout = DEFAULT_CONFIG.http_fetch_timeout_seconds
     engine = _fetch_engine()
-    page = await asyncio.wait_for(
-        engine.fetch(url, stealth=stealth),
-        timeout=fetch_timeout,
-    )
+
+    async def _load_page(use_stealth: bool):
+        return await asyncio.wait_for(
+            engine.fetch(url, stealth=use_stealth),
+            timeout=fetch_timeout,
+        )
+
+    page = await _load_page(stealth)
     if page.quality.value == "blocked" or page.content_length == 0:
-        raise MaruSearchError(page.error_message or "fetch blocked or empty")
+        if not stealth:
+            page = await _load_page(True)
+        if page.quality.value == "blocked" or page.content_length == 0:
+            raise MaruSearchError(page.error_message or "fetch blocked or empty")
 
     content = page.markdown if page.markdown else page.text
     body = truncate_for_llm(content, max_tokens)
@@ -154,14 +161,15 @@ async def _parallel_answer_evidence(
         async with sem:
             lines: list[str] = []
             try:
+                token_cap = max(1, min(fetch_budget, 1800))
                 body = await asyncio.wait_for(
                     _fetch_body_markdown(
                         src.url,  # type: ignore[attr-defined]
-                        max_tokens=max(250, min(fetch_budget, 1800)),
+                        max_tokens=token_cap,
                     ),
                     timeout=timeout,
                 )
-                preview = truncate_for_llm(body, max_tokens=max(250, min(fetch_budget, 1800)))
+                preview = truncate_for_llm(body, max_tokens=token_cap)
                 lines.append(f"#### [{src.citation_id}] {src.title}")  # type: ignore[attr-defined]
                 lines.append(f"URL: {src.url}")  # type: ignore[attr-defined]
                 lines.append("")

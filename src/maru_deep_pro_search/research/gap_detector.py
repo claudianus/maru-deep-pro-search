@@ -55,7 +55,8 @@ def detect_gaps(query: str, sources: list) -> list[str]:
     suggestions: list[str] = []
 
     for entity in _required_entities(query):
-        if entity.lower() not in source_text:
+        pattern = rf"(?<![a-z0-9]){re.escape(entity.lower())}(?![a-z0-9])"
+        if not re.search(pattern, source_text):
             suggestions.append(f"{query} {entity}".strip())
             if len(suggestions) >= 3:
                 return suggestions[:3]

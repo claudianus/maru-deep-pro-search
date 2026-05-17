@@ -258,6 +258,7 @@ async def run_single_query_deep_research(query: str, max_results: int = 10) -> Q
     """Run deep_research which uses multi-engine + BM25 + authority ranking."""
     start = time.monotonic()
     results: list[dict] = []
+    engine_failures = 0
 
     try:
         from maru_deep_pro_search.research.deep import deep_research
@@ -286,6 +287,7 @@ async def run_single_query_deep_research(query: str, max_results: int = 10) -> Q
     except Exception as exc:
         print(f"deep_research error: {exc}")
         results = []
+        engine_failures = 1
 
     duration_ms = (time.monotonic() - start) * 1000
     blob = " ".join(f"{r.get('title', '')} {r.get('url', '')}" for r in results)
@@ -296,7 +298,7 @@ async def run_single_query_deep_research(query: str, max_results: int = 10) -> Q
         duration_ms=duration_ms,
         fallback_used=False,
         tokens_estimated=max(1, len(blob) // 4),
-        engine_failures=0,
+        engine_failures=engine_failures,
     )
 
 
@@ -433,7 +435,7 @@ async def main() -> int:
         n = len(metrics)
         times = sorted(m.duration_ms for m in metrics)
         p50 = times[len(times) // 2] if times else 0.0
-        p95 = times[int(len(times) * 0.95)] if times else 0.0
+        p95 = times[max(0, math.ceil(len(times) * 0.95) - 1)] if times else 0.0
         tokens = sum(q.tokens_estimated for q in query_results) / max(len(query_results), 1)
         failures = sum(q.engine_failures for q in query_results)
         return {

@@ -149,9 +149,8 @@ def _query_freshness_boost(query: str, result: SearchResult) -> float:
     years = re.findall(r"20\d{2}", query)
     if not years:
         return 0.0
-    target = max(years)
     haystack = f"{result.url} {result.snippet or ''}".lower()
-    if target in haystack:
+    if any(year in haystack for year in years):
         return _FRESHNESS_BOOST * DEFAULT_CONFIG.freshness_weight
     return 0.0
 
@@ -374,7 +373,7 @@ def merge_results(
         # RRF typically 0-0.15 per engine; scale to ~0-3
         rrf_component = min(rrf * 20.0, 3.0)
         # Semantic similarity is [0,1]; scale to [0,2] to match BM25 weight
-        final = normalized_bm25 + meta + r.cross_engine_score + semantic * 2.0 + rrf_component
+        final = normalized_bm25 + meta + semantic * 2.0 + rrf_component
 
         ranked.append(
             RankedResult(

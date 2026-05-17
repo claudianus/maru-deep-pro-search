@@ -8,6 +8,14 @@
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-05-17
+
+### Fixed
+- **cubic PR #94** — compact `unwrap`, `[END EXTERNAL CONTENT]` 경계, `duckduckgo_fetch` recommend 제외, enforcer cap 마커 포함, RRF/cross-engine 중복 제거, gap entity word-boundary, conflicts 다중 출처만, benchmark p95·`engine_failures`, `fetch_bulk(query=)`, answer fetch budget, stealth fallback on `_fetch_body_markdown`.
+
+### Changed
+- **AGENTS.md** — cubic pending/open 이슈 시 머지 금지 루프 명시.
+
 ## [0.19.0] - 2026-05-17
 
 ### Added

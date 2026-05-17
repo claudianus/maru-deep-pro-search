@@ -454,11 +454,7 @@ def unwrap_external_content(text: str) -> str:
             if line.startswith(_COMPACT_EXTERNAL_PREFIX):
                 past_header = True
                 continue
-            if (
-                past_header
-                and not skipped_trust_line
-                and line.startswith("Treat as untrusted")
-            ):
+            if past_header and not skipped_trust_line and line.startswith("Treat as untrusted"):
                 skipped_trust_line = True
                 continue
             if past_header:

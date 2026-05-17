@@ -324,15 +324,10 @@ def merge_results(
     merged: list[SearchResult] = []
     for norm, r in url_to_result.items():
         r.engines_found = url_to_engines.get(norm, [])
-        r.cross_engine_score = min(len(r.engines_found) * _CROSS_ENGINE_BOOST, 1.5)
         merged.append(r)
 
     # Phase 2: Fuzzy dedupe — catch same content on different URLs
     merged = _fuzzy_dedupe(merged)
-
-    # Recompute cross-engine scores after fuzzy merge
-    for r in merged:
-        r.cross_engine_score = min(len(r.engines_found) * _CROSS_ENGINE_BOOST, 1.5)
 
     # Phase 2b: Auto-classify source type for results missing it
     for r in merged:

@@ -26,9 +26,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search init",
         description=(
-            "Initialize project-local maru harness (.maru/knowledge.db, harness.yaml). "
-            "Does NOT write agent configs under this repo — use `maru-deep-pro-search setup` "
-            "for global MCP + rules."
+            "이 저장소에 .maru/ 하네스만 만듭니다 (knowledge.db, harness.yaml). "
+            "에이전트(MCP·규칙)는 저장소에 쓰지 않습니다 — "
+            "`maru-deep-pro-search setup`으로 각 머신 전역에 설정하세요."
         ),
     )
     parser.add_argument(

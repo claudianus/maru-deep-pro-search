@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 PACKAGE_NAME = "maru-deep-pro-search"
 PYPI_URL = f"https://pypi.org/pypi/{PACKAGE_NAME}/json"
 
-SETUP_REPAIR_HINT = "Run: maru-deep-pro-search setup --repair"
+SETUP_REPAIR_HINT = "다음: maru-deep-pro-search setup --repair (또는 update --with-setup)"
 
 
 def _get_installed_version() -> str:
@@ -125,8 +125,8 @@ def get_update_notice(result: UpdateCheckResult) -> str | None:
         f"│     Installed: {result.current_version}\n"
         f"│     Latest:    {result.latest_version}\n"
         f"│\n"
-        f"│  Run:  maru-deep-pro-search update\n"
-        f"│     or  pip install -U {PACKAGE_NAME}\n"
+        f"│  Run:  maru-deep-pro-search update --with-setup\n"
+        f"│     or  pip install -U {PACKAGE_NAME} && setup --repair\n"
         f"└─────────────────────────────────────────────────────────────┘\n"
     )
 
@@ -183,9 +183,9 @@ def perform_update(dry_run: bool = False, *, with_setup: bool = False) -> tuple[
             )
             if result.returncode == 0:
                 msg = (
-                    f"✅ Updated {PACKAGE_NAME}\n"
+                    f"✅ {PACKAGE_NAME} 업데이트 완료\n"
                     f"   {current} → {latest}\n"
-                    f"   Please restart the server."
+                    f"   MCP를 쓰는 에이전트(Cursor, Claude 등)를 재시작하세요."
                 )
                 if not auto_setup_enabled(with_setup):
                     msg += f"\n   {SETUP_REPAIR_HINT}"

@@ -2,7 +2,7 @@
 
 > **문서 언어:** 로드맵은 **한국어**로 유지합니다.
 
-**현재:** PyPI [`0.19.0`](https://pypi.org/project/maru-deep-pro-search/) — **20개** 에이전트용 MCP 어댑터, **answer-engine** + **deep_research**, RRF·본문 랭킹·토큰/성능 최적화(0.18–0.19), 검색은 **영어(en) 전용**, 엔진은 **100% 무료** 스크래핑만.
+**현재:** PyPI [`0.19.1`](https://pypi.org/project/maru-deep-pro-search/) — **20개** 에이전트용 MCP 어댑터, **answer-engine** + **deep_research**, RRF·본문 랭킹·토큰/성능 최적화(0.18–0.19), 검색은 **영어(en) 전용**, 엔진은 **100% 무료** 스크래핑만.
 
 **품질:** `ruff`·`mypy` 정적 분석과 런타임 검증/훅 — **자동 테스트 스위트 없음** (`AGENTS.md` 참고).
 

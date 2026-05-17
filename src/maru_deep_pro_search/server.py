@@ -1299,10 +1299,11 @@ def _print_cli_router_help() -> None:
         f"{inv} — MCP(stdio) 서버이거나, 아래 서브커맨드로 CLI를 실행합니다.\n\n"
         "서브커맨드:\n"
         "  setup      에이전트 전역 설정 (MCP·규칙·스킬)\n"
+        "             setup --check 진단 · setup --repair 훅/프로토콜 수리\n"
         "  sync       전역 에이전트 재설정 (프로젝트 `.maru/harness.yaml` 있으면 로드·없으면 안내)\n"
-        "  init       현재 디렉터리에 .maru/ 하네스만 생성\n"
+        "  init       현재 디렉터리에 .maru/ 하네스만 생성 (에이전트 설정은 setup)\n"
         "  stats      지식 DB 통계\n"
-        "  update     자기 자신 버전 업데이트\n"
+        "  update     PyPI 업데이트 (권장: update --with-setup)\n"
         "  research   헤드리스 딥 리서치\n"
         "  knowledge  knowledge export / import\n"
         "  plugin     하네스 플러그인 관리\n\n"
@@ -1310,7 +1311,7 @@ def _print_cli_router_help() -> None:
         "  -h, --help     이 도움말\n"
         "  -V, --version  패키지 버전\n\n"
         f"MCP만 실행: 인자 없이 `{inv}`\n"
-        f"전역 설정: `{inv} setup` 또는 `{inv}-setup`"
+        f"전역 설정: `{inv} setup` · 업그레이드 후 `{inv} setup --repair` 또는 `{inv} update --with-setup`"
     )
 
 

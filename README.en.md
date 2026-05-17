@@ -32,12 +32,21 @@
 | | Built-in Agent Search | maru-deep-pro-search |
 |---|---|---|
 | **Engines** | 1–2, no fallback | **9-engine auto-failover** |
-| **Ranking** | Raw engine order | **BM25 + semantic + authority/freshness/code-density** |
+| **Ranking** | Raw engine order | **9-engine results merged and re-ranked (RRF+BM25·semantic·authority/freshness)** |
 | **Citations** | Hallucinated or none | **Native `[1]`, `[2]` IDs with real URLs** |
 | **Defense** | None | **72-signature prompt injection + zero-width char sanitization** |
 | **Enforcement** | "Please search first" (ignored) | **3-layer technical gatekeeping + code validation** |
 | **Agents** | Generic | **20 dedicated adapters with skill file injection** |
 | **Cost** | Varies | **$0 forever — zero API keys** |
+
+---
+
+## 3-minute overview
+
+1. **Install** → `maru-deep-pro-search setup` → **restart** your agent (Cursor, Claude Code, etc.)
+2. **Everyday questions** (prices, recommendations) → ask in plain language, e.g. *"Latest used Galaxy phone prices"* — `answer` gathers sources and `[1]` citations
+3. **Code, security, architecture** → e.g. *"FastAPI vs Django 2025 architecture comparison"* — `deep_research` runs first (default **10** sources), then coding
+4. **Already installed?** → `pip install -U maru-deep-pro-search` then `maru-deep-pro-search update --with-setup` (or `setup --repair`) → confirm with `setup --check`
 
 ---
 
@@ -74,7 +83,7 @@ The setup wizard auto-detects your AI agent, backs up existing configs, injects 
 ### 1. Verify installation
 ```bash
 maru-deep-pro-search --version
-# Expected: 0.17.2
+# Expected: 0.19.1 (latest on PyPI)
 ```
 
 ### 2. Set up your agent
@@ -82,6 +91,17 @@ maru-deep-pro-search --version
 maru-deep-pro-search setup
 ```
 This auto-detects installed agents (Claude, Cursor, etc.) and injects MCP configs.
+
+**Upgrading (if already installed)** — `pip install -U` alone does **not** refresh agent configs.
+
+```bash
+pip install -U maru-deep-pro-search
+maru-deep-pro-search update --with-setup
+# or: maru-deep-pro-search setup --repair
+maru-deep-pro-search setup --check    # diagnose only
+```
+
+Use `setup --repair` when hooks or protocol text is stale. To overwrite SKILL files too: `setup --repair --repair-skills`.
 
 ### 3. Example MCP config for Claude Code
 Add to your `~/.claude/settings.json`:
@@ -136,7 +156,17 @@ Search tools prefer **keyword-style** queries (3–12 terms: product/library + a
 
 ## 🛠️ 18 MCP Tools
 
-### Research Core
+### Top 3 for most users
+
+| Tool | One line | Example ask |
+|------|----------|-------------|
+| `answer` | General web Q&A with ranked sources + citations | Used Galaxy prices, product recommendations |
+| `deep_research` | Multi-engine deep dive (default 10 sources) + optional auto-fetch | Library compare, CVE, architecture |
+| `fetch_page` | Read one URL (sanitized, defended) | Open a single official doc link |
+
+The tables below are **advanced / diagnostics**. Most work is the three tools above plus chatting with your agent.
+
+### Research Core (advanced)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
 | `answer` | Perplexity-style answer-engine packet with ranked sources and fetched evidence | General web questions, prices, recommendations, Korean consumer searches |
@@ -145,14 +175,14 @@ Search tools prefer **keyword-style** queries (3–12 terms: product/library + a
 | `web_search` | Scrape + rank + return cited results | Additional targeted sources |
 | `search_with_citations` | Pre-numbered sources for academic writing | Papers, documentation requiring strict attribution |
 
-### Fetch & Extract
+### Fetch & Extract (advanced)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
 | `fetch_page` | Extract clean content from a single URL (with 403 auto-stealth fallback) | Reading specific docs found during research |
 | `fetch_bulk` | Parallel fetch with deduplication | Reading 2–10 known URLs at once |
 | `stealthy_fetch` | Anti-bot bypass for protected sites | Cloudflare/DataDome blocked sites (last resort) |
 
-### Validation & Enforcement
+### Validation & Enforcement (advanced)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
 | `generate_code` | **Code validation gate** — blocks un-researched code by checking for missing citations | After research — ensures code is backed by citations |
@@ -161,7 +191,7 @@ Search tools prefer **keyword-style** queries (3–12 terms: product/library + a
 | `query_knowledge` | Search persisted knowledge base for prior research | Reusing research without re-searching the web |
 | `export_research` | Export current session research to a markdown file | Saving/sharing research results |
 
-### Engine & Infrastructure
+### Engine & Infrastructure (diagnostics)
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
 | `list_engines` | List all search engines with reliability & latency metadata | Choosing the right engine |
@@ -175,6 +205,7 @@ Search tools prefer **keyword-style** queries (3–12 terms: product/library + a
 User request?
 ├── General web question / latest price / recommendation? → answer(query, mode="balanced")
 ├── Code / security / architecture / deep research? → deep_research(query, auto_fetch=3)
+│   └── default max_sources=10; raise max_sources only if you need more
     ├── Multiple angles? → parallel_search
     ├── Specific URLs? → fetch_page / fetch_bulk
     ├── Blocked site? → stealthy_fetch (last resort)
@@ -231,7 +262,7 @@ MCP Client (Claude, Cursor, Kimi, Windsurf, ...)
 ┌──────────────────────────────────────────────────────────────┐
 │  maru-deep-pro-search MCP Server                             │
 │  ├─ 18 Tools (search, fetch, cite, validate, introspect)     │
-│  ├─ 9-Engine Failover Registry (query-aware selection)       │
+│  ├─ 9-engine failover + RRF fusion (default 10 sources)      │
 │  ├─ Hybrid Ranking (BM25 + semantic + authority/freshness)   │
 │  ├─ 3-Layer Enforcement + Research Quality Score (A-F)       │
 │  ├─ 72-Signature Sanitization + Zero-Width Char Defense      │
@@ -346,6 +377,11 @@ All optional. Search defaults, timeouts, and retry counts are read in `src/maru_
 |------------------------|---------|------------------|
 | `MARU_SEARCH_ENGINE` | `duckduckgo_lite` | Default `engine` for `web_search`, `search_with_citations`, `answer`, `parallel_search`, `deep_research` |
 | `MARU_SEARCH_MAX_RESULTS` | `10` | Default `max_results` / `answer`'s `max_sources` |
+| `MARU_DEEP_MAX_SOURCES` | `10` | Default `max_sources` for `deep_research` |
+| `MARU_SERP_PER_ENGINE_CAP` | `40` | Max SERP rows parsed per engine |
+| `MARU_WRAPPER_TIER` | `tiered` | `tiered` (light SERP wrapper) or `full` |
+| `MARU_KNOWLEDGE_REUSE_MAX_CHARS` | `4000` | Cap on cached KnowledgeStore hits |
+| `MARU_RESEARCH_CONTEXT_MAX_CHARS` | `8000` | Cap on session research context in enforcer |
 | `MARU_SEARCH_MAX_CONCURRENT` | `5` | Default `max_concurrent` for `fetch_bulk` |
 | `MARU_SEARCH_RETRIES` | `3` | Max attempts for SERP `with_retry` (e.g. Bing, Yahoo) |
 | `MARU_SEARCH_TIMEOUT` | `30.0` | SERP HTML scrape (`web_search`, `search_with_citations`), seconds |
@@ -368,8 +404,12 @@ maru-deep-pro-search
 
 # Setup AI agents with MCP config + skill files
 maru-deep-pro-search setup
+maru-deep-pro-search setup --check
+maru-deep-pro-search setup --repair
 maru-deep-pro-search setup --list
 maru-deep-pro-search setup --restore
+maru-deep-pro-search update --with-setup
+# After upgrade: maru-deep-pro-search setup --check
 
 # Project harness (.maru only — does not touch agent configs in the repo)
 maru-deep-pro-search init

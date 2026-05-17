@@ -139,11 +139,13 @@ class ContinueAdapter(AgentAdapter):
 
     @staticmethod
     def _upsert_named_spec(items: list[Any], spec: dict[str, str]) -> None:
-        """Replace an existing named prompt/command or append if missing."""
+        """Merge maru fields into an existing named prompt/command or append if missing."""
         for index, item in enumerate(items):
             if isinstance(item, dict) and item.get("name") == spec["name"]:
-                if item != spec:
-                    items[index] = dict(spec)
+                merged = dict(item)
+                merged.update(spec)
+                if merged != item:
+                    items[index] = merged
                 return
         items.append(dict(spec))
 

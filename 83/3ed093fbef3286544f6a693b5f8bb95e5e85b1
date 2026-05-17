@@ -1,0 +1,53 @@
+src/maru_deep_pro_search/__init__.py
+  s_15929f54bfa054::t_f15635cf2aa2c5 7
+AGENTS.md
+  s_15929f54bfa054::t_27f414cd725057 120-122,125-143
+src/maru_deep_pro_search/research/gap_detector.py
+  s_15929f54bfa054::t_2ad30ffa228987 58-59
+src/maru_deep_pro_search/research/ranker.py
+  s_15929f54bfa054::t_16f1c62af75b4d 153
+  s_15929f54bfa054::t_14d65e2e8a5c8b 376
+src/maru_deep_pro_search/harness/enforcer.py
+  s_15929f54bfa054::t_ff6b9d4ec84f6e 110,112-113
+pyproject.toml
+  s_15929f54bfa054::t_62ea06991a16bf 3
+src/maru_deep_pro_search/utils/sanitize.py
+  s_15929f54bfa054::t_b2de80c6af97b1 506
+  s_15929f54bfa054::t_bcc6a71d02674f 430-431
+  s_15929f54bfa054::t_f7828ac64a89be 444-461
+src/maru_deep_pro_search/research/deep.py
+  s_15929f54bfa054::t_92f270f9b0d023 338-339,342-345,347-350,352-353
+src/maru_deep_pro_search/tools.py
+  s_15929f54bfa054::t_24c6f5fc38c583 92-99,101-104
+  s_15929f54bfa054::t_b4c68c3cc1b2a6 164,168,172
+CHANGELOG.md
+  s_15929f54bfa054::t_f054669fcbcb31 11-18
+benchmark/search_quality_benchmark.py
+  s_15929f54bfa054::t_2fb1c6f574041e 438
+  s_15929f54bfa054::t_1617794c75c579 290,301
+  s_15929f54bfa054::t_37cada01c4e3da 261
+src/maru_deep_pro_search/engines/registry.py
+  s_15929f54bfa054::t_6a4ed3a199ec8a 11-13
+  s_15929f54bfa054::t_1d1ab7e90c62b3 94-95
+uv.lock
+  ai_agent 1139
+src/maru_deep_pro_search/server.py
+  s_15929f54bfa054::t_82c7a854285ce8 524
+  s_15929f54bfa054::t_3ed78fc35db3ad 636,642
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "833ed093fbef3286544f6a693b5f8bb95e5e85b1",
+  "prompts": {},
+  "sessions": {
+    "s_15929f54bfa054": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "36ef6e70-4837-46d2-a0c1-50b0bc3b675a",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

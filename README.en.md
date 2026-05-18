@@ -45,7 +45,7 @@
 
 1. **Install** → `maru-deep-pro-search setup` → **restart** your agent (Cursor, Claude Code, etc.)
 2. **Everyday questions** (prices, recommendations) → ask in plain language, e.g. *"Latest used Galaxy phone prices"* — `answer` gathers sources and `[1]` citations
-3. **Code, security, architecture** → e.g. *"FastAPI vs Django 2025 architecture comparison"* — `deep_research` runs first (default **10** sources), then coding
+3. **Code, security, architecture** → e.g. *"FastAPI vs Django 2025 architecture comparison"* — `deep_research` runs first (default **30** sources), then coding
 4. **Already installed?** → `pip install -U maru-deep-pro-search` then `maru-deep-pro-search update --with-setup` (or `setup --repair`) → confirm with `setup --check`
 
 ---
@@ -161,7 +161,7 @@ Search tools prefer **keyword-style** queries (3–12 terms: product/library + a
 | Tool | One line | Example ask |
 |------|----------|-------------|
 | `answer` | General web Q&A with ranked sources + citations | Used Galaxy prices, product recommendations |
-| `deep_research` | Multi-engine deep dive (default 10 sources) + optional auto-fetch | Library compare, CVE, architecture |
+| `deep_research` | Multi-engine deep dive (default 30 sources) + optional auto-fetch | Library compare, CVE, architecture |
 | `fetch_page` | Read one URL (sanitized, defended) | Open a single official doc link |
 
 The tables below are **advanced / diagnostics**. Most work is the three tools above plus chatting with your agent.
@@ -205,7 +205,7 @@ The tables below are **advanced / diagnostics**. Most work is the three tools ab
 User request?
 ├── General web question / latest price / recommendation? → answer(query, mode="balanced")
 ├── Code / security / architecture / deep research? → deep_research(query, auto_fetch=3)
-│   ├── default max_sources=10; raise max_sources only if you need more
+│   ├── default max_sources=30; raise max_sources only if you need more
     ├── Multiple angles? → parallel_search
     ├── Specific URLs? → fetch_page / fetch_bulk
     ├── Blocked site? → stealthy_fetch (last resort)
@@ -262,7 +262,7 @@ MCP Client (Claude, Cursor, Kimi, Windsurf, ...)
 ┌──────────────────────────────────────────────────────────────┐
 │  maru-deep-pro-search MCP Server                             │
 │  ├─ 18 Tools (search, fetch, cite, validate, introspect)     │
-│  ├─ 9-engine failover + RRF fusion (default 10 sources)      │
+│  ├─ 9-engine failover + RRF fusion (default 30 sources)      │
 │  ├─ Hybrid Ranking (BM25 + semantic + authority/freshness)   │
 │  ├─ 3-Layer Enforcement + Research Quality Score (A-F)       │
 │  ├─ 72-Signature Sanitization + Zero-Width Char Defense      │
@@ -376,18 +376,24 @@ All optional. Search defaults, timeouts, and retry counts are read in `src/maru_
 | Environment variable | Default | What it controls |
 |------------------------|---------|------------------|
 | `MARU_SEARCH_ENGINE` | `duckduckgo_lite` | Default `engine` for `web_search`, `search_with_citations`, `answer`, `parallel_search`, `deep_research` |
-| `MARU_SEARCH_MAX_RESULTS` | `10` | Default `max_results` / `answer`'s `max_sources` |
-| `MARU_DEEP_MAX_SOURCES` | `10` | Default `max_sources` for `deep_research` |
-| `MARU_SERP_PER_ENGINE_CAP` | `40` | Max SERP rows parsed per engine |
+| `MARU_SEARCH_MAX_RESULTS` | `10` | Default `max_results` for search tools. `answer` uses mode-specific source defaults |
+| `MARU_DEEP_MAX_SOURCES` | `30` | Default `max_sources` for `deep_research` |
+| `MARU_DEEP_MAX_SUBQUERIES` | `7` | Query expansion cap for `deep_research` |
+| `MARU_SERP_PER_ENGINE_CAP` | `50` | Max SERP rows parsed per engine |
+| `MARU_ANSWER_BALANCED_MAX_SOURCES` | `14` | Default source budget for `answer(mode="balanced")` |
+| `MARU_ANSWER_DEEP_MAX_SOURCES` | `30` | Default source budget for `answer(mode="deep")` |
+| `MARU_ANSWER_DEEP_FETCH_COUNT` | `6` | Number of auto-selected page reads for `answer(mode="deep")` |
 | `MARU_WRAPPER_TIER` | `tiered` | `tiered` (light SERP wrapper) or `full` |
+| `MARU_ENABLE_STARTPAGE` | (unset) | Set to `1` to include Playwright-backed Startpage in automatic engine recommendations |
 | `MARU_KNOWLEDGE_REUSE_MAX_CHARS` | `4000` | Cap on cached KnowledgeStore hits |
 | `MARU_RESEARCH_CONTEXT_MAX_CHARS` | `8000` | Cap on session research context in enforcer |
 | `MARU_SEARCH_MAX_CONCURRENT` | `5` | Default `max_concurrent` for `fetch_bulk` |
 | `MARU_SEARCH_RETRIES` | `3` | Max attempts for SERP `with_retry` (e.g. Bing, Yahoo) |
 | `MARU_SEARCH_TIMEOUT` | `30.0` | SERP HTML scrape (`web_search`, `search_with_citations`), seconds |
 | `MARU_FETCH_HTTP_TIMEOUT` | `20.0` | `fetch_page` / per-URL `fetch_bulk`, seconds |
-| `MARU_DEEP_RESEARCH_TIMEOUT` | `45.0` | `deep_research` orchestration, seconds |
-| `MARU_ANSWER_TIMEOUT` | `30.0` | `answer` tool, seconds |
+| `MARU_DEEP_RESEARCH_TIMEOUT` | `60.0` | `deep_research` orchestration, seconds |
+| `MARU_DEEP_SERP_RUN_TIMEOUT` | `10.0` | Timeout for each subquery/engine run inside `deep_research`, seconds |
+| `MARU_ANSWER_TIMEOUT` | `60.0` | `answer` tool, seconds |
 | `MARU_AUTO_FETCH_TIMEOUT` | `8.0` | Nested fetch budget inside `deep_research` `auto_fetch`, seconds |
 | `MARU_SKIP_UPDATE_CHECK` | (unset) | Any non-empty value skips the startup PyPI update banner |
 | `MARU_DEBUG` | (unset) | `1` / `true` / `yes` enables DEBUG logging on the MCP server |

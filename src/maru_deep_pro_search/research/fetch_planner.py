@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from urllib.parse import urlparse
 
 from .deep import CitedSource
+from .signals import source_mentions_focus_alias
 
 _INTENT_SECURITY = re.compile(
     r"\b(cve|vulnerability|vulnerabilities|exploit|security|ghsa|advisory|"
@@ -26,30 +27,30 @@ _INTENT_COMPARE = re.compile(r"\b(vs\.?|versus|compare|comparison|better)\b", re
 
 _TYPE_BOOST: dict[str, dict[str, float]] = {
     "security": {
-        "official-docs": 3.0,
-        "github-repo": 2.5,
-        "package-registry": 2.0,
+        "official_docs": 3.0,
+        "github_repo": 2.5,
+        "package_registry": 2.0,
         "forum": 1.0,
-        "blog-review": 0.5,
+        "blog_review": 0.5,
     },
     "docs": {
-        "official-docs": 4.0,
-        "package-registry": 3.0,
-        "github-repo": 2.0,
+        "official_docs": 4.0,
+        "package_registry": 3.0,
+        "github_repo": 2.0,
         "tutorial": 2.5,
-        "blog-review": 0.8,
+        "blog_review": 0.8,
     },
     "compare": {
-        "official-docs": 2.5,
-        "github-repo": 2.0,
-        "blog-review": 1.5,
+        "official_docs": 2.5,
+        "github_repo": 2.0,
+        "blog_review": 1.5,
         "forum": 1.2,
     },
     "general": {
-        "official-docs": 2.5,
-        "github-repo": 2.0,
-        "academic-paper": 2.0,
-        "package-registry": 2.0,
+        "official_docs": 2.5,
+        "github_repo": 2.0,
+        "academic_paper": 2.0,
+        "package_registry": 2.0,
     },
 }
 
@@ -83,10 +84,14 @@ def _domain(url: str) -> str:
         return ""
 
 
+def _source_type_key(source_type: str) -> str:
+    return source_type.replace("-", "_")
+
+
 def _score_source(src: CitedSource, intent: str) -> float:
     boosts = _TYPE_BOOST.get(intent, _TYPE_BOOST["general"])
     score = src.relevance_score
-    score += boosts.get(src.source_type, 1.0)
+    score += boosts.get(_source_type_key(src.source_type), 1.0)
     if src.is_primary:
         score += 2.0
     if src.authority_boost:
@@ -95,6 +100,14 @@ def _score_source(src: CitedSource, intent: str) -> float:
         score += 1.0
     if len(src.engines_found) > 1:
         score += 0.8
+    score += min(src.query_coverage * 2.0, 2.0)
+    score -= min(src.noise_penalty, 3.0)
+    if src.access_risk == "blocked_likely":
+        score -= 4.0
+    elif src.access_risk == "paywall_likely":
+        score -= 1.2
+    elif src.access_risk in ("paywall_possible", "dynamic_likely"):
+        score -= 0.5
     if intent == "security" and any(
         x in src.url.lower() for x in ("nvd.nist", "github.com/advisories", "security")
     ):
@@ -111,7 +124,11 @@ def _reason_for(src: CitedSource, intent: str) -> str:
     if len(src.engines_found) > 1:
         parts.append(f"confirmed by {len(src.engines_found)} engines")
     if src.source_type not in ("unknown", ""):
-        parts.append(src.source_type.replace("-", " "))
+        parts.append(src.source_type.replace("-", " ").replace("_", " "))
+    if src.query_coverage:
+        parts.append(f"{src.query_coverage:.0%} query coverage")
+    if src.access_risk != "open":
+        parts.append(f"access risk: {src.access_risk}")
     if intent == "security" and "security" in src.url.lower():
         parts.append("security-related URL")
     if not parts:
@@ -129,19 +146,39 @@ def plan_reads(
         return []
 
     intent = detect_query_intent(query)
+    query_has_focus_alias = source_mentions_focus_alias(query)
     ranked = sorted(sources, key=lambda s: _score_source(s, intent), reverse=True)
+    viable = [
+        s
+        for s in ranked
+        if s.query_coverage >= 0.25
+        or (
+            query_has_focus_alias
+            and s.is_primary
+            and source_mentions_focus_alias(f"{s.title} {s.url} {s.snippet}")
+        )
+        or len(s.engines_found) > 1
+    ]
+    if viable:
+        ranked = viable
+    elif ranked and max(_score_source(s, intent) for s in ranked) < 1.0:
+        return []
 
     chosen: list[PlannedRead] = []
-    seen_domains: set[str] = set()
+    domain_counts: dict[str, int] = {}
+    type_counts: dict[str, int] = {}
+    max_per_domain = 1 if intent in ("security", "docs", "compare") else 2
+    max_per_type = 2
 
     for src in ranked:
         if len(chosen) >= max_reads:
             break
         dom = _domain(src.url)
-        if intent == "compare" and dom and dom in seen_domains:
+        stype = _source_type_key(src.source_type)
+        if dom and domain_counts.get(dom, 0) >= max_per_domain:
             continue
-        if dom:
-            seen_domains.add(dom)
+        if stype and stype != "unknown" and type_counts.get(stype, 0) >= max_per_type:
+            continue
         chosen.append(
             PlannedRead(
                 citation_id=src.citation_id,
@@ -151,8 +188,12 @@ def plan_reads(
                 score=round(_score_source(src, intent), 2),
             )
         )
+        if dom:
+            domain_counts[dom] = domain_counts.get(dom, 0) + 1
+        if stype:
+            type_counts[stype] = type_counts.get(stype, 0) + 1
 
-    # Fill remaining slots if compare mode skipped too many
+    # Fill remaining slots if diversity constraints skipped too many.
     if len(chosen) < max_reads:
         picked_ids = {p.citation_id for p in chosen}
         for src in ranked:

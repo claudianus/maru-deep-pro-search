@@ -79,6 +79,24 @@ _QUERY_TEMPLATES = {
         "{domain} github issues open bugs {_current_year}",
         "{domain} deprecated removed migration guide",
     ],
+    # ── Security / advisories ──
+    "security_primary": [
+        "{domain} CVE security advisory {_current_year}",
+        "{domain} github advisory vulnerability",
+    ],
+    "security_fix": [
+        "{domain} patch release notes vulnerability fix",
+        "{domain} NVD advisory GHSA",
+    ],
+    # ── Versioned libraries / breaking changes ──
+    "version_release": [
+        "{domain} release notes changelog breaking changes",
+        "{domain} migration guide compatibility patch",
+    ],
+    "version_primary": [
+        "{domain} official documentation latest version",
+        "{domain} github releases",
+    ],
     # ── Definition / Concept ──
     "def_official": [
         "{domain} official documentation what is overview",
@@ -96,6 +114,29 @@ _QUERY_TEMPLATES = {
     "news_release": [
         "{domain} release notes changelog {_current_year}",
         "{domain} version latest stable",
+    ],
+    # ── Korean locale ──
+    "korean_community": [
+        "{domain} 한국 개발자 후기 {_current_year}",
+        "{domain} 국내 사례 문제 해결",
+    ],
+    "korean_docs": [
+        "{domain} 공식 문서 한국어",
+        "{domain} github docs",
+    ],
+    "recent_general": [
+        "{domain} 최신 {_current_year}",
+        "{domain} 릴리즈 변경사항",
+    ],
+    "korean_nlp_models": [
+        "KoELECTRA KcELECTRA 한국어 텍스트 분류 모델",
+        "Korean lightweight text classification model KoELECTRA KcELECTRA NSMC KorSTS",
+        "KR-ELECTRA Small KD Korean sentiment analysis",
+    ],
+    "korean_chat_analysis": [
+        "카카오톡 대화 분석 감정 분석 KoELECTRA KcELECTRA",
+        "KakaoTalk chat analysis Korean sentiment toxicity topic model",
+        "한국어 메신저 대화 분석 초경량 모델 Hugging Face",
     ],
 }
 
@@ -135,6 +176,21 @@ _INTENT_ANGLES = {
         "korean_community",
         "korean_docs",
         "recent_general",
+    ],
+    "korean_nlp": [
+        "korean_nlp_models",
+        "korean_chat_analysis",
+        "korean_docs",
+    ],
+    "security": [
+        "security_primary",
+        "security_fix",
+        "trends_official",
+    ],
+    "versioned": [
+        "version_release",
+        "version_primary",
+        "debug_issues",
     ],
 }
 
@@ -202,6 +258,9 @@ def expand_query(query: str, max_subqueries: int = 8) -> list[str]:
         List of subqueries including the original.
     """
     subqueries = [query]
+    aliased_query = _apply_domain_aliases(query)
+    if aliased_query != query:
+        subqueries.append(aliased_query)
 
     intent = _detect_intent(query)
     angles = _INTENT_ANGLES.get(intent, _INTENT_ANGLES["trends"])
@@ -237,30 +296,54 @@ def _detect_intent(query: str) -> str:
     """Detect query intent for angle selection."""
     lower = query.lower()
 
-    # Korean language queries → preserve original Korean expansion behavior
+    def contains_marker(marker: str) -> bool:
+        return re.search(rf"(?<![a-z0-9]){re.escape(marker)}(?![a-z0-9])", lower) is not None
+
     has_korean = any("\uac00" <= char <= "\ud7a3" for char in query)
     korean_keywords = ["한국", "국내", "korean", "한글", "한국어"]
+    if (has_korean or "korean" in lower) and any(
+        kw in lower
+        for kw in [
+            "텍스트",
+            "감정",
+            "분류",
+            "카카오톡",
+            "초경량",
+            "koelectra",
+            "kcelectra",
+            "kobert",
+            "nsmc",
+            "형태소",
+            "토픽",
+            "요약",
+            "nlp",
+        ]
+    ):
+        return "korean_nlp"
+
+    # Korean language queries → preserve original Korean expansion behavior
     if has_korean or any(kw in lower for kw in korean_keywords):
         return "korean"
 
-    # Comparison intent
+    # Security and exact advisory intent
     if any(
-        k in lower
-        for k in [
-            " vs ",
-            " versus ",
-            "compare",
-            "comparison",
-            "difference between",
-            "diff between",
-            "which is better",
-            "pros and cons",
-            "advantages disadvantages",
+        contains_marker(marker)
+        for marker in [
+            "cve",
+            "ghsa",
+            "vulnerability",
+            "vulnerabilities",
+            "security advisory",
+            "exploit",
+            "rce",
+            "zero day",
+            "zero-day",
         ]
     ):
-        return "comparison"
+        return "security"
 
-    # How-To intent
+    # How-To intent comes before dotted-version detection so examples like
+    # "how to install foo 1.2" stay procedural rather than release-focused.
     if any(
         k in lower
         for k in [
@@ -279,6 +362,42 @@ def _detect_intent(query: str) -> str:
         ]
     ):
         return "howto"
+
+    # Versioned library / breaking-change intent
+    if any(
+        k in lower
+        for k in [
+            "breaking change",
+            "breaking changes",
+            "compatibility",
+            "migration",
+            "release notes",
+            "changelog",
+        ]
+    ) or (
+        re.search(r"\bv?\d+\.\d+(?:\.\d+)?\b", query)
+        and any(
+            k in lower for k in ("release", "version", "migration", "compatibility", "changelog")
+        )
+    ):
+        return "versioned"
+
+    # Comparison intent
+    if any(
+        k in lower
+        for k in [
+            " vs ",
+            " versus ",
+            "compare",
+            "comparison",
+            "difference between",
+            "diff between",
+            "which is better",
+            "pros and cons",
+            "advantages disadvantages",
+        ]
+    ):
+        return "comparison"
 
     # Debug / Problem intent
     if any(
@@ -434,7 +553,26 @@ def _extract_domain(query: str) -> str:
         words = domain.split()
         domain = " ".join(words[:4])
 
-    return domain or query
+    return _apply_domain_aliases(domain or query)
+
+
+def _apply_domain_aliases(text: str) -> str:
+    """Disambiguate overloaded package/product names before search."""
+    lower = text.lower()
+    if (
+        "transformers" in lower
+        and any(marker in lower for marker in ("library", "huggingface", "comfyui", "python"))
+        and "huggingface" not in lower
+        and "hugging face" not in lower
+    ):
+        return re.sub(
+            r"(?<![A-Za-z0-9-])transformers(?![A-Za-z0-9-])",
+            "huggingface transformers",
+            text,
+            count=1,
+            flags=re.I,
+        )
+    return text
 
 
 def extract_keywords(query: str) -> list[str]:
@@ -578,7 +716,32 @@ def extract_keywords(query: str) -> list[str]:
         "docs",
     }
 
-    words = re.findall(r"\b[a-zA-Z]+\b", query.lower())
-    keywords = [w for w in words if w not in stop_words and len(w) > 2]
+    words = re.findall(
+        r"CVE-\d{4}-\d+|"
+        r"\bv?\d+\.\d+(?:\.\d+)?\b|"
+        r"\b[A-Za-z][A-Za-z0-9._+-]*\d[A-Za-z0-9._+-]*\b|"
+        r"\b\d+[A-Za-z][A-Za-z0-9._+-]*\b|"
+        r"\b[A-Za-z][A-Za-z0-9._+-]{2,}\b|"
+        r"[\uac00-\ud7a3]{2,}",
+        query,
+        flags=re.IGNORECASE,
+    )
+
+    keywords: list[str] = []
+    seen: set[str] = set()
+    for word in words:
+        normalized = word.lower().strip("._+-")
+        if normalized in stop_words or len(normalized) <= 2:
+            continue
+        if normalized not in seen:
+            seen.add(normalized)
+            keywords.append(normalized)
+
+        if re.fullmatch(r"[\uac00-\ud7a3]{5,}", normalized):
+            for i in range(len(normalized) - 1):
+                gram = normalized[i : i + 2]
+                if gram not in seen:
+                    seen.add(gram)
+                    keywords.append(gram)
 
     return keywords

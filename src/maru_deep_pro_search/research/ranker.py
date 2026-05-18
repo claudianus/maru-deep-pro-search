@@ -13,6 +13,7 @@ from ..config import DEFAULT_CONFIG
 from ..engines.base import ContentType, PageContent, SearchResult
 from ..research.expander import extract_keywords
 from ..utils.url import get_domain, is_authority_domain, normalize_url
+from .signals import SourceSignals, source_signals
 
 logger = logging.getLogger(__name__)
 
@@ -157,17 +158,23 @@ def _query_freshness_boost(query: str, result: SearchResult) -> float:
 
 def _compute_rrf_scores(
     engine_results: dict[str, list[SearchResult]],
+    search_runs: list[tuple[str, list[SearchResult]]] | None = None,
 ) -> dict[str, float]:
-    """Reciprocal rank fusion across engine result lists."""
+    """Reciprocal rank fusion across independent SERP runs."""
     scores: dict[str, float] = {}
-    for results in engine_results.values():
+    runs = search_runs if search_runs is not None else list(engine_results.items())
+    for _run_id, results in runs:
         for rank, result in enumerate(results, start=1):
             norm = normalize_url(result.url)
             scores[norm] = scores.get(norm, 0.0) + 1.0 / (_RRF_K + rank)
     return scores
 
 
-def _score_metadata(result: SearchResult, query: str = "") -> float:
+def _score_metadata(
+    result: SearchResult,
+    query: str = "",
+    signals: SourceSignals | None = None,
+) -> float:
     """Score a result based on metadata quality signals."""
     cfg = DEFAULT_CONFIG
     auth_w = cfg.authority_weight
@@ -219,6 +226,17 @@ def _score_metadata(result: SearchResult, query: str = "") -> float:
 
     if query:
         score += _query_freshness_boost(query, result)
+    if signals is not None:
+        score += signals.proximity_boost
+        score -= signals.noise_penalty
+        if signals.access_risk == "paywall_likely":
+            score -= 0.5
+        elif signals.access_risk == "blocked_likely":
+            score -= 1.5
+        elif signals.access_risk == "dynamic_likely":
+            score -= 0.25
+        if signals.query_coverage < 0.25 and not result.is_primary:
+            score -= 0.8
 
     return score
 
@@ -282,9 +300,22 @@ def _fuzzy_dedupe(results: list[SearchResult], threshold: float = 0.72) -> list[
             # Duplicates: Jaccard high OR semantic very high
             if title_sim > threshold or snippet_sim > threshold or sem_sim > 0.95:
                 is_dup = True
-                # Merge engine metadata: keep the one with more engine confirmations
-                if len(r.engines_found) > len(u.engines_found):
-                    u.engines_found = list(set(u.engines_found) | set(r.engines_found))
+                engines = sorted(set(u.engines_found) | set(r.engines_found))
+                r_better = (
+                    (r.is_primary and not u.is_primary)
+                    or (r.url_suggests_docs and not u.url_suggests_docs)
+                    or (
+                        r.is_primary == u.is_primary
+                        and r.url_suggests_docs == u.url_suggests_docs
+                        and len(r.snippet) > len(u.snippet) * 1.5
+                    )
+                )
+                if r_better:
+                    r.engines_found = engines
+                    unique[j] = r
+                    unique_indices[j] = i
+                else:
+                    u.engines_found = engines
                 break
 
         if not is_dup:
@@ -298,6 +329,7 @@ def _fuzzy_dedupe(results: list[SearchResult], threshold: float = 0.72) -> list[
 def merge_results(
     engine_results: dict[str, list[SearchResult]],
     query: str,
+    search_runs: list[tuple[str, list[SearchResult]]] | None = None,
 ) -> list[RankedResult]:
     """Merge results from multiple engines, deduplicate, and rank.
 
@@ -310,26 +342,27 @@ def merge_results(
     """
     # Phase 1: URL-level deduplicate and track which engines found each URL
     url_to_result: dict[str, SearchResult] = {}
-    url_to_engines: dict[str, list[str]] = {}
+    url_to_engines: dict[str, set[str]] = {}
 
     for engine_name, results in engine_results.items():
         for r in results:
             norm = normalize_url(r.url)
             if norm not in url_to_result:
                 url_to_result[norm] = r
-                url_to_engines[norm] = []
-            url_to_engines[norm].append(engine_name)
+                url_to_engines[norm] = set()
+            url_to_engines[norm].add(engine_name)
 
     # Update results with cross-engine metadata
     merged: list[SearchResult] = []
     for norm, r in url_to_result.items():
-        r.engines_found = url_to_engines.get(norm, [])
+        r.engines_found = sorted(url_to_engines.get(norm, set()))
         merged.append(r)
 
     # Phase 2: Fuzzy dedupe — catch same content on different URLs
     merged = _fuzzy_dedupe(merged)
 
     # Phase 2b: Auto-classify source type for results missing it
+    signals_by_url: dict[str, SourceSignals] = {}
     for r in merged:
         if r.source_type.value == "unknown" or not r.is_primary:
             from ..engines.base import guess_source_type_and_primary
@@ -337,10 +370,17 @@ def merge_results(
             st, prim = guess_source_type_and_primary(r.url, r.snippet)
             r.source_type = st
             r.is_primary = prim
+        norm_url = normalize_url(r.url)
+        signals = source_signals(query, r.title, r.snippet, r.url)
+        signals_by_url[norm_url] = signals
+        r.query_coverage = signals.query_coverage
+        r.access_risk = signals.access_risk
+        r.access_reasons = signals.access_reasons
+        r.noise_penalty = signals.noise_penalty
 
     # Phase 3: Compute BM25 scores
     bm25_scores = _compute_bm25_scores(query, merged)
-    rrf_scores = _compute_rrf_scores(engine_results)
+    rrf_scores = _compute_rrf_scores(engine_results, search_runs)
 
     # Phase 3b: Compute semantic scores (optional, lazy-loaded)
     semantic_scores: dict[str, float] = {}
@@ -359,7 +399,8 @@ def merge_results(
     for r in merged:
         norm_url = normalize_url(r.url)
         bm25 = bm25_scores.get(norm_url, 0.0)
-        meta = _score_metadata(r, query)
+        signals = signals_by_url[norm_url]
+        meta = _score_metadata(r, query, signals)
         semantic = semantic_scores.get(norm_url, 0.0)
         rrf = rrf_scores.get(norm_url, 0.0)
         # Normalize BM25 to be comparable with metadata score

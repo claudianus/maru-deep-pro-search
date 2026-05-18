@@ -11,6 +11,12 @@ def is_successful_tool_result(result: object) -> bool:
     failure_markers = (
         "## [query rejected]",
         "## [blocked]",
+        "## [timeout]",
+        "## [empty]",
+        "## [too large]",
+        "no results found",
+        "i couldn't find any sources",
+        "fetch failed",
         "error executing tool",
         "[maru-research-gate]",
         "research gate not unlocked",

@@ -42,15 +42,36 @@ def write_receipt(
 
     now = datetime.now(timezone.utc).isoformat()
     citation_map = {str(s.citation_id): s.url for s in result.sources}
+    source_records = [
+        {
+            "id": s.citation_id,
+            "url": s.url,
+            "title": s.title,
+            "quality": s.quality,
+            "source_type": s.source_type,
+            "is_primary": s.is_primary,
+            "authority": s.authority_boost,
+            "engines": s.engines_found,
+            "score": s.relevance_score,
+            "query_coverage": s.query_coverage,
+            "access_risk": s.access_risk,
+            "access_reasons": s.access_reasons,
+            "noise_penalty": s.noise_penalty,
+            "missing_entities": s.missing_entities,
+        }
+        for s in result.sources
+    ]
 
     payload: dict[str, Any] = {
         "research_id": research_id,
+        "citation_namespace": research_id,
         "query": result.query,
         "created_at": now,
         "engines": result.search_coverage,
         "source_count": result.total_sources,
         "elapsed_ms": round(result.elapsed_ms, 1),
         "citations": citation_map,
+        "sources": source_records,
         "planned_reads": [
             {
                 "id": p.citation_id,
@@ -78,6 +99,14 @@ def write_receipt(
     for p in planned:
         lines.append(f"- [{p.citation_id}] {p.title} — {p.reason}")
         lines.append(f"  - {p.url}")
+    access_risks = [s for s in result.sources if s.access_risk != "open"]
+    if access_risks:
+        lines.append("")
+        lines.append("## Access Risks")
+        lines.append("")
+        for src in access_risks[:10]:
+            reason = ", ".join(src.access_reasons[:2]) if src.access_reasons else "heuristic"
+            lines.append(f"- [{src.citation_id}] {src.access_risk} — {reason}")
     lines.append("")
     lines.append("## Citations")
     lines.append("")

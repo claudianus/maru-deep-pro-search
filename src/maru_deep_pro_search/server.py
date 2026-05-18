@@ -552,7 +552,7 @@ For `fetch_bulk`, re-run failed URLs with stealth before stealthy_fetch.
 async def answer(
     query: str,
     engine: str = DEFAULT_CONFIG.default_engine,
-    max_sources: int = DEFAULT_CONFIG.max_results_per_query,
+    max_sources: int | None = None,
     max_tokens: int = 8000,
     primary_sources_only: bool = False,
     mode: str = "balanced",
@@ -673,7 +673,7 @@ async def deep_research(
     deduplicates, and ranks results. Returns Recommended Reads for fetch_page.
 
     Args:
-        auto_fetch: Fetch top planned reads (0-3). Default 0 to save bandwidth.
+        auto_fetch: Fetch top planned reads (0-10). Default 0 to save bandwidth.
     """
     from .tools import tool_deep_research
 

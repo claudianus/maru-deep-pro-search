@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .deep import ResearchResult, format_for_llm, research_quality_line
+from .deep import CitedSource, ResearchResult, format_for_llm, research_quality_line
 from .fetch_planner import PlannedRead, plan_reads
 from .receipt import generate_research_id, write_receipt
 
@@ -23,6 +23,23 @@ class PersistedResearch:
     planned: list[PlannedRead]
     receipt_path: Path | None
     formatted_packet: str
+
+
+def _source_to_dict(source: CitedSource) -> dict[str, Any]:
+    """Serialize source metadata for KnowledgeStore without duplicating fields."""
+    return {
+        "url": source.url,
+        "title": source.title,
+        "snippet": source.snippet,
+        "quality": source.quality,
+        "engines_found": source.engines_found,
+        "relevance_score": source.relevance_score,
+        "source_type": source.source_type,
+        "is_primary": source.is_primary,
+        "query_coverage": source.query_coverage,
+        "access_risk": source.access_risk,
+        "noise_penalty": source.noise_penalty,
+    }
 
 
 def persist_research_artifacts(
@@ -54,17 +71,7 @@ def persist_research_artifacts(
         try:
             from ..harness.persistence import KnowledgeStore
 
-            sources: list[dict[str, Any]] = [
-                {
-                    "url": s.url,
-                    "title": s.title,
-                    "snippet": s.snippet,
-                    "quality": s.quality,
-                    "engines_found": s.engines_found,
-                    "relevance_score": s.relevance_score,
-                }
-                for s in result.sources
-            ]
+            sources = [_source_to_dict(s) for s in result.sources]
             answer_body = knowledge_answer if knowledge_answer is not None else packet
             KnowledgeStore().save(query=result.query, answer=answer_body, sources=sources)
         except Exception:
@@ -83,17 +90,7 @@ def save_research_knowledge(result: ResearchResult, answer: str) -> None:
     try:
         from ..harness.persistence import KnowledgeStore
 
-        sources: list[dict[str, Any]] = [
-            {
-                "url": s.url,
-                "title": s.title,
-                "snippet": s.snippet,
-                "quality": s.quality,
-                "engines_found": s.engines_found,
-                "relevance_score": s.relevance_score,
-            }
-            for s in result.sources
-        ]
+        sources = [_source_to_dict(s) for s in result.sources]
         KnowledgeStore().save(query=result.query, answer=answer, sources=sources)
     except Exception:
         logger.debug("KnowledgeStore save failed (non-critical)", exc_info=True)

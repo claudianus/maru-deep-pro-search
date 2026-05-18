@@ -359,6 +359,50 @@ def _matches_any_domain(domain: str, targets: set[str] | list[str] | tuple[str, 
     return any(_domain_matches(domain, target) for target in targets)
 
 
+_GITHUB_NON_REPO_SEGMENTS = {
+    "about",
+    "advisories",
+    "apps",
+    "collections",
+    "contact",
+    "customer-stories",
+    "dashboard",
+    "education",
+    "enterprise",
+    "events",
+    "explore",
+    "features",
+    "github-copilot",
+    "issues",
+    "login",
+    "marketplace",
+    "mobile",
+    "new",
+    "notifications",
+    "orgs",
+    "pricing",
+    "pulls",
+    "readme",
+    "resources",
+    "search",
+    "security",
+    "settings",
+    "signup",
+    "solutions",
+    "sponsors",
+    "team",
+    "topics",
+    "trending",
+}
+
+
+def _is_github_repository_path(path_parts: list[str]) -> bool:
+    if len(path_parts) < 2:
+        return False
+    owner, repo = path_parts[0].lower(), path_parts[1].lower()
+    return owner not in _GITHUB_NON_REPO_SEGMENTS and repo not in _GITHUB_NON_REPO_SEGMENTS
+
+
 def classify_source_type(url: str, snippet: str = "") -> str:
     """Classify a URL into a SourceType category.
 
@@ -378,9 +422,13 @@ def classify_source_type(url: str, snippet: str = "") -> str:
                 return SourceType.OFFICIAL_DOCS.value
             if path_parts[:1] in (["topics"], ["marketplace"], ["orgs"]):
                 return SourceType.UNKNOWN.value
-            if len(path_parts) >= 3 and path_parts[2] in {"issues", "discussions"}:
+            if (
+                _is_github_repository_path(path_parts)
+                and len(path_parts) >= 3
+                and path_parts[2] in {"issues", "discussions"}
+            ):
                 return SourceType.FORUM.value
-            if len(path_parts) >= 2:
+            if _is_github_repository_path(path_parts):
                 return SourceType.GITHUB_REPO.value
             return SourceType.UNKNOWN.value
         return SourceType.GITHUB_REPO.value

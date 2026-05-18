@@ -301,23 +301,20 @@ def _detect_intent(query: str) -> str:
 
     has_korean = any("\uac00" <= char <= "\ud7a3" for char in query)
     korean_keywords = ["한국", "국내", "korean", "한글", "한국어"]
-    if (has_korean or "korean" in lower) and any(
-        kw in lower
-        for kw in [
-            "텍스트",
-            "감정",
-            "분류",
-            "카카오톡",
-            "초경량",
-            "koelectra",
-            "kcelectra",
-            "kobert",
-            "nsmc",
-            "형태소",
-            "토픽",
-            "요약",
-            "nlp",
-        ]
+    korean_nlp_terms = [
+        "텍스트",
+        "감정",
+        "분류",
+        "카카오톡",
+        "초경량",
+        "형태소",
+        "토픽",
+        "요약",
+        "nlp",
+    ]
+    korean_nlp_models = ["koelectra", "kcelectra", "kr-electra", "kobert", "nsmc"]
+    if any(model in lower for model in korean_nlp_models) or (
+        (has_korean or "korean" in lower) and any(term in lower for term in korean_nlp_terms)
     ):
         return "korean_nlp"
 
@@ -566,7 +563,7 @@ def _apply_domain_aliases(text: str) -> str:
         and "hugging face" not in lower
     ):
         return re.sub(
-            r"(?<![A-Za-z0-9-])transformers(?![A-Za-z0-9-])",
+            r"(?<![A-Za-z0-9_-])transformers(?![A-Za-z0-9_-])",
             "huggingface transformers",
             text,
             count=1,

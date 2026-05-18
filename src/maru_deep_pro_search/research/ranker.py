@@ -231,6 +231,8 @@ def _score_metadata(
         score -= signals.noise_penalty
         if signals.access_risk == "paywall_likely":
             score -= 0.5
+        elif signals.access_risk == "paywall_possible":
+            score -= 0.25
         elif signals.access_risk == "blocked_likely":
             score -= 1.5
         elif signals.access_risk == "dynamic_likely":

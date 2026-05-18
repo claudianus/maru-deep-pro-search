@@ -234,6 +234,9 @@ class SearchEngine(ABC):
                     url=url,
                     error_message=f"{self.name} circuit breaker is open",
                     quality=ExtractionQuality.BLOCKED,
+                    needs_stealth=True,
+                    access_risk="blocked_likely",
+                    access_reasons=["circuit_breaker"],
                 )
             try:
                 result = await original_fetch(self, url, stealth, timeout)

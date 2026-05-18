@@ -490,6 +490,13 @@ async def run_benchmark_mode(
 
 async def main() -> int:
     suite = os.getenv("MARU_BENCHMARK_SUITE", "core").strip().lower()
+    valid_suites = {"core", "stress", "all"}
+    if suite not in valid_suites:
+        print(
+            f"Unknown MARU_BENCHMARK_SUITE={suite!r}; "
+            f"falling back to 'core' ({', '.join(sorted(valid_suites))})"
+        )
+        suite = "core"
     if suite == "stress":
         queries = list(QUALITY_STRESS_GROUND_TRUTH.keys())
     elif suite == "all":

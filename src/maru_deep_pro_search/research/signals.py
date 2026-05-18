@@ -28,14 +28,16 @@ _DYNAMIC_DOMAINS = {
 }
 
 _PAYWALL_TEXT = re.compile(
-    r"\b(member[- ]only|members[- ]only|subscribe|subscription|sign in to read|"
+    r"\b(member[- ]only|members[- ]only|subscriber[- ]only|subscription required|"
+    r"subscribe to (?:read|continue|access)|sign in to read|"
     r"log in to read|continue reading|metered|paywall|join .* to read|"
     r"get unlimited access|unlock this article)\b",
     re.I,
 )
 _BLOCKED_TEXT = re.compile(
-    r"\b(access denied|forbidden|captcha|cloudflare|enable javascript|"
-    r"checking your browser|access blocked|request blocked|403 forbidden|"
+    r"\b(access denied|forbidden|captcha|cloudflare challenge|cloudflare ray id|"
+    r"attention required|enable javascript|checking your browser|access blocked|"
+    r"request blocked|403 forbidden|"
     r"403 error|http 403|too many requests)\b",
     re.I,
 )

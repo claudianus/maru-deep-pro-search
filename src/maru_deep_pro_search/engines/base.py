@@ -67,6 +67,10 @@ class SearchResult:
     # Cross-engine metadata
     engines_found: list[str] = field(default_factory=list)
     cross_engine_score: float = 0.0
+    query_coverage: float = 0.0
+    access_risk: str = "open"
+    access_reasons: list[str] = field(default_factory=list)
+    noise_penalty: float = 0.0
 
 
 @dataclass
@@ -85,10 +89,14 @@ class PageContent:
     content_length: int = 0
     heading_count: int = 0
     code_block_count: int = 0
+    extraction_method: str = ""
+    duplicate_ratio: float = 0.0
 
     internal_links: list[dict] = field(default_factory=list)
     external_links: list[dict] = field(default_factory=list)
     needs_stealth: bool = False
+    access_risk: str = "open"
+    access_reasons: list[str] = field(default_factory=list)
     fetch_duration_ms: float = 0.0
     error_message: str = ""
 
@@ -226,6 +234,8 @@ class SearchEngine(ABC):
                     url=url,
                     error_message=f"{self.name} circuit breaker is open",
                     quality=ExtractionQuality.BLOCKED,
+                    access_risk="temporarily_unavailable",
+                    access_reasons=["circuit_breaker"],
                 )
             try:
                 result = await original_fetch(self, url, stealth, timeout)

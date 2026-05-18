@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import json
 import math
+import os
 import sys
 import time
 from dataclasses import asdict, dataclass
@@ -28,6 +29,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from maru_deep_pro_search.engines.registry import SearchEngineRegistry
+
+BENCHMARK_RESULT_DEPTH = 30
 
 # ── Ground Truth Dataset ──────────────────────────────────────────
 # Each query has a list of relevant domain patterns.
@@ -117,6 +120,46 @@ ANSWER_EXTENDED_GROUND_TRUTH: dict[str, list[str] | dict[str, list[str]]] = {
     ],
 }
 
+QUALITY_STRESS_GROUND_TRUTH: dict[str, list[str] | dict[str, list[str]]] = {
+    "MacBook Pro M5 48GB local LLM inference performance benchmark comparison 2026": {
+        "primary": ["apple.com", "developer.apple.com"],
+        "acceptable": [
+            "contracollective.com",
+            "jmlab.net",
+            "youngju.dev",
+            "huggingface.co",
+            "github.com/ggml-org/llama.cpp",
+            "hardwarepedia.com",
+            "blog.kulman.sk",
+            "blog.starmorph.com",
+            "applemagazine.com",
+        ],
+    },
+    "transformers library 5.8 breaking changes compatibility ComfyUI patch": {
+        "primary": ["github.com/huggingface/transformers", "huggingface.co/docs/transformers"],
+        "acceptable": ["github.com/comfyanonymous/ComfyUI", "pypi.org/project/transformers"],
+    },
+    "LTX 2.3 ComfyUI MPS Apple Silicon workflow benchmark docs": {
+        "primary": ["github.com/Lightricks/LTX-Video", "docs.comfy.org"],
+        "acceptable": ["github.com/Lightricks/ComfyUI-LTXVideo", "huggingface.co"],
+    },
+    "2026년 한국어 텍스트 분석 초경량 ai 모델 조사 카카오톡 대화 분석": {
+        "primary": [
+            "github.com/monologg/KoELECTRA",
+            "github.com/Beomi/KcELECTRA",
+            "pubmed.ncbi.nlm.nih.gov/40282614",
+            "huggingface.co/daekeun-ml/koelectra-small-v3-nsmc",
+        ],
+        "acceptable": [
+            "huggingface.co/monologg/koelectra-small-discriminator",
+            "sites.google.com/snu.ac.kr/gsds-nlp/research/kr-bert",
+            "arxiv.org",
+            "github.com/NomaDamas/awesome-korean-llm",
+            "kakaocorp.com",
+        ],
+    },
+}
+
 
 @dataclass
 class QueryResult:
@@ -149,6 +192,7 @@ def _domain_patterns(query: str) -> tuple[list[str], list[str]]:
         GROUND_TRUTH.get(query)
         or ANSWER_GROUND_TRUTH.get(query)
         or ANSWER_EXTENDED_GROUND_TRUTH.get(query, [])
+        or QUALITY_STRESS_GROUND_TRUTH.get(query, [])
     )
     if isinstance(raw, dict):
         primary = list(raw.get("primary", []))
@@ -159,8 +203,41 @@ def _domain_patterns(query: str) -> tuple[list[str], list[str]]:
 
 def is_relevant(url: str, query: str) -> bool:
     _, patterns = _domain_patterns(query)
+    return _matched_gold_pattern(url, patterns) is not None
+
+
+def _matched_gold_pattern(url: str, patterns: list[str]) -> str | None:
+    """Return the single most specific gold pattern matched by a URL."""
     url_lower = url.lower()
-    return any(pat.lower() in url_lower for pat in patterns)
+    for pattern in sorted({p.lower() for p in patterns}, key=len, reverse=True):
+        if pattern in url_lower:
+            return pattern
+    return None
+
+
+def _matched_gold_patterns(results: list[dict], query: str, k: int) -> set[str]:
+    _, patterns = _domain_patterns(query)
+    matched: set[str] = set()
+    for result in results[:k]:
+        pattern = _matched_gold_pattern(result.get("url", ""), patterns)
+        if pattern is not None:
+            matched.add(pattern)
+    return matched
+
+
+def _deduped_relevance_grades(results: list[dict], query: str, k: int) -> list[float]:
+    primary, patterns = _domain_patterns(query)
+    primary_set = {p.lower() for p in primary}
+    credited: set[str] = set()
+    grades: list[float] = []
+    for result in results[:k]:
+        matched = _matched_gold_pattern(result.get("url", ""), patterns)
+        if matched is None or matched in credited:
+            grades.append(0.0)
+            continue
+        credited.add(matched)
+        grades.append(2.0 if matched in primary_set else 1.0)
+    return grades
 
 
 def compute_precision_at_k(results: list[dict], query: str, k: int) -> float:
@@ -172,14 +249,10 @@ def compute_precision_at_k(results: list[dict], query: str, k: int) -> float:
 
 
 def compute_recall_at_k(results: list[dict], query: str, k: int) -> float:
-    if not results:
+    _, patterns = _domain_patterns(query)
+    if not results or not patterns:
         return 0.0
-    total_relevant = sum(1 for r in results if is_relevant(r.get("url", ""), query))
-    if total_relevant == 0:
-        return 0.0
-    top_k = results[:k]
-    found = sum(1 for r in top_k if is_relevant(r.get("url", ""), query))
-    return found / total_relevant
+    return len(_matched_gold_patterns(results, query, k)) / len({p.lower() for p in patterns})
 
 
 def compute_dcg(relevances: list[float], k: int) -> float:
@@ -192,10 +265,11 @@ def compute_dcg(relevances: list[float], k: int) -> float:
 def compute_ndcg_at_k(results: list[dict], query: str, k: int) -> float:
     if not results:
         return 0.0
-    # Binary relevance: 1.0 if relevant, 0.0 otherwise
-    relevances = [1.0 if is_relevant(r.get("url", ""), query) else 0.0 for r in results]
+    relevances = _deduped_relevance_grades(results, query, k)
     dcg = compute_dcg(relevances, k)
-    ideal_relevances = sorted(relevances, reverse=True)
+    primary, patterns = _domain_patterns(query)
+    acceptable_count = max(0, len(set(patterns)) - len(set(primary)))
+    ideal_relevances = [2.0] * len(set(primary)) + [1.0] * acceptable_count
     idcg = compute_dcg(ideal_relevances, k)
     return dcg / idcg if idcg > 0 else 0.0
 
@@ -208,7 +282,7 @@ def compute_mrr(results: list[dict], query: str) -> float:
 
 
 async def run_single_query_web_search(
-    query: str, engine_name: str = "duckduckgo_lite", max_results: int = 10
+    query: str, engine_name: str = "duckduckgo_lite", max_results: int = BENCHMARK_RESULT_DEPTH
 ) -> QueryResult:
     start = time.monotonic()
     fallback_used = False
@@ -254,7 +328,9 @@ async def run_single_query_web_search(
     )
 
 
-async def run_single_query_deep_research(query: str, max_results: int = 10) -> QueryResult:
+async def run_single_query_deep_research(
+    query: str, max_results: int = BENCHMARK_RESULT_DEPTH
+) -> QueryResult:
     """Run deep_research which uses multi-engine + BM25 + authority ranking."""
     start = time.monotonic()
     results: list[dict] = []
@@ -267,7 +343,7 @@ async def run_single_query_deep_research(query: str, max_results: int = 10) -> Q
             query=query,
             engine="duckduckgo_lite",
             max_sources=max_results,
-            expand_queries=False,
+            expand_queries=True,
         )
         # ResearchResult has .sources: list[CitedSource] with .url
         unique_urls = []
@@ -304,7 +380,8 @@ async def run_single_query_deep_research(query: str, max_results: int = 10) -> Q
 
 def evaluate_query(result: QueryResult) -> MetricResult:
     all_results = result.results
-    total_relevant = sum(1 for r in all_results if is_relevant(r.get("url", ""), result.query))
+    _, patterns = _domain_patterns(result.query)
+    total_relevant = len({p.lower() for p in patterns})
 
     return MetricResult(
         query=result.query,
@@ -316,9 +393,7 @@ def evaluate_query(result: QueryResult) -> MetricResult:
         mrr=compute_mrr(all_results, result.query),
         duration_ms=result.duration_ms,
         fallback_used=result.fallback_used,
-        relevant_found=sum(
-            1 for r in all_results[:10] if is_relevant(r.get("url", ""), result.query)
-        ),
+        relevant_found=len(_matched_gold_patterns(all_results, result.query, 10)),
         total_relevant=total_relevant,
     )
 
@@ -414,7 +489,20 @@ async def run_benchmark_mode(
 
 
 async def main() -> int:
-    queries = list(GROUND_TRUTH.keys())
+    suite = os.getenv("MARU_BENCHMARK_SUITE", "core").strip().lower()
+    valid_suites = {"core", "stress", "all"}
+    if suite not in valid_suites:
+        print(
+            f"Unknown MARU_BENCHMARK_SUITE={suite!r}; "
+            f"falling back to 'core' ({', '.join(sorted(valid_suites))})"
+        )
+        suite = "core"
+    if suite == "stress":
+        queries = list(QUALITY_STRESS_GROUND_TRUTH.keys())
+    elif suite == "all":
+        queries = list(GROUND_TRUTH.keys()) + list(QUALITY_STRESS_GROUND_TRUTH.keys())
+    else:
+        queries = list(GROUND_TRUTH.keys())
     print(f"Running search quality benchmark with {len(queries)} queries...")
     print("Comparing web_search (single engine) vs deep_research (multi-engine)")
 
@@ -464,11 +552,19 @@ async def main() -> int:
 
     report_path = Path("benchmark/search_quality_report.json")
     report_data: dict[str, object] = {
-        "web_search": {"summary": web, "results": [asdict(m) for m in web_metrics]},
-        "deep_research": {"summary": deep, "results": [asdict(m) for m in deep_metrics]},
+        "web_search": {
+            "summary": web,
+            "results": [asdict(m) for m in web_metrics],
+            "raw_results": [asdict(q) for q in web_qr],
+        },
+        "deep_research": {
+            "summary": deep,
+            "results": [asdict(m) for m in deep_metrics],
+            "raw_results": [asdict(q) for q in deep_qr],
+        },
     }
 
-    answer_queries = list(ANSWER_GROUND_TRUTH.keys())
+    answer_queries = list(ANSWER_GROUND_TRUTH.keys()) if suite in ("core", "all") else []
     if answer_queries:
         print(f"\n{'=' * 80}")
         print(f"ANSWER-MODE QUERIES ({len(answer_queries)} Korean consumer / price queries)")
@@ -486,7 +582,7 @@ async def main() -> int:
         for key, val in answer_summary.items():
             print(f"{key:<25} {val:>15.3f}")
 
-    extended_queries = list(ANSWER_EXTENDED_GROUND_TRUTH.keys())
+    extended_queries = list(ANSWER_EXTENDED_GROUND_TRUTH.keys()) if suite in ("core", "all") else []
     if extended_queries:
         print(f"\n{'=' * 80}")
         print(f"ANSWER EXTENDED SUITE ({len(extended_queries)} queries)")
@@ -502,6 +598,25 @@ async def main() -> int:
         print(f"\n{'Metric':<25} {'answer_extended':>15}")
         print("-" * 42)
         for key, val in ext_summary.items():
+            print(f"{key:<25} {val:>15.3f}")
+
+    if suite == "core":
+        stress_queries = list(QUALITY_STRESS_GROUND_TRUTH.keys())
+        print(f"\n{'=' * 80}")
+        print(f"QUALITY STRESS SUITE ({len(stress_queries)} hard technical queries)")
+        print(f"{'=' * 80}")
+        print("\n  [recovery] Waiting 5s before stress benchmark...")
+        await asyncio.sleep(5)
+        stress_metrics, stress_qr = await run_benchmark_mode(stress_queries, "deep_research")
+        stress_summary = summarize(stress_metrics, stress_qr)
+        report_data["quality_stress"] = {
+            "summary": stress_summary,
+            "results": [asdict(m) for m in stress_metrics],
+            "raw_results": [asdict(q) for q in stress_qr],
+        }
+        print(f"\n{'Metric':<25} {'quality_stress':>15}")
+        print("-" * 42)
+        for key, val in stress_summary.items():
             print(f"{key:<25} {val:>15.3f}")
 
     report_path.write_text(json.dumps(report_data, indent=2))

@@ -82,17 +82,8 @@ _AUTHORITY_DOMAINS = {
     "pypi.org",
     "npmjs.com",
     "crates.io",
-    "realpython.com",
-    "dev.to",
-    "medium.com",
-    # Korean developer communities
-    "velog.io",
-    "tistory.com",
-    "naver.com",
-    "daum.net",
-    "brunch.co.kr",
+    "huggingface.co",
     "okky.kr",
-    "hashnode.dev",
 }
 
 # Primary / official source domains
@@ -132,6 +123,7 @@ _PRIMARY_SOURCE_DOMAINS = {
     "pypi.org",
     "npmjs.com",
     "crates.io",
+    "huggingface.co",
     "maven.apache.org",
     "rubygems.org",
     "packagist.org",
@@ -352,7 +344,63 @@ def resolve_redirect(url: str, base_url: str) -> str:
 
 def get_domain(url: str) -> str:
     """Extract domain from URL."""
-    return urlparse(url).netloc.lower()
+    parsed = urlparse(url)
+    host = parsed.hostname or parsed.netloc.rsplit("@", 1)[-1].split(":", 1)[0]
+    return host.lower().rstrip(".")
+
+
+def _domain_matches(domain: str, target: str) -> bool:
+    host = domain.rsplit("@", 1)[-1].split(":", 1)[0].lower().rstrip(".")
+    target = target.lower().rstrip(".")
+    return host == target or host.endswith("." + target)
+
+
+def _matches_any_domain(domain: str, targets: set[str] | list[str] | tuple[str, ...]) -> bool:
+    return any(_domain_matches(domain, target) for target in targets)
+
+
+_GITHUB_NON_REPO_SEGMENTS = {
+    "about",
+    "advisories",
+    "apps",
+    "collections",
+    "contact",
+    "customer-stories",
+    "dashboard",
+    "education",
+    "enterprise",
+    "events",
+    "explore",
+    "features",
+    "github-copilot",
+    "issues",
+    "login",
+    "marketplace",
+    "mobile",
+    "new",
+    "notifications",
+    "orgs",
+    "pricing",
+    "pulls",
+    "readme",
+    "resources",
+    "search",
+    "security",
+    "settings",
+    "signup",
+    "solutions",
+    "sponsors",
+    "team",
+    "topics",
+    "trending",
+}
+
+
+def _is_github_repository_path(path_parts: list[str]) -> bool:
+    if len(path_parts) < 2:
+        return False
+    owner, repo = path_parts[0].lower(), path_parts[1].lower()
+    return owner not in _GITHUB_NON_REPO_SEGMENTS and repo not in _GITHUB_NON_REPO_SEGMENTS
 
 
 def classify_source_type(url: str, snippet: str = "") -> str:
@@ -367,11 +415,26 @@ def classify_source_type(url: str, snippet: str = "") -> str:
     combined = f"{lower_url} {snippet.lower()}"
 
     # GitHub / GitLab / BitBucket
-    if any(d in domain for d in ["github.com", "gitlab.com", "bitbucket.org"]):
+    if _matches_any_domain(domain, ["github.com", "gitlab.com", "bitbucket.org"]):
+        path_parts = [p for p in urlparse(url).path.strip("/").split("/") if p]
+        if domain == "github.com":
+            if path_parts[:1] == ["advisories"]:
+                return SourceType.OFFICIAL_DOCS.value
+            if path_parts[:1] in (["topics"], ["marketplace"], ["orgs"]):
+                return SourceType.UNKNOWN.value
+            if (
+                _is_github_repository_path(path_parts)
+                and len(path_parts) >= 3
+                and path_parts[2] in {"issues", "discussions"}
+            ):
+                return SourceType.FORUM.value
+            if _is_github_repository_path(path_parts):
+                return SourceType.GITHUB_REPO.value
+            return SourceType.UNKNOWN.value
         return SourceType.GITHUB_REPO.value
 
     # Official docs
-    if any(d in domain for d in _PRIMARY_SOURCE_DOMAINS):
+    if _matches_any_domain(domain, _PRIMARY_SOURCE_DOMAINS):
         if any(p in lower_url for p in _DOCS_URL_PATTERNS):
             return SourceType.OFFICIAL_DOCS.value
         if domain in (
@@ -399,16 +462,16 @@ def classify_source_type(url: str, snippet: str = "") -> str:
         return SourceType.ACADEMIC_PAPER.value
 
     # Package registry
-    if any(
-        d in domain
-        for d in [
+    if _matches_any_domain(
+        domain,
+        [
             "pypi.org",
             "npmjs.com",
             "crates.io",
             "rubygems.org",
             "packagist.org",
             "maven.apache.org",
-        ]
+        ],
     ):
         return SourceType.PACKAGE_REGISTRY.value
 
@@ -455,7 +518,15 @@ def is_primary_source(url: str, source_type: str = "") -> bool:
     if st in ("official_docs", "github_repo", "package_registry", "academic_paper"):
         return True
 
-    if any(d in domain for d in _PRIMARY_SOURCE_DOMAINS):
+    if _domain_matches(domain, "github.com"):
+        if st in ("official_docs", "github_repo"):
+            return True
+        if st:
+            return False
+        path_parts = [p for p in urlparse(url).path.strip("/").split("/") if p]
+        return len(path_parts) >= 2 and path_parts[0] not in {"topics", "marketplace", "orgs"}
+
+    if _matches_any_domain(domain, _PRIMARY_SOURCE_DOMAINS):
         return True
 
     return "stackoverflow.com" in domain or "stackexchange.com" in domain

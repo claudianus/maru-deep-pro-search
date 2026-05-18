@@ -22,6 +22,7 @@ from ..utils.url import is_authority_domain
 from .expander import expand_query
 from .gap_detector import detect_gaps
 from .ranker import merge_results
+from .signals import source_signals
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,11 @@ class CitedSource:
     authority_boost: bool = False
     engines_found: list[str] = field(default_factory=list)
     relevance_score: float = 0.0
+    query_coverage: float = 0.0
+    access_risk: str = "open"
+    access_reasons: list[str] = field(default_factory=list)
+    noise_penalty: float = 0.0
+    missing_entities: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -120,32 +126,43 @@ async def deep_research(
     # Phase 1: Query expansion
     subqueries = [query]
     if expand_queries:
-        subqueries = expand_query(query, max_subqueries=5)
+        subqueries = expand_query(query, max_subqueries=DEFAULT_CONFIG.deep_max_subqueries)
 
     # Phase 2: Multi-engine search
     engine_results: dict[str, list[SearchResult]] = {e: [] for e in engines}
 
     async def _search_one(
         eng_name: str, sq: str, allow_fallback: bool = True
-    ) -> tuple[str, list[SearchResult]]:
+    ) -> tuple[str, str, list[SearchResult]]:
         async with _search_semaphore:
             try:
                 search_engine = SearchEngineRegistry.create(eng_name)
                 # Locale harness: English tech terms → localized tokens for Naver/Baidu.
                 sent = optimize_for_engine(sq, eng_name) if eng_name in ("naver", "baidu") else sq
                 serp_cap = min(max_sources * 2, DEFAULT_CONFIG.serp_per_engine_cap)
-                results = await search_engine.search(sent, max_results=serp_cap)
-                return (eng_name, results)
+                results = await asyncio.wait_for(
+                    search_engine.search(sent, max_results=serp_cap),
+                    timeout=DEFAULT_CONFIG.deep_serp_run_timeout_seconds,
+                )
+                return (eng_name, sq, results)
+            except asyncio.TimeoutError:
+                logger.warning(
+                    "Search '%s' on %s timed out after %.0fs",
+                    sq[:40],
+                    eng_name,
+                    DEFAULT_CONFIG.deep_serp_run_timeout_seconds,
+                )
+                return (eng_name, sq, [])
             except NetworkError as exc:
                 logger.warning("Search '%s' on %s failed: %s", sq[:40], eng_name, exc)
                 fallback = getattr(exc, "suggested_engine", None)
                 if fallback and fallback != eng_name and allow_fallback:
                     logger.info("Engine fallback: %s -> %s", eng_name, fallback)
                     return await _search_one(fallback, sq, allow_fallback=False)
-                return (eng_name, [])
+                return (eng_name, sq, [])
             except Exception as exc:
                 logger.warning("Search '%s' on %s failed: %s", sq[:40], eng_name, exc)
-                return (eng_name, [])
+                return (eng_name, sq, [])
 
     # Pre-filter engines with open circuit breakers
     available_engines: list[str] = []
@@ -169,11 +186,13 @@ async def deep_research(
         sub_eng = engines[i % len(engines)]
         search_tasks.append(asyncio.create_task(_search_one(sub_eng, sq)))
 
+    search_runs: list[tuple[str, list[SearchResult]]] = []
     all_results = await asyncio.gather(*search_tasks, return_exceptions=True)
     for res in all_results:
         if isinstance(res, tuple):
-            eng_name, results = res
-            engine_results[eng_name].extend(results)
+            eng_name, sq, results = res
+            engine_results.setdefault(eng_name, []).extend(results)
+            search_runs.append((f"{eng_name}:{len(search_runs) + 1}:{sq[:48]}", results))
         elif isinstance(res, Exception):
             logger.warning("Search task failed: %s", res)
 
@@ -187,7 +206,7 @@ async def deep_research(
         )
 
     # Phase 3: Merge, deduplicate, and rank
-    ranked = merge_results(engine_results, query)
+    ranked = merge_results(engine_results, query, search_runs=search_runs)
 
     # Phase 3b: Primary source filtering
     if primary_sources_only:
@@ -197,7 +216,7 @@ async def deep_research(
         if not ranked:
             ranked = [
                 rr
-                for rr in merge_results(engine_results, query)
+                for rr in merge_results(engine_results, query, search_runs=search_runs)
                 if rr.result.url_suggests_docs or is_authority_domain(rr.result.url)
             ]
 
@@ -215,6 +234,7 @@ async def deep_research(
         for engine_name in sr.engines_found:
             search_coverage[engine_name] = search_coverage.get(engine_name, 0) + 1
 
+        signals = source_signals(query, sr.title, sr.snippet, sr.url)
         sources.append(
             CitedSource(
                 citation_id=len(sources) + 1,
@@ -227,6 +247,11 @@ async def deep_research(
                 authority_boost=is_authority_domain(sr.url),
                 engines_found=sr.engines_found,
                 relevance_score=round(rr.final_score, 2),
+                query_coverage=signals.query_coverage,
+                access_risk=signals.access_risk,
+                access_reasons=signals.access_reasons,
+                noise_penalty=signals.noise_penalty,
+                missing_entities=signals.missing_entities,
             )
         )
 
@@ -282,6 +307,14 @@ def format_for_llm(
         lines.append(f"_subqueries: {', '.join(result.subqueries)}_")
     lines.append("")
 
+    trace_block = _format_research_trace(result, planned_reads)
+    if trace_block:
+        lines.append(trace_block)
+
+    insight_block = _format_insight_cards(result.sources)
+    if insight_block:
+        lines.append(insight_block)
+
     # Key findings from snippets
     lines.append("### Key Findings")
     lines.append("")
@@ -290,6 +323,10 @@ def format_for_llm(
         if snippet:
             lines.append(f"- [{src.citation_id}] {snippet}")
     lines.append("")
+
+    cluster_block = _format_evidence_clusters(result.sources)
+    if cluster_block:
+        lines.append(cluster_block)
 
     planned_block = format_planned_reads(planned_reads)
     if planned_block:
@@ -305,11 +342,20 @@ def format_for_llm(
         cross = f" | ✓{len(src.engines_found)} engines" if len(src.engines_found) > 1 else ""
         primary = " | 📌 primary" if src.is_primary else ""
         stype = f" | {src.source_type}" if src.source_type != "unknown" else ""
+        coverage = f" | coverage: {src.query_coverage:.0%}"
+        access = "" if src.access_risk == "open" else f" | access: {src.access_risk}"
+        noise = f" | noise: -{src.noise_penalty:.1f}" if src.noise_penalty >= 0.5 else ""
+        missing = ""
+        if src.missing_entities:
+            missing = f" | missing: {', '.join(src.missing_entities[:3])}"
         snippet_cap = 400 if i < 8 else 150
 
         lines.append(f"#### [{src.citation_id}] {src.title}{badge}")
         lines.append(f"{src.url}")
-        lines.append(f"_score: {src.relevance_score:.1f}{auth}{cross}{primary}{stype}_")
+        lines.append(
+            f"_score: {src.relevance_score:.1f}{auth}{cross}{primary}{stype}"
+            f"{coverage}{access}{noise}{missing}_"
+        )
         if src.snippet:
             lines.append(f"\n> {src.snippet[:snippet_cap]}\n")
         else:
@@ -326,6 +372,10 @@ def format_for_llm(
         for sq in result.suggested_followups:
             lines.append(f"- {sq}")
         lines.append("")
+
+    blueprint = _format_answer_blueprint(result)
+    if blueprint:
+        lines.append(blueprint)
 
     return "\n".join(lines)
 
@@ -360,6 +410,150 @@ def _format_snippet_conflicts(sources: list) -> str:
     return "\n".join(lines)
 
 
+def _format_research_trace(result: ResearchResult, planned_reads: list | None = None) -> str:
+    """Expose visible deep-research process steps for host UIs and agents."""
+    if not result.sources:
+        return ""
+
+    source_types = len({src.source_type for src in result.sources if src.source_type})
+    primary_count = sum(1 for src in result.sources if src.is_primary)
+    open_count = sum(1 for src in result.sources if src.access_risk == "open")
+    followup_count = len(result.suggested_followups)
+    planned_count = len(planned_reads or [])
+    steps = [
+        f"Query intent normalized and expanded into {len(result.subqueries)} orthogonal searches",
+        f"{result.total_sources} deduplicated sources analyzed across {len(result.search_coverage)} engines",
+        f"{primary_count} primary/official sources and {source_types} source categories identified",
+        "BM25/RRF/entity coverage/access-risk ranking applied",
+        "Version/year/conflict hints checked from top snippets",
+        f"{planned_count} best reads selected for fetch_page/fetch_bulk verification",
+        f"{followup_count} follow-up gaps generated for iterative research",
+    ]
+
+    lines = [
+        "### Research Trace",
+        "",
+        f"_deep research: {result.total_sources} sources analyzed | {len(steps)} steps complete | {open_count} open-access candidates_",
+        "",
+    ]
+    for i, step in enumerate(steps, start=1):
+        lines.append(f"{i}. {step}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _format_insight_cards(sources: list[CitedSource], max_cards: int = 5) -> str:
+    """Generate concise UI-style insight cards from high-signal snippets."""
+    candidates = [
+        src
+        for src in sources
+        if src.snippet and src.access_risk != "blocked_likely" and src.query_coverage >= 0.2
+    ]
+    if not candidates:
+        return ""
+
+    candidates.sort(
+        key=lambda src: (
+            src.is_primary,
+            src.authority_boost,
+            src.query_coverage,
+            src.relevance_score,
+        ),
+        reverse=True,
+    )
+
+    seen: set[str] = set()
+    cards: list[CitedSource] = []
+    for src in candidates:
+        normalized = re.sub(r"\W+", " ", src.snippet.lower())[:90]
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        cards.append(src)
+        if len(cards) >= max_cards:
+            break
+
+    if not cards:
+        return ""
+
+    lines = ["### Insights", ""]
+    for src in cards:
+        snippet = re.sub(r"\s+", " ", src.snippet).strip()
+        if len(snippet) > 240:
+            snippet = snippet[:237].rstrip() + "..."
+        kind = src.source_type.replace("_", " ") if src.source_type != "unknown" else "source"
+        lines.append(f"- [{src.citation_id}] **{src.title[:90]}** ({kind}) — {snippet}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _format_evidence_clusters(sources: list[CitedSource]) -> str:
+    """Summarize top-source agreement signals without LLM synthesis."""
+    if not sources:
+        return ""
+
+    by_type: dict[str, list[CitedSource]] = {}
+    for src in sources[:10]:
+        by_type.setdefault(src.source_type or "unknown", []).append(src)
+
+    lines = ["### Evidence Clusters", ""]
+    for source_type, group in sorted(
+        by_type.items(),
+        key=lambda item: max(s.relevance_score for s in item[1]),
+        reverse=True,
+    )[:4]:
+        ids = ", ".join(f"[{s.citation_id}]" for s in group[:4])
+        avg_coverage = sum(s.query_coverage for s in group) / max(len(group), 1)
+        label = source_type.replace("_", " ")
+        lines.append(f"- {label}: {ids} (avg coverage {avg_coverage:.0%})")
+
+    access_risks = [s for s in sources[:10] if s.access_risk != "open"]
+    if access_risks:
+        parts = [
+            f"[{s.citation_id}] {s.access_risk}"
+            for s in sorted(access_risks, key=lambda item: item.citation_id)[:5]
+        ]
+        lines.append(f"- Access risks: {', '.join(parts)}")
+
+    low_coverage = [s for s in sources[:10] if s.query_coverage < 0.25]
+    if low_coverage:
+        ids = ", ".join(f"[{s.citation_id}]" for s in low_coverage[:5])
+        lines.append(f"- Low-query-coverage candidates to verify before citing: {ids}")
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _format_answer_blueprint(result: ResearchResult) -> str:
+    """Return a synthesis plan that pushes host answers toward report quality."""
+    if not result.sources:
+        return ""
+    primary_ids = [f"[{s.citation_id}]" for s in result.sources if s.is_primary][:5]
+    independent_ids = [
+        f"[{s.citation_id}]"
+        for s in result.sources
+        if not s.is_primary and s.access_risk == "open" and s.query_coverage >= 0.2
+    ][:5]
+    risk_ids = [f"[{s.citation_id}]" for s in result.sources if s.access_risk != "open"][:5]
+
+    lines = [
+        "### Answer Blueprint",
+        "",
+        "- Start with a direct recommendation/answer in the first paragraph.",
+        "- Then group evidence by model/product/source family instead of listing search results.",
+        "- Include a comparison table when candidates, versions, models, or trade-offs appear.",
+        "- Use primary sources for factual claims and independent sources only for corroboration.",
+    ]
+    if primary_ids:
+        lines.append(f"- Primary anchors to cite first: {', '.join(primary_ids)}")
+    if independent_ids:
+        lines.append(f"- Independent corroboration candidates: {', '.join(independent_ids)}")
+    if risk_ids:
+        lines.append(f"- Mention access/freshness caveats before relying on: {', '.join(risk_ids)}")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _compute_research_quality(result: ResearchResult) -> int:
     """Score research quality 0-100 based on source diversity, authority, and coverage."""
     if not result.sources:
@@ -370,25 +564,39 @@ def _compute_research_quality(result: ResearchResult) -> int:
     primary_count = sum(1 for s in result.sources if s.is_primary)
     high_quality_count = sum(1 for s in result.sources if s.quality == "high")
     multi_engine_count = sum(1 for s in result.sources if len(s.engines_found) > 1)
+    avg_coverage = sum(s.query_coverage for s in result.sources) / total
+    access_risk_count = sum(1 for s in result.sources if s.access_risk != "open")
 
     # Coverage: how many engines contributed
     engine_count = len(result.search_coverage)
-    coverage_score = min(engine_count * 15, 30)  # 2 engines=30, 1 engine=15
+    engine_score = min(engine_count * 12, 25)
 
     # Authority ratio
-    authority_score = int((authority_count / total) * 25)
+    authority_score = int((authority_count / total) * 20)
 
     # Primary source ratio
-    primary_score = int((primary_count / total) * 20)
+    primary_score = int((primary_count / total) * 15)
 
     # High-quality ratio
-    quality_score = int((high_quality_count / total) * 15)
+    quality_score = int((high_quality_count / total) * 10)
 
     # Cross-engine confirmation ratio
     diversity_score = int((multi_engine_count / total) * 10)
+    relevance_score = int(avg_coverage * 20)
+    access_penalty = int((access_risk_count / total) * 8)
 
     return min(
-        coverage_score + authority_score + primary_score + quality_score + diversity_score, 100
+        max(
+            engine_score
+            + authority_score
+            + primary_score
+            + quality_score
+            + diversity_score
+            + relevance_score
+            - access_penalty,
+            0,
+        ),
+        100,
     )
 
 

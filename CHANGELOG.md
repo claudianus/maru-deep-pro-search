@@ -8,6 +8,23 @@
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-05-19
+
+### Added
+- **Research Trace / Insights / Evidence Clusters** — `deep_research` 출력에 조사 과정, 핵심 인사이트, 출처 클러스터, 답변 설계 블록을 추가해 Perplexity Deep Research에 가까운 UI/하네스 소비가 가능해졌습니다.
+- **Source quality signals** — 쿼리 커버리지, 필수 엔티티 누락, 접근성/페이월 위험, 노이즈 패널티를 랭킹·receipt·출력 메타데이터에 반영합니다.
+- **Stress benchmark suite** — 한국어 초경량 모델 조사, Transformers/ComfyUI 호환성, Apple Silicon LLM 추론, LTX/ComfyUI 워크플로를 포함한 품질 스트레스 벤치를 추가했습니다.
+
+### Changed
+- **검색 기본값 상향** — `deep_research` 기본 30개 소스, 7개 서브쿼리, 엔진당 SERP 50개, answer deep 모드 30개 소스/6개 본문 확인으로 조정했습니다.
+- **랭킹/중복 제거 개선** — SERP 실행 단위 RRF, fuzzy dedupe 대표 병합, 접근성·노이즈·커버리지 기반 재랭킹으로 동일 엔진 중복과 무관한 구매가이드/홈페이지 노이즈를 줄였습니다.
+- **쿼리 확장 개선** — 버전·CVE·숫자 포함 패키지명·한글 토큰 보존, Korean NLP 모델 별칭, Hugging Face `transformers` 모호성 해소, 보안/버전/벤치 각도를 강화했습니다.
+- **본문 확인 플래너 개선** — 도메인/출처 타입 다양성, source-family viability, paywall risk를 반영해 `fetch_bulk` 후보를 더 공격적으로 선별합니다.
+
+### Fixed
+- **Startpage 자동 추천** — Playwright 비용이 큰 Startpage는 `MARU_ENABLE_STARTPAGE=1`일 때만 자동 추천에 포함합니다.
+- **Receipt JSON** — 출처별 score/type/primary/engines/coverage/access/noise/missing metadata를 병행 저장해 후속 툴 체이닝이 가능하게 했습니다.
+
 ## [0.19.1] - 2026-05-17
 
 ### Fixed

@@ -83,7 +83,7 @@ PyPI만 쓸 때는 `uv tool install --python 3.12 "maru-deep-pro-search[semantic
 ### 1. 설치 확인
 ```bash
 maru-deep-pro-search --version
-# 예: 0.19.1 (PyPI 최신)
+# 예: 0.20.0 (PyPI 최신)
 ```
 
 ### 2. 에이전트 설정
@@ -379,18 +379,24 @@ ACTION REQUIRED:
 | 환경 변수 | 기본값 | 적용 범위 |
 |-----------|--------|-----------|
 | `MARU_SEARCH_ENGINE` | `duckduckgo_lite` | MCP `web_search` / `search_with_citations` / `answer` / `parallel_search` / `deep_research` 기본 엔진 |
-| `MARU_SEARCH_MAX_RESULTS` | `10` | 위 툴의 `max_results` 또는 `answer`의 `max_sources` 기본값 |
-| `MARU_DEEP_MAX_SOURCES` | `10` | `deep_research` 기본 `max_sources` |
-| `MARU_SERP_PER_ENGINE_CAP` | `40` | 엔진당 SERP 파싱 상한 |
+| `MARU_SEARCH_MAX_RESULTS` | `10` | 검색 툴의 `max_results` 기본값. `answer`는 모드별 기본 소스 수를 사용 |
+| `MARU_DEEP_MAX_SOURCES` | `30` | `deep_research` 기본 `max_sources` |
+| `MARU_DEEP_MAX_SUBQUERIES` | `7` | `deep_research` 쿼리 확장 상한 |
+| `MARU_SERP_PER_ENGINE_CAP` | `50` | 엔진당 SERP 파싱 상한 |
+| `MARU_ANSWER_BALANCED_MAX_SOURCES` | `14` | `answer(mode="balanced")` 내부 리서치 최소 소스 수 |
+| `MARU_ANSWER_DEEP_MAX_SOURCES` | `30` | `answer(mode="deep")` 내부 리서치 최소 소스 수 |
+| `MARU_ANSWER_DEEP_FETCH_COUNT` | `6` | `answer(mode="deep")` 자동 본문 확인 수 |
 | `MARU_WRAPPER_TIER` | `tiered` | `tiered`(SERP 경량 래퍼) 또는 `full` |
+| `MARU_ENABLE_STARTPAGE` | (미설정) | `1`이면 Playwright 기반 Startpage를 자동 엔진 추천에 포함 |
 | `MARU_KNOWLEDGE_REUSE_MAX_CHARS` | `4000` | KnowledgeStore 캐시 히트 응답 상한 |
 | `MARU_RESEARCH_CONTEXT_MAX_CHARS` | `8000` | enforcer 세션 research 누적 상한 |
 | `MARU_SEARCH_MAX_CONCURRENT` | `5` | `fetch_bulk`의 `max_concurrent` 기본값 |
 | `MARU_SEARCH_RETRIES` | `3` | Bing/Yahoo 등 SERP `with_retry` 최대 시도 횟수 |
 | `MARU_SEARCH_TIMEOUT` | `30.0` | SERP 스크레이프 (`web_search`, `search_with_citations`), 초 |
 | `MARU_FETCH_HTTP_TIMEOUT` | `20.0` | `fetch_page` / `fetch_bulk` URL당, 초 |
-| `MARU_DEEP_RESEARCH_TIMEOUT` | `45.0` | `deep_research` 파이프라인, 초 |
-| `MARU_ANSWER_TIMEOUT` | `30.0` | `answer` 툴, 초 |
+| `MARU_DEEP_RESEARCH_TIMEOUT` | `60.0` | `deep_research` 파이프라인, 초 |
+| `MARU_DEEP_SERP_RUN_TIMEOUT` | `10.0` | `deep_research` 내부 하위 검색 1회당, 초 |
+| `MARU_ANSWER_TIMEOUT` | `60.0` | `answer` 툴, 초 |
 | `MARU_AUTO_FETCH_TIMEOUT` | `8.0` | `deep_research`의 `auto_fetch` 안 nested fetch, 초 |
 | `MARU_SKIP_UPDATE_CHECK` | (미설정) | 값이 비어 있지 않으면 시작 시 PyPI 업데이트 알림 생략 |
 | `MARU_DEBUG` | (미설정) | `1`/`true`/`yes`이면 MCP 서버 로그를 DEBUG로 |

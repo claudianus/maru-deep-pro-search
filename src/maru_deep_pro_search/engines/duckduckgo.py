@@ -11,6 +11,7 @@ from typing import Any
 from urllib.parse import quote_plus, urljoin
 
 from ..exceptions import NetworkError, ParseError
+from ..research.signals import classify_access
 from ..utils.url import get_domain, resolve_canonical_url, resolve_redirect, should_skip_url
 from .base import (
     DOCS_DOMAINS,
@@ -279,12 +280,22 @@ class DuckDuckGoEngine(SearchEngine):
                 needs_stealth_flag = not stealth
 
             logger.debug("Fetch %s for %s: %s", error_type, url, exc)
+            if error_type == "blocked":
+                access_risk = "blocked_likely"
+            elif error_type == "not_found":
+                access_risk = "not_found"
+                needs_stealth_flag = False
+            else:
+                access_risk = "fetch_failed"
+                needs_stealth_flag = False
             return PageContent(
                 url=url,
                 error_message=f"[{error_type.upper()}] {exc}",
                 quality=ExtractionQuality.BLOCKED,
                 fetch_duration_ms=duration,
                 needs_stealth=needs_stealth_flag,
+                access_risk=access_risk,
+                access_reasons=[error_type],
             )
 
         duration = (time.monotonic() - t0) * 1000
@@ -315,18 +326,24 @@ class DuckDuckGoEngine(SearchEngine):
         markdown, plain, stats = _extract_structured(main_el)
 
         # Collect links
-        internal_links, external_links = _collect_links(page, url)
-
-        # Quality assessment
-        quality = _assess_quality(stats, len(plain))
+        internal_links, external_links = _collect_links(page, final_url or url)
 
         # Enhanced extraction with trafilatura (CPU-bound — off event loop)
         _date_result = ""
         _code_stats = None
+        extraction_method = "dom"
 
         if original_html:
             try:
-                markdown, plain, stats, title, _date_result, _code_stats = await asyncio.to_thread(
+                (
+                    markdown,
+                    plain,
+                    stats,
+                    title,
+                    _date_result,
+                    _code_stats,
+                    extraction_method,
+                ) = await asyncio.to_thread(
                     _enhance_with_trafilatura,
                     original_html,
                     markdown,
@@ -337,12 +354,21 @@ class DuckDuckGoEngine(SearchEngine):
             except Exception as exc:
                 logger.warning("Enhanced extraction failed: %s", exc)
 
-        source_type, is_primary = guess_source_type_and_primary(url, plain[:300])
+        quality = _assess_quality(stats, len(plain))
+        effective_url = final_url or url
+        source_type, is_primary = guess_source_type_and_primary(effective_url, plain[:300])
+        access_risk, access_reasons = classify_access(
+            effective_url,
+            title=title,
+            content=plain,
+            content_length=len(plain),
+        )
 
         # Try to extract GitHub metadata
         github_meta = None
-        if "github.com" in get_domain(url):
-            github_meta = _extract_github_meta(page, url, plain)
+        effective_domain = get_domain(effective_url)
+        if effective_domain == "github.com" or effective_domain.endswith(".github.com"):
+            github_meta = _extract_github_meta(page, effective_url, plain)
 
         return PageContent(
             url=url,
@@ -352,12 +378,17 @@ class DuckDuckGoEngine(SearchEngine):
             markdown=markdown,
             html=main_el.html_content if main_el else "",
             quality=quality,
-            content_type=_guess_content_type(url, plain[:300]),
+            content_type=_guess_content_type(effective_url, plain[:300]),
             content_length=len(plain),
             heading_count=stats["headings"],
             code_block_count=stats["code_blocks"],
+            extraction_method=extraction_method,
+            duplicate_ratio=_estimate_duplicate_ratio(plain),
             internal_links=internal_links,
             external_links=external_links,
+            needs_stealth=access_risk in ("blocked_likely", "dynamic_likely"),
+            access_risk=access_risk,
+            access_reasons=access_reasons,
             fetch_duration_ms=duration,
             published_date=_date_result,
             code_languages=_code_stats.code_languages if _code_stats else [],
@@ -379,16 +410,17 @@ def _enhance_with_trafilatura(
     plain: str,
     stats: dict,
     title: str,
-) -> tuple[str, str, dict, str, str, Any | None]:
+) -> tuple[str, str, dict, str, str, Any | None, str]:
     """Run trafilatura/htmldate extraction (sync, for asyncio.to_thread)."""
     _date_result = ""
     _code_stats = None
+    extraction_method = "dom"
     try:
         import htmldate as _htmldate
         import trafilatura
     except ImportError:
         logger.debug("trafilatura/htmldate not available")
-        return markdown, plain, stats, title, _date_result, _code_stats
+        return markdown, plain, stats, title, _date_result, _code_stats, extraction_method
 
     tf_result = trafilatura.extract(
         original_html,
@@ -407,6 +439,8 @@ def _enhance_with_trafilatura(
             or plain
         )
         stats["code_blocks"] = len(re.findall(r"```", markdown)) // 2
+        stats["paragraphs"] = max(stats.get("paragraphs", 0), len(re.findall(r"\n\n+", markdown)))
+        extraction_method = "trafilatura"
 
     meta = trafilatura.extract_metadata(original_html)
     if meta:
@@ -422,7 +456,7 @@ def _enhance_with_trafilatura(
     from ..extraction.code import analyze_code_content
 
     _code_stats = analyze_code_content(markdown, published_date=_date_result)
-    return markdown, plain, stats, title, _date_result, _code_stats
+    return markdown, plain, stats, title, _date_result, _code_stats, extraction_method
 
 
 def _extract_structured(element) -> tuple[str, str, dict]:
@@ -472,9 +506,16 @@ def _extract_structured(element) -> tuple[str, str, dict]:
             stats["paragraphs"] += 1
         plain_lines.append(text)
 
-    # Remaining body text
-    remaining = str(element.text).strip()
-    if remaining:
+    # Fallback body text when article selectors missed paragraph/list content.
+    remaining = _clean_whitespace(str(element.text).strip())
+    plain_so_far = _clean_whitespace("\n\n".join(plain_lines))
+    body_text_was_under_extracted = (
+        len(remaining) > 1500 and len(plain_so_far) < len(remaining) * 0.45
+    )
+    if remaining and body_text_was_under_extracted:
+        md_lines = [f"\n{remaining}"]
+        plain_lines = [remaining]
+    elif remaining and (not plain_so_far or (stats["paragraphs"] == 0 and stats["lists"] == 0)):
         md_lines.append(f"\n{remaining}")
         plain_lines.append(remaining)
 
@@ -482,6 +523,15 @@ def _extract_structured(element) -> tuple[str, str, dict]:
     plain = _clean_whitespace("\n\n".join(plain_lines))
 
     return markdown, plain, stats
+
+
+def _estimate_duplicate_ratio(text: str) -> float:
+    """Estimate repeated-line noise after extraction."""
+    lines = [line.strip() for line in text.splitlines() if len(line.strip()) > 20]
+    if not lines:
+        return 0.0
+    unique = len(set(lines))
+    return round(max(0.0, 1.0 - unique / len(lines)), 3)
 
 
 def _assess_quality(stats: dict, content_length: int) -> ExtractionQuality:

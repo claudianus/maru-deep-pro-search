@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 
 from .expander import extract_keywords
+from .signals import required_entities
 
 # Research angles that are commonly valuable
 _RESEARCH_ANGLES = [
@@ -39,7 +40,7 @@ def detect_gaps(query: str, sources: list) -> list[str]:
 
     # Extract query keywords
     query_keywords = set(extract_keywords(query))
-    if not query_keywords and not _required_entities(query):
+    if not query_keywords and not required_entities(query):
         return []
 
     # Collect all text from sources
@@ -54,7 +55,7 @@ def detect_gaps(query: str, sources: list) -> list[str]:
     source_text = source_text.lower()
     suggestions: list[str] = []
 
-    for entity in _required_entities(query):
+    for entity in required_entities(query):
         normalized = entity.lower()
         if re.fullmatch(r"v?\d+\.\d+(?:\.\d+)?", normalized):
             core = normalized[1:] if normalized.startswith("v") else normalized
@@ -100,12 +101,3 @@ def detect_gaps(query: str, sources: list) -> list[str]:
             suggestions.append(f"{query} security")
 
     return suggestions[:3]
-
-
-def _required_entities(query: str) -> list[str]:
-    """CVE IDs, semver-like tokens, and explicit years from the query."""
-    entities: list[str] = []
-    entities.extend(re.findall(r"CVE-\d{4}-\d+", query, flags=re.IGNORECASE))
-    entities.extend(re.findall(r"\bv?\d+\.\d+(?:\.\d+)?\b", query))
-    entities.extend(re.findall(r"20\d{2}", query))
-    return entities

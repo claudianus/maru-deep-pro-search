@@ -23,6 +23,7 @@ from .research.pipeline import (
     save_research_knowledge,
 )
 from .research.ranker import rank_pages
+from .research.signals import classify_access
 from .utils.cache import cache_key, fetch_page_cache_key, get_fetch_cache, get_search_cache
 from .utils.locale_harness import optimize_for_engine
 from .utils.query_gate import (
@@ -44,6 +45,14 @@ logging.getLogger("scrapling.fetchers").setLevel(logging.WARNING)
 
 # All registered engines
 SEARCH_ENGINES = SearchEngineRegistry.list_engines()
+
+
+def _safe_exception_reason(exc: Exception) -> str:
+    """Return a compact non-empty exception label for user-facing fetch failures."""
+    raw = str(exc).strip()
+    if not raw:
+        return exc.__class__.__name__
+    return re.sub(r"\s+", " ", raw)[:80]
 
 
 def _coerce_registered_engine(engine: str) -> str:
@@ -138,8 +147,16 @@ async def _parallel_auto_fetch_previews(
                 lines.append("")
             except Exception as exc:
                 logger.debug("Auto-fetch failed for %s: %s", getattr(src, "url", ""), exc)
+                access_risk, reasons = classify_access(
+                    getattr(src, "url", ""),
+                    title=getattr(src, "title", ""),
+                    content=str(exc),
+                )
+                reason = access_risk if access_risk != "open" else _safe_exception_reason(exc)
+                if reasons:
+                    reason = f"{reason} ({', '.join(reasons[:2])})"
                 lines.append(
-                    f"**From [{getattr(src, 'citation_id', '?')}] {getattr(src, 'title', '')}** — fetch failed"
+                    f"**From [{getattr(src, 'citation_id', '?')}] {getattr(src, 'title', '')}** — fetch failed: {reason}"
                 )
                 lines.append("")
             return lines
@@ -400,7 +417,13 @@ async def tool_fetch_page(
         if (
             auto_stealth_fallback
             and not stealth
-            and ("403" in err or "forbidden" in err.lower() or "blocked" in err.lower())
+            and (
+                page.needs_stealth
+                or page.access_risk in ("blocked_likely", "dynamic_likely")
+                or "403" in err
+                or "forbidden" in err.lower()
+                or "blocked" in err.lower()
+            )
         ):
             logger.info("fetch_page blocked for %s, auto-falling back to stealthy_fetch", url)
             return await tool_stealthy_fetch(url, max_tokens)
@@ -424,20 +447,31 @@ async def tool_fetch_page(
             guidance = (
                 "_Fetch blocked or failed. Try stealthy_fetch or fetch_page with stealth=True._"
             )
-        return f"## [BLOCKED] {url}\n{guidance}\nError: {page.error_message}"
+        access = f"\n_access: {page.access_risk}_" if page.access_risk != "open" else ""
+        if page.access_reasons:
+            access += f"\n_access reasons: {', '.join(page.access_reasons[:3])}_"
+        return f"## [BLOCKED] {url}\n{guidance}{access}\nError: {page.error_message}"
 
     if page.content_length == 0:
         if auto_stealth_fallback and not stealth:
             logger.info("fetch_page empty for %s, auto-falling back to stealthy_fetch", url)
             return await tool_stealthy_fetch(url, max_tokens)
-        return f"## [EMPTY] {url}\n_No extractable content found._"
+        access = f"\n_access: {page.access_risk}_" if page.access_risk != "open" else ""
+        return f"## [EMPTY] {url}\n_No extractable content found._{access}"
 
     content = page.markdown if page.markdown else page.text
     content = truncate_for_llm(content, max_tokens)
 
-    quality_line = f"_quality: {page.quality.value} | type: {page.content_type.value} | {page.content_length} chars | {page.fetch_duration_ms:.0f}ms_"
-
     code_meta = ""
+    access = "" if page.access_risk == "open" else f" | access: {page.access_risk}"
+    quality_line = f"_quality: {page.quality.value} | type: {page.content_type.value}{access} | {page.content_length} chars | {page.fetch_duration_ms:.0f}ms_"
+    if page.access_reasons:
+        code_meta += f"\n_access reasons: {', '.join(page.access_reasons[:3])}_"
+    if page.extraction_method:
+        code_meta += f"\n_extraction: {page.extraction_method}_"
+    if page.duplicate_ratio >= 0.2:
+        code_meta += f"\n_duplicate ratio: {page.duplicate_ratio:.0%}_"
+
     if page.code_languages:
         code_meta += f"\n_languages: {', '.join(page.code_languages)}_"
     if page.api_signatures:
@@ -584,10 +618,14 @@ async def tool_fetch_bulk(
         error_line = ""
         if page.quality.value == "blocked" and page.error_message:
             error_line = f"\n_Error: {page.error_message}_"
+        access = "" if page.access_risk == "open" else f", access={page.access_risk}"
+        extraction = f", extraction={page.extraction_method}" if page.extraction_method else ""
+        if page.access_reasons:
+            error_line += f"\n_Access reasons: {', '.join(page.access_reasons[:3])}_"
 
         lines.append(f"### [{i}] {page.title}{badge}")
         lines.append(
-            f"URL: {page.final_url or page.url} _({page.content_length} chars, {status}, {page.content_type.value})_{error_line}"
+            f"URL: {page.final_url or page.url} _({page.content_length} chars, {status}, {page.content_type.value}{access}{extraction})_{error_line}"
         )
         lines.append(f"\n{content}\n")
 
@@ -706,13 +744,14 @@ async def tool_deep_research(
 
     # Auto-fetch top results if requested (saves agent from separate fetch_page calls)
     if auto_fetch > 0 and result.sources:
-        top_sources = result.sources[: min(auto_fetch, 3)]
+        fetch_cap = min(auto_fetch, 10, len(result.sources))
+        top_sources = result.sources[:fetch_cap]
         if planned:
             top_sources = [
                 s
                 for s in result.sources
-                if s.citation_id in {p.citation_id for p in planned[: min(auto_fetch, 3)]}
-            ] or result.sources[: min(auto_fetch, 3)]
+                if s.citation_id in {p.citation_id for p in planned[:fetch_cap]}
+            ] or result.sources[:fetch_cap]
         fetch_lines = ["\n### Auto-Fetched Content", ""]
         fetch_lines.extend(await _parallel_auto_fetch_previews(top_sources))
         result_text += "\n" + "\n".join(fetch_lines)
@@ -743,7 +782,7 @@ def _answer_mode_config(mode: str) -> tuple[str, bool, int]:
     if normalized == "fast":
         return "fast", False, 0
     if normalized == "deep":
-        return "deep", True, 3
+        return "deep", True, max(0, DEFAULT_CONFIG.answer_deep_fetch_count)
     return "balanced", True, 2
 
 
@@ -767,7 +806,7 @@ def _compact_fetch_preview(page: str, max_tokens: int) -> str:
 async def tool_answer(
     query: str,
     engine: str = DEFAULT_CONFIG.default_engine,
-    max_sources: int = DEFAULT_CONFIG.max_results_per_query,
+    max_sources: int | None = None,
     max_tokens: int = 8000,
     primary_sources_only: bool = False,
     mode: str = "balanced",
@@ -791,9 +830,22 @@ async def tool_answer(
     mode, expand_queries, fetch_count = _answer_mode_config(mode)
 
     engine = _coerce_registered_engine(engine)
-    source_limit = max(1, min(max_sources, 12))
+    if max_sources is not None and (max_sources < 1 or max_sources > 100):
+        raise ValueError(f"max_sources must be between 1 and 100 (got {max_sources})")
     if mode == "fast":
-        source_limit = min(source_limit, 6)
+        source_limit = 6 if max_sources is None else max(1, min(max_sources, 6))
+    elif mode == "deep":
+        source_limit = (
+            max(1, DEFAULT_CONFIG.answer_deep_max_sources)
+            if max_sources is None
+            else max(1, max_sources)
+        )
+    else:
+        source_limit = (
+            max(1, DEFAULT_CONFIG.answer_balanced_max_sources)
+            if max_sources is None
+            else max(1, max_sources)
+        )
 
     answer_timeout = DEFAULT_CONFIG.answer_timeout_seconds
     try:
@@ -846,6 +898,8 @@ async def tool_answer(
         "",
         "### Host Synthesis Instructions",
         "Answer from evidence only; cite every factual claim with `[N]` IDs; note uncertainty or conflicts.",
+        "Use the Research Trace and Insights as the visible research process, then produce a concise report-style answer.",
+        "Lead with the conclusion, then group evidence into sections and tables where useful.",
         "",
         _format_source_map(research_packet),
     ]

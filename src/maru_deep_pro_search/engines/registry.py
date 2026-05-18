@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 
 from .base import SearchEngine
 
@@ -40,6 +41,12 @@ class SearchEngineRegistry:
         """
         if name not in cls._instances:
             engine_class = cls.get(name)
+            if (
+                name in {"duckduckgo", "duckduckgo_lite", "duckduckgo_fetch"}
+                and "variant" not in kwargs
+            ):
+                variant = "duckduckgo_lite" if name == "duckduckgo_fetch" else name
+                kwargs = {**kwargs, "variant": variant}
             cls._instances[name] = engine_class(**kwargs)
         return cls._instances[name]
 
@@ -69,7 +76,7 @@ class SearchEngineRegistry:
             List of engine names sorted by quality tier and reliability.
         """
         engines = cls.list_engines()
-        scored: list[tuple[str, int, float, float]] = []
+        scored: list[tuple[str, int, float, float, int]] = []
 
         # Locale detection for query-aware boosting
         locale_boosts: dict[str, float] = {}
@@ -93,19 +100,34 @@ class SearchEngineRegistry:
         for name in engines:
             if name in _FETCH_ONLY_ENGINES:
                 continue
+            if name == "startpage" and os.getenv(
+                "MARU_ENABLE_STARTPAGE", ""
+            ).strip().lower() not in (
+                "1",
+                "true",
+                "yes",
+            ):
+                continue
             try:
                 eng_cls = cls.get(name)
                 reliability = eng_cls.reliability_score + locale_boosts.get(name, 0.0)
+                variant_preference = 0 if name == "duckduckgo_lite" else 1
                 scored.append(
-                    (name, eng_cls.quality_tier, reliability, locale_boosts.get(name, 0.0))
+                    (
+                        name,
+                        eng_cls.quality_tier,
+                        reliability,
+                        locale_boosts.get(name, 0.0),
+                        variant_preference,
+                    )
                 )
             except Exception:
                 continue
 
         # Sort by tier ascending (1 is best), then reliability descending,
         # then locale boost descending (prefer locale-matched engines)
-        scored.sort(key=lambda x: (x[1], -x[2], -x[3]))
-        return [name for name, _, _, _ in scored[:count]]
+        scored.sort(key=lambda x: (x[1], -x[2], -x[3], x[4]))
+        return [name for name, _, _, _, _ in scored[:count]]
 
 
 # Auto-register built-in engines

@@ -280,7 +280,14 @@ class DuckDuckGoEngine(SearchEngine):
                 needs_stealth_flag = not stealth
 
             logger.debug("Fetch %s for %s: %s", error_type, url, exc)
-            access_risk = "open" if error_type == "not_found" else "blocked_likely"
+            if error_type == "blocked":
+                access_risk = "blocked_likely"
+            elif error_type == "not_found":
+                access_risk = "not_found"
+                needs_stealth_flag = False
+            else:
+                access_risk = "fetch_failed"
+                needs_stealth_flag = False
             return PageContent(
                 url=url,
                 error_message=f"[{error_type.upper()}] {exc}",
@@ -505,11 +512,10 @@ def _extract_structured(element) -> tuple[str, str, dict]:
     body_text_was_under_extracted = (
         len(remaining) > 1500 and len(plain_so_far) < len(remaining) * 0.45
     )
-    if remaining and (
-        not plain_so_far
-        or (stats["paragraphs"] == 0 and stats["lists"] == 0)
-        or body_text_was_under_extracted
-    ):
+    if remaining and body_text_was_under_extracted:
+        md_lines = [f"\n{remaining}"]
+        plain_lines = [remaining]
+    elif remaining and (not plain_so_far or (stats["paragraphs"] == 0 and stats["lists"] == 0)):
         md_lines.append(f"\n{remaining}")
         plain_lines.append(remaining)
 

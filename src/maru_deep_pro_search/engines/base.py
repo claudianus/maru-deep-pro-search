@@ -234,8 +234,7 @@ class SearchEngine(ABC):
                     url=url,
                     error_message=f"{self.name} circuit breaker is open",
                     quality=ExtractionQuality.BLOCKED,
-                    needs_stealth=True,
-                    access_risk="blocked_likely",
+                    access_risk="temporarily_unavailable",
                     access_reasons=["circuit_breaker"],
                 )
             try:

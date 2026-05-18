@@ -83,7 +83,7 @@ The setup wizard auto-detects your AI agent, backs up existing configs, injects 
 ### 1. Verify installation
 ```bash
 maru-deep-pro-search --version
-# Expected: 0.19.1 (latest on PyPI)
+# Expected: 0.20.0 (latest on PyPI)
 ```
 
 ### 2. Set up your agent

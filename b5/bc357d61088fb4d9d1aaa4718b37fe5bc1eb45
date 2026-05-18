@@ -1,0 +1,26 @@
+README.md
+  s_48732b6ec24419::t_c93a246cf1d9f9 382
+README.en.md
+  s_48732b6ec24419::t_b6710c64be892a 394-396
+  s_48732b6ec24419::t_c7ad5c07f5b768 379
+src/maru_deep_pro_search/server.py
+  s_48732b6ec24419::t_5b9b7211873c6b 555
+src/maru_deep_pro_search/tools.py
+  s_48732b6ec24419::t_420c545d7cc33f 801
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b5bc357d61088fb4d9d1aaa4718b37fe5bc1eb45",
+  "prompts": {},
+  "sessions": {
+    "s_48732b6ec24419": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "067dff20-aa21-4b5a-bcbf-a4c6b17394ff",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

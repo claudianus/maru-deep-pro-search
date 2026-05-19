@@ -1,0 +1,30 @@
+docs/index.html
+  s_3039b9bd4d38b4::t_1a5859cd1bd741 629-678,688-689
+  s_3039b9bd4d38b4::t_d5a95b4e4811c6 436
+  s_3039b9bd4d38b4::t_7d6a900153014d 421
+  s_3039b9bd4d38b4::t_8eac0f7951188f 357-379
+docs/agent_matrix.html
+  s_3039b9bd4d38b4::t_f9dd4a37adc843 5-8,10-11
+README.en.md
+  s_3039b9bd4d38b4::t_937ed1b38313bd 139
+README.md
+  s_3039b9bd4d38b4::t_850a7f0aa979ac 139
+docs/marketing/BRIEF.md
+  s_3039b9bd4d38b4::t_656c7fe134511b 25-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "6a2c8e79de104a9d0c8d570655cd1a3bcc23a3c4",
+  "prompts": {},
+  "sessions": {
+    "s_3039b9bd4d38b4": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "606a6cef-3e1c-48f9-9af6-e767acad7fe4",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

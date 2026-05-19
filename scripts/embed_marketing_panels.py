@@ -9,6 +9,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -17,11 +18,51 @@ PARTIALS_DIR = (ROOT / "docs" / "partials" / "panels").resolve()
 CSS_OUT = (ROOT / "docs" / "assets" / "marketing" / "panels.css").resolve()
 INDEX_HTML = (ROOT / "docs" / "index.html").resolve()
 
-sys.path.insert(0, str(ROOT / "scripts"))
-from marketing_panels import build_all_panels, scoped_panels_css  # noqa: E402
+_DIV_TAG = re.compile(r"<(/?)div\b", re.IGNORECASE)
+
+
+def _mcp_demo_open(panel_id: str) -> str:
+    return '<div class="mcp-demo" data-panel="' + panel_id + '"'
+
+
+def _replace_one_mcp_demo(html: str, panel_id: str, replacement: str) -> tuple[str, bool]:
+    """Replace the first mcp-demo block for panel_id (balanced div walk)."""
+    start = html.find(_mcp_demo_open(panel_id))
+    if start < 0:
+        return html, False
+    depth = 0
+    end = -1
+    for m in _DIV_TAG.finditer(html, start):
+        depth += -1 if m.group(1) else 1
+        if depth == 0:
+            end = html.find(">", m.end()) + 1
+            break
+    if end <= 0:
+        return html, False
+    if html[start:end] == replacement:
+        return html, False
+    return html[:start] + replacement + html[end:], True
+
+
+def _upsert_panel(html: str, panel_id: str, replacement: str) -> tuple[str, int]:
+    """Insert or refresh panel HTML; returns (html, count_replaced)."""
+    marker = f"<!--@panel:{panel_id}@-->"
+    count = 0
+    while marker in html:
+        html = html.replace(marker, replacement, 1)
+        count += 1
+    while True:
+        html, ok = _replace_one_mcp_demo(html, panel_id, replacement)
+        if not ok:
+            break
+        count += 1
+    return html, count
 
 
 def write_panels() -> dict[str, str]:
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from marketing_panels import build_all_panels, scoped_panels_css  # noqa: E402
+
     panels = build_all_panels()
     PARTIALS_DIR.mkdir(parents=True, exist_ok=True)
     for panel_id, html_fragment in panels.items():
@@ -37,20 +78,26 @@ def write_panels() -> dict[str, str]:
 def patch_index_html(panels: dict[str, str], *, use_fetch: bool) -> None:
     text = INDEX_HTML.read_text(encoding="utf-8")
     missing: list[str] = []
+    total = 0
     for panel_id, fragment in panels.items():
-        marker = f"<!--@panel:{panel_id}@-->"
-        if marker not in text:
-            missing.append(panel_id)
-            continue
         if use_fetch:
-            replacement = f'<div class="mcp-demo" data-panel="{panel_id}" aria-busy="true"></div>'
+            replacement = (
+                "<"
+                + "div"
+                + ' class="mcp-demo" data-panel="'
+                + panel_id
+                + '" aria-busy="true"></div>'
+            )
         else:
             replacement = fragment
-        text = text.replace(marker, replacement)
+        text, n = _upsert_panel(text, panel_id, replacement)
+        total += n
+        if n == 0 and _mcp_demo_open(panel_id) not in text:
+            missing.append(panel_id)
     if missing:
-        print(f"Warning: markers missing: {', '.join(missing)}")
+        print(f"Warning: no slots for: {', '.join(missing)}")
     INDEX_HTML.write_text(text, encoding="utf-8")
-    print(f"Updated {INDEX_HTML} ({'fetch' if use_fetch else 'inline'})")
+    print(f"Updated {INDEX_HTML} ({total} slot(s), {'fetch' if use_fetch else 'inline'})")
 
 
 def main() -> int:

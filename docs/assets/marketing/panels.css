@@ -10,6 +10,7 @@
 .mcp-demo .tool-body { max-height: 300px; overflow-y: auto; }
 .mcp-demo .sidebar { width: 140px; }
 @media (max-width: 640px) { .mcp-demo .sidebar { display: none; } }
+.mcp-demo { box-sizing: border-box; margin: 0; padding: 0;}
 .mcp-demo .cursor-chrome {
   background: #1e1e1e;
   border: 1px solid #333;

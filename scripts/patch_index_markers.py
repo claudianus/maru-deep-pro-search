@@ -16,8 +16,7 @@ def main() -> int:
         t = t.replace(
             '<link rel="stylesheet" href="maru-tailwind.css">',
             '<link rel="stylesheet" href="maru-tailwind.css">\n'
-            '<link rel="stylesheet" href="assets/marketing/panels.css">\n'
-            '<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">',
+            '<link rel="stylesheet" href="assets/marketing/panels.css">',
             1,
         )
     if ".mcp-demo-host" not in t:
@@ -29,14 +28,6 @@ def main() -> int:
             1,
         )
 
-    t, _ = re.subn(
-        r"(<div class=\"mt-12 max-w-5xl mx-auto scroll-reveal\">\s*)"
-        r"<div class=\"shot-frame\">\s*"
-        r"<img src=\"assets/screenshots/tech_compare@2x\.png\"[^>]*/>\s*",
-        r'\1<div class="shot-frame mcp-demo-host"><!--@panel:tech_compare@-->',
-        t,
-        count=1,
-    )
     t, _ = re.subn(
         r"(<div class=\"mt-12 max-w-5xl mx-auto scroll-reveal\">\s*)"
         r"<div class=\"shot-frame\">\s*"
@@ -135,9 +126,13 @@ def main() -> int:
     )
 
     INDEX.write_text(t, encoding="utf-8")
-    print(f"Markers: {len(re.findall(r'<!--@panel:', t))}")
-    print(f"Non-og imgs: {len(re.findall(r'assets/screenshots/(?!og-card)', t))}")
-    return 0
+    markers = len(re.findall(r"<!--@panel:", t))
+    non_og_imgs = sum(
+        1 for m in re.finditer(r'assets/screenshots/[^"\']+', t) if "og-card" not in m.group(0)
+    )
+    print(f"Markers: {markers}")
+    print(f"Non-og imgs: {non_og_imgs}")
+    return 1 if non_og_imgs else 0
 
 
 if __name__ == "__main__":

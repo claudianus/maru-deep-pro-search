@@ -102,8 +102,8 @@ def sources_table(raw: str) -> str:
             f"<td>{html.escape(title_line[:56])}</td>"
             f"<td class='mono'>{score.group(1) if score else '—'}</td>"
             f"<td class='mono'>{cov.group(1) if cov else '—'}</td>"
-            f"<td class='mono'>{access.group(1).strip() if access else '—'}</td>"
-            f"<td class='mono'>{noise.group(1) if noise else '—'}</td>"
+            f"<td class='mono'>{html.escape(access.group(1).strip()) if access else '—'}</td>"
+            f"<td class='mono'>{html.escape(noise.group(1)) if noise else '—'}</td>"
             "</tr>"
         )
         if len(rows) >= 8:
@@ -242,7 +242,11 @@ def scoped_panels_css() -> str:
     ]
     for rule in base.split("}"):
         chunk = rule.strip()
-        if not chunk or chunk.startswith("*"):
+        if not chunk:
+            continue
+        if chunk.startswith("*"):
+            _, _, decl = chunk.partition("{")
+            lines.append(f".mcp-demo {{{decl}}}")
             continue
         if "{" not in chunk:
             continue

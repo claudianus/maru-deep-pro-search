@@ -1,0 +1,30 @@
+src/maru_deep_pro_search/cli/prompts.py
+  s_6168ecaf291913::t_188b317b31bb4d 110-117
+.agent-context-credits.md
+  s_62e5728d562c4b::t_32c3c429605c93 1-2,4,6
+  s_62e5728d562c4b::t_751d8c4575e478 3,5,7-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "7af454ed6447d26743c6b86e624d29d383a96adc",
+  "prompts": {},
+  "sessions": {
+    "s_6168ecaf291913": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a90fe6c6-3b5f-4c8c-923a-224747f3f9ea",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    },
+    "s_62e5728d562c4b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "68eedf42-0356-4044-8c7f-42571df66f55",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

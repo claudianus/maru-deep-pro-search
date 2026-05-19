@@ -59,10 +59,6 @@ def main() -> int:
             '<div class="shot-frame mcp-demo-host"><!--@panel:setup_flow@--><div class="shot-caption">warmup-embeddings</div></div>',
         ),
         (
-            '<div class="shot-frame"><img src="assets/screenshots/setup_flow@2x.png" width="960" height="520" loading="lazy" alt="warmup CLI"/><div class="shot-caption">warmup-embeddings</div></div>',
-            '<div class="shot-frame mcp-demo-host"><!--@panel:setup_flow@--><div class="shot-caption">warmup-embeddings</div></div>',
-        ),
-        (
             '<div class="shot-frame"><img src="assets/screenshots/compare_split@2x.png" width="1100" height="620" loading="lazy" alt="compare"/><div class="shot-caption">P@5 +86% · 9 engines · $0</div></div>',
             '<div class="shot-frame mcp-demo-host"><!--@panel:compare_split@--><div class="shot-caption">P@5 +86% · 9 engines · $0</div></div>',
         ),

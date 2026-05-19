@@ -64,15 +64,15 @@ irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scrip
 
 **Manual (pip, Python ≥3.10):**
 ```bash
-python3 -m pip install --user "maru-deep-pro-search[semantic]" && maru-deep-pro-search setup
+python3 -m pip install --user maru-deep-pro-search && maru-deep-pro-search setup
 ```
-`sentence-transformers` is optional. `setup` stays quiet by default; set `MARU_ENABLE_SEMANTIC_INSTALL=1` if you want it to install semantic ranking support.
+Semantic ranking (`sentence-transformers` + `ibm-granite/granite-embedding-97m-multilingual-r2`) is **included by default**. `install.sh` / `setup` **pre-download** the model from Hugging Face to avoid first `deep_research` cold start.
 
-**Recommended (uv — fastest, includes semantic):**
+**Recommended (uv):**
 ```bash
-uv tool install --python 3.12 --with "sentence-transformers>=3.0.0" git+https://github.com/claudianus/maru-deep-pro-search.git
+uv tool install --python 3.12 git+https://github.com/claudianus/maru-deep-pro-search.git
 ```
-From PyPI only: `uv tool install --python 3.12 "maru-deep-pro-search[semantic]"`.
+From PyPI: `uv tool install --python 3.12 maru-deep-pro-search`
 
 The setup wizard auto-detects your AI agent, backs up existing configs, injects MCP settings, and enforces research-first rules.
 
@@ -286,7 +286,7 @@ The server contains **zero generative LLMs**. Your agent's LLM handles all reaso
 SQLite-backed research cache at `./.maru/knowledge.db`:
 
 - **Deduplication** — Same query hashes to the same entry (UPSERT with access counter)
-- **3-tier retrieval** — Exact match → FTS5 full-text → Semantic similarity (optional, local `intfloat/multilingual-e5-small`)
+- **3-tier retrieval** — Exact match → FTS5 full-text → Semantic similarity (local Granite 97M R2, 384-dim)
 - **Domain stats** — Per-domain success rate and average response time tracking
 - **Pruning** — Auto-remove entries older than 30 days
 
@@ -375,7 +375,7 @@ Fetched content is sanitized through a 72-pattern defense layer before reaching 
 - Zero-width character removal (`\u200b`, `\u200c`, `\u200d`)
 - Chat-token neutralization (`Human:`, `Assistant:` → `[REDACTED]`)
 - MCP-specific attack detection (tool poisoning, rug pulls, shadowing)
-- Optional semantic similarity anomaly detection
+- Semantic similarity injection detection (Granite embeddings)
 
 Every tool call is logged to `.maru/audit.db` with anomaly detection (rapid-fire, oversized results, suspicious params).
 
@@ -409,6 +409,7 @@ All optional. Search defaults, timeouts, and retry counts are read in `src/maru_
 | `MARU_DEEP_SERP_RUN_TIMEOUT` | `10.0` | Timeout for each subquery/engine run inside `deep_research`, seconds |
 | `MARU_ANSWER_TIMEOUT` | `60.0` | `answer` tool, seconds |
 | `MARU_AUTO_FETCH_TIMEOUT` | `8.0` | Nested fetch budget inside `deep_research` `auto_fetch`, seconds |
+| `MARU_EMBEDDING_MODEL` | `ibm-granite/granite-embedding-97m-multilingual-r2` | Hugging Face model for semantic ranking, knowledge store, and injection detection |
 | `MARU_SKIP_UPDATE_CHECK` | (unset) | Any non-empty value skips the startup PyPI update banner |
 | `MARU_DEBUG` | (unset) | `1` / `true` / `yes` enables DEBUG logging on the MCP server |
 

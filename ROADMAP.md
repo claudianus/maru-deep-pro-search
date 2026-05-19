@@ -18,7 +18,7 @@
 - **에이전트 어댑터** — `src/maru_deep_pro_search/cli/agents/`에 **20**개 Python 어댑터; `ask`/`search`/`compare` 커맨드(Claude, Cursor, Continue, Hermes)
 - **Knowledge** — git 기반 문서 동기화용 `maru knowledge *` CLI
 - **드리프트·영수증** — `drift_status`, `DeepResearchReceipt` (`deep_research` 경로)
-- **설치 UX** — `setup` 전역 설정, `MARU_ENABLE_SEMANTIC_INSTALL` opt-in semantic
+- **설치 UX** — `setup` 전역 설정, 시맨틱 임베딩 기본 포함 (0.21+)
 - **방어** — 프롬프트 인젝션 완화, 선택적 Docker, 감사용 SQLite
 
 ---

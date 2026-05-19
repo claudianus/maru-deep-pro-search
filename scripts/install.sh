@@ -182,19 +182,39 @@ section "4. 패키지 설치"
 if [ "$USE_UV" = true ]; then
     info "GitHub 저장소에서 최신 코드를 받습니다..."
     "$UV_BIN" tool install --python "${TARGET_PY}" --reinstall \
-        --with "sentence-transformers>=3.0.0" \
         "git+https://github.com/claudianus/maru-deep-pro-search.git"
 else
     info "PyPI에서 설치합니다..."
-    $PYTHON_CMD -m pip install --user "maru-deep-pro-search[semantic]"
+    $PYTHON_CMD -m pip install --user "maru-deep-pro-search"
 fi
 
 # Verify
 new_ver=$(maru-deep-pro-search --version 2>/dev/null || echo "unknown")
 ok "maru-deep-pro-search ${new_ver} 설치 완료"
 
-# ── 6. Optional setup wizard ───────────────────────────────────
-section "5. 설정 마법사"
+# ── 6. Pre-download embedding model (avoid first deep_research cold start) ──
+section "5. 임베딩 모델 사전 다운로드"
+info "첫 deep_research 지연 방지 — Hugging Face에서 Granite 임베딩을 받습니다."
+if command -v maru-deep-pro-search-setup >/dev/null 2>&1; then
+    WARMUP_CMD=(maru-deep-pro-search-setup warmup-embeddings -q)
+elif $PYTHON_CMD -c "import maru_deep_pro_search.cli.setup" 2>/dev/null; then
+    WARMUP_CMD=("$PYTHON_CMD" -m maru_deep_pro_search.cli.setup warmup-embeddings -q)
+else
+    WARMUP_CMD=()
+fi
+if [ "${#WARMUP_CMD[@]}" -gt 0 ] && "${WARMUP_CMD[@]}"; then
+    ok "임베딩 모델 준비 완료"
+else
+    if [ "${#WARMUP_CMD[@]}" -eq 0 ]; then
+        warn "warmup CLI 없음 — 패키지 재설치 후 maru-deep-pro-search-setup warmup-embeddings 실행"
+    else
+        warn "임베딩 모델 다운로드 실패 — 네트워크 확인 후 재실행:"
+        info "  maru-deep-pro-search-setup warmup-embeddings"
+    fi
+fi
+
+# ── 7. Optional setup wizard ───────────────────────────────────
+section "6. 설정 마법사"
 echo "설정 마법사는 AI 에이전트(Claude, Cursor, Kimi 등)를 자동 감지하고"
 echo "MCP 서버를 등록하는 과정입니다."
 echo ""
@@ -206,7 +226,7 @@ else
     info "  maru-deep-pro-search setup"
 fi
 
-# ── 7. Summary ─────────────────────────────────────────────────
+# ── 8. Summary ─────────────────────────────────────────────────
 section "✅ 설치 완료 요약"
 ok "Python: ${PYTHON_VERSION:-${TARGET_PY} (via uv)}"
 ok "패키지: ${new_ver}"

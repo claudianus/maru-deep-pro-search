@@ -8,6 +8,36 @@
 
 ## [Unreleased]
 
+## [0.22.1] - 2026-05-19
+
+### Added
+- **`warmup-embeddings`** — `maru-deep-pro-search-setup warmup-embeddings`로 Hugging Face 모델 사전 다운로드·probe encode. `install.sh` / `install.ps1`이 패키지 설치 직후 자동 실행.
+
+### Changed
+- **`setup`** — 에이전트 설정 후 임베딩 로드만 하던 것을 `warmup_embeddings()`로 통일(다운로드+워밍).
+
+## [0.22.0] - 2026-05-19
+
+### Changed
+- **기본 임베딩 모델** — `ibm-granite/granite-embedding-97m-multilingual-r2` (97M, 384-dim). IBM MTEB 다국어 검색 ~60.3 vs e5-small ~50.9. 한국어·코드·짧은 SERP 랭킹에 맞춤.
+- **E5 접두사** — Granite에는 미적용. `MARU_EMBEDDING_MODEL=intfloat/multilingual-e5-small` 시 `query:`/`passage:` 자동 복원.
+
+### Migration
+- **`.maru/knowledge.db`** — 임베딩 벡터 공간이 바뀌므로 업그레이드 후 `rm .maru/knowledge.db` 또는 knowledge 재저장 권장 (차원은 동일 384).
+
+## [0.21.0] - 2026-05-19
+
+### Added
+- **`embeddings` 모듈** — 랭킹·KnowledgeStore·프롬프트 인젝션 탐지가 단일 로컬 모델(`intfloat/multilingual-e5-small`)을 공유합니다. E5 `query:`/`passage:` 접두사를 적용해 검색 품질을 높였습니다.
+- **`MARU_EMBEDDING_MODEL`** — Hugging Face 모델 ID로 임베딩 백엔드를 교체할 수 있습니다.
+
+### Changed
+- **`sentence-transformers` 필수 의존성** — `pip install maru-deep-pro-search`만으로 시맨틱 랭킹이 항상 활성화됩니다. `setup`·설치 스크립트가 없으면 자동 설치·모델 로드를 검증합니다.
+- **보안 임베딩 통합** — 별도 MiniLM 대신 동일 E5 모델로 인젝션 유사도 탐지(모델 1회 로드).
+
+### Removed
+- **`MARU_ENABLE_SEMANTIC_INSTALL` opt-in** — 시맨틱은 기본 경로입니다.
+
 ## [0.20.0] - 2026-05-19
 
 ### Added

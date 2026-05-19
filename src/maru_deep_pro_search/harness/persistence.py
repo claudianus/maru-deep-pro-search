@@ -35,10 +35,9 @@ class KnowledgeEntry:
 
 
 class KnowledgeStore:
-    """SQLite-backed knowledge store with optional semantic search.
+    """SQLite-backed knowledge store with semantic similarity search.
 
-    Falls back to exact + substring match when sentence-transformers
-    is not available (keeping the zero-API-key promise).
+    Falls back to exact + substring match only when embedding computation fails.
     """
 
     _instances: dict[str, KnowledgeStore] = {}
@@ -125,7 +124,7 @@ class KnowledgeStore:
 
         # Try to compute embedding if model available
         embedding_json: str | None = None
-        emb = self._compute_embedding(query + " " + answer[:500])
+        emb = self._compute_embedding(query + " " + answer[:500], as_query=False)
         if emb is not None:
             embedding_json = json.dumps(emb)
 
@@ -356,27 +355,26 @@ class KnowledgeStore:
             )
             self._conn.commit()
 
-    # ── semantic search (optional) ──────────────────────────────
+    # ── semantic search ─────────────────────────────────────────
 
-    def _compute_embedding(self, text: str) -> list[float] | None:
-        if self._encoder is None:
-            try:
-                from sentence_transformers import SentenceTransformer
-
-                self._encoder = SentenceTransformer("intfloat/multilingual-e5-small")
-            except Exception:
-                return None
+    def _compute_embedding(self, text: str, *, as_query: bool) -> list[float] | None:
         try:
+            from ..embeddings import encode_passages, encode_queries, get_encoder
+
+            if self._encoder is None:
+                self._encoder = get_encoder()
             import numpy as np
 
-            emb = self._encoder.encode([text], convert_to_numpy=True)
+            raw = encode_queries([text]) if as_query else encode_passages([text])
+            emb = np.asarray(raw, dtype=np.float32)
             emb = emb / (np.linalg.norm(emb, axis=1, keepdims=True) + 1e-8)
             return emb[0].tolist()  # type: ignore[no-any-return]
-        except Exception:
+        except Exception as exc:
+            logger.warning("Embedding computation failed: %s", exc)
             return None
 
     def _semantic_search(self, query: str, threshold: float, limit: int) -> list[KnowledgeEntry]:
-        q_emb = self._compute_embedding(query)
+        q_emb = self._compute_embedding(query, as_query=True)
         if q_emb is None:
             return []
 

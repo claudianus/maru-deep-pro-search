@@ -271,20 +271,16 @@ def _fuzzy_dedupe(results: list[SearchResult], threshold: float = 0.72) -> list[
     """
     unique: list[SearchResult] = []
 
-    # Pre-compute semantic similarities if available
     semantic_sims: dict[tuple[int, int], float] = {}
-    try:
+    if len(results) > 1:
         from .semantic_ranker import SemanticRanker
 
-        if SemanticRanker.available() and len(results) > 1:
-            texts = [f"{r.title} {r.snippet[:200]}" for r in results]
-            sim_matrix = SemanticRanker.sentence_similarity(texts)
-            if sim_matrix:
-                for i in range(len(results)):
-                    for j in range(i):
-                        semantic_sims[(j, i)] = float(sim_matrix[i][j])
-    except Exception:
-        pass
+        texts = [f"{r.title} {r.snippet[:200]}" for r in results]
+        sim_matrix = SemanticRanker.sentence_similarity(texts)
+        if sim_matrix:
+            for i in range(len(results)):
+                for j in range(i):
+                    semantic_sims[(j, i)] = float(sim_matrix[i][j])
 
     unique_indices: list[int] = []
     for i, r in enumerate(results):
@@ -384,17 +380,13 @@ def merge_results(
     bm25_scores = _compute_bm25_scores(query, merged)
     rrf_scores = _compute_rrf_scores(engine_results, search_runs)
 
-    # Phase 3b: Compute semantic scores (optional, lazy-loaded)
-    semantic_scores: dict[str, float] = {}
-    try:
-        from .semantic_ranker import SemanticRanker
+    # Phase 3b: Semantic scores (required; lazy model load)
+    from .semantic_ranker import SemanticRanker
 
-        if SemanticRanker.available():
-            sims = SemanticRanker.score_results(query, merged)
-            for r, sim in zip(merged, sims, strict=False):
-                semantic_scores[normalize_url(r.url)] = sim
-    except Exception:
-        pass  # Graceful fallback when sentence-transformers not installed
+    semantic_scores: dict[str, float] = {}
+    sims = SemanticRanker.score_results(query, merged)
+    for r, sim in zip(merged, sims, strict=False):
+        semantic_scores[normalize_url(r.url)] = sim
 
     # Phase 4: Build ranked results
     ranked: list[RankedResult] = []
@@ -453,18 +445,14 @@ def rank_pages(pages: list[PageContent], query: str) -> list[PageContent]:
     """
     query_keywords = set(extract_keywords(query))
 
-    # Semantic scores (optional, lazy-loaded)
-    semantic_scores: dict[str, float] = {}
-    try:
-        from .semantic_ranker import SemanticRanker
+    from .semantic_ranker import SemanticRanker
 
-        if SemanticRanker.available() and pages:
-            texts = [f"{p.title} {p.text[:300]}" for p in pages]
-            sims = SemanticRanker.query_sentence_similarity_batch(query, texts)
-            for p, sim in zip(pages, sims, strict=False):
-                semantic_scores[normalize_url(p.url)] = sim
-    except Exception:
-        pass
+    semantic_scores: dict[str, float] = {}
+    if pages:
+        texts = [f"{p.title} {p.text[:300]}" for p in pages]
+        sims = SemanticRanker.query_sentence_similarity_batch(query, texts)
+        for p, sim in zip(pages, sims, strict=False):
+            semantic_scores[normalize_url(p.url)] = sim
 
     scored_pages: list[tuple[PageContent, float]] = []
     for p in pages:

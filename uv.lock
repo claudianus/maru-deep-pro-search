@@ -1136,7 +1136,7 @@ wheels = [
 
 [[package]]
 name = "maru-deep-pro-search"
-version = "0.20.0"
+version = "0.22.1"
 source = { editable = "." }
 dependencies = [
     { name = "htmldate" },
@@ -1145,13 +1145,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "rank-bm25" },
     { name = "scrapling", extra = ["fetchers"] },
+    { name = "sentence-transformers" },
     { name = "trafilatura" },
     { name = "urllib3" },
-]
-
-[package.optional-dependencies]
-semantic = [
-    { name = "sentence-transformers" },
 ]
 
 [package.dev-dependencies]
@@ -1168,7 +1164,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.1" },
     { name = "rank-bm25", specifier = ">=0.2.2" },
     { name = "scrapling", extras = ["fetchers"], specifier = ">=0.2.99" },
-    { name = "sentence-transformers", marker = "extra == 'semantic'", specifier = ">=3.0.0" },
+    { name = "sentence-transformers", specifier = ">=3.0.0" },
     { name = "trafilatura", specifier = ">=2.0.0" },
     { name = "urllib3", specifier = ">=2.7.0" },
 ]

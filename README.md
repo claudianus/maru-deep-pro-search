@@ -64,15 +64,15 @@ irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scrip
 
 **수동 (pip, Python ≥3.10):**
 ```bash
-python3 -m pip install --user "maru-deep-pro-search[semantic]" && maru-deep-pro-search setup
+python3 -m pip install --user maru-deep-pro-search && maru-deep-pro-search setup
 ```
-`sentence-transformers`는 선택 사항입니다. `setup`은 기본적으로 조용히 지나가며, 시맨틱 랭킹 설치까지 원하면 `MARU_ENABLE_SEMANTIC_INSTALL=1`을 설정하세요.
+시맨틱 랭킹(`sentence-transformers` + `ibm-granite/granite-embedding-97m-multilingual-r2`)은 **기본 포함**입니다. `install.sh` / `setup`이 Hugging Face 모델을 **사전 다운로드**해 첫 `deep_research` 콜드스타트를 줄입니다.
 
-**권장 (uv — 빠른 설치, semantic 포함):**
+**권장 (uv):**
 ```bash
-uv tool install --python 3.12 --with "sentence-transformers>=3.0.0" git+https://github.com/claudianus/maru-deep-pro-search.git
+uv tool install --python 3.12 git+https://github.com/claudianus/maru-deep-pro-search.git
 ```
-PyPI만 쓸 때는 `uv tool install --python 3.12 "maru-deep-pro-search[semantic]"` 로 동일합니다.
+PyPI: `uv tool install --python 3.12 maru-deep-pro-search`
 
 설정 마법사가 AI 에이전트를 자동 감지하고, 기존 설정을 백업한 뒤 MCP 설정을 주입하고, 리서치 우선 규칙을 강제합니다.
 
@@ -291,11 +291,13 @@ MCP 클라이언트 (Claude, Cursor, Kimi, Windsurf, ...)
 SQLite 기반 연구 캐시 (`./.maru/knowledge.db`):
 
 - **중복 제거** — 동일 쿼리는 `query_hash` 기준 UPSERT (`access_count` 증가)
-- **3단계 검색** — 정확 일치 → FTS5 전문 검색 → 시맨틱 유사도 (선택, 로컬 `intfloat/multilingual-e5-small`)
+- **3단계 검색** — 정확 일치 → FTS5 전문 검색 → 시맨틱 유사도 (로컬 Granite 97M R2, 384-dim)
 - **도메인 통계** — 도메인별 성공률·평균 응답 시간
 - **정리(Prune)** — 30일 이상 항목 자동 삭제
 
 `maru-deep-pro-search stats`로 조회합니다.
+
+> **v0.22+ 임베딩 변경:** 기본 모델이 Granite 97M R2로 바뀌면 기존 `.maru/knowledge.db` 시맨틱 벡터는 무효합니다. `rm .maru/knowledge.db` 후 재검색하거나 그대로 두면 exact/FTS만 쓰다가 새 항목부터 재임베딩됩니다.
 
 ---
 
@@ -380,7 +382,7 @@ ACTION REQUIRED:
 - 제로폭 문자 제거 (`\u200b`, `\u200c`, `\u200d`)
 - 채팅 토큰 중화 (`Human:`, `Assistant:` → `[REDACTED]`)
 - MCP 특정 공격 탐지 (툴 포이즈닝, 럭 풀, 섀도잉)
-- 선택적 시맨틱 유사도 이상 탐지
+- 시맨틱 유사도 기반 인젝션 탐지 (Granite 임베딩)
 
 모든 툴 호출은 `.maru/audit.db`에 기록되며, 급발사·과대 결과·의심 파라미터 등 이상 징후를 탐지합니다.
 
@@ -414,6 +416,8 @@ ACTION REQUIRED:
 | `MARU_DEEP_SERP_RUN_TIMEOUT` | `10.0` | `deep_research` 내부 하위 검색 1회당, 초 |
 | `MARU_ANSWER_TIMEOUT` | `60.0` | `answer` 툴, 초 |
 | `MARU_AUTO_FETCH_TIMEOUT` | `8.0` | `deep_research`의 `auto_fetch` 안 nested fetch, 초 |
+| `MARU_EMBEDDING_MODEL` | `ibm-granite/granite-embedding-97m-multilingual-r2` | 로컬 시맨틱 랭킹·KnowledgeStore·보안 탐지용 Hugging Face 모델 ID |
+| (수동 워밍) | — | `maru-deep-pro-search-setup warmup-embeddings` |
 | `MARU_SKIP_UPDATE_CHECK` | (미설정) | 값이 비어 있지 않으면 시작 시 PyPI 업데이트 알림 생략 |
 | `MARU_DEBUG` | (미설정) | `1`/`true`/`yes`이면 MCP 서버 로그를 DEBUG로 |
 

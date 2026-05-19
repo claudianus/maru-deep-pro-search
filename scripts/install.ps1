@@ -151,11 +151,10 @@ Write-Title "4. 패키지 설치"
 if ($useUv) {
     Write-Info "GitHub 저장소에서 최신 코드를 받습니다..."
     & $uvBin tool install --python $TargetPy --reinstall `
-        --with "sentence-transformers>=3.0.0" `
         "git+https://github.com/claudianus/maru-deep-pro-search.git"
 } else {
     Write-Info "PyPI에서 설치합니다..."
-    & $pythonCmd -m pip install --user "maru-deep-pro-search[semantic]"
+    & $pythonCmd -m pip install --user "maru-deep-pro-search"
 }
 
 # Verify
@@ -164,8 +163,26 @@ try {
 } catch { $newVer = "unknown" }
 Write-Ok "maru-deep-pro-search $newVer 설치 완료"
 
-# ── 6. Optional setup wizard ───────────────────────────────────
-Write-Title "5. 설정 마법사"
+# ── 6. Pre-download embedding model ────────────────────────────
+Write-Title "5. 임베딩 모델 사전 다운로드"
+Write-Info "첫 deep_research 지연 방지 — Hugging Face에서 Granite 임베딩을 받습니다."
+$warmupOk = $false
+if (Get-Command maru-deep-pro-search-setup -ErrorAction SilentlyContinue) {
+    maru-deep-pro-search-setup warmup-embeddings -q
+    if ($LASTEXITCODE -eq 0) { $warmupOk = $true }
+} else {
+    & $pythonCmd -m maru_deep_pro_search.cli.setup warmup-embeddings -q
+    if ($LASTEXITCODE -eq 0) { $warmupOk = $true }
+}
+if ($warmupOk) {
+    Write-Ok "임베딩 모델 준비 완료"
+} else {
+    Write-Warn "임베딩 모델 다운로드 실패 — 네트워크 확인 후 재실행:"
+    Write-Info "  maru-deep-pro-search-setup warmup-embeddings"
+}
+
+# ── 7. Optional setup wizard ───────────────────────────────────
+Write-Title "6. 설정 마법사"
 Write-Host "설정 마법사는 AI 에이전트(Claude, Cursor, Kimi 등)를 자동 감지하고"
 Write-Host "MCP 서버를 등록하는 과정입니다."
 Write-Host ""
@@ -177,7 +194,7 @@ if (Confirm "지금 설정 마법사를 실행하시겠습니까?") {
     Write-Info "  maru-deep-pro-search setup"
 }
 
-# ── 7. Summary ─────────────────────────────────────────────────
+# ── 8. Summary ─────────────────────────────────────────────────
 Write-Title "✅ 설치 완료 요약"
 Write-Ok "Python: ${pythonVersion:-${TargetPy} (via uv)}"
 Write-Ok "패키지: $newVer"

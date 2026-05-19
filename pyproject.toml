@@ -1,6 +1,6 @@
 [project]
 name = "maru-deep-pro-search"
-version = "0.20.0"
+version = "0.22.1"
 description = "Universal AI search MCP server — Perplexity-level quality with zero API keys. Multi-engine web scraping, intelligent ranking, and citation-native answers."
 readme = "README.md"
 license = "MIT"
@@ -48,6 +48,7 @@ dependencies = [
     "scrapling[fetchers]>=0.2.99",
     "trafilatura>=2.0.0",
     "rank-bm25>=0.2.2",
+    "sentence-transformers>=3.0.0",
     "urllib3>=2.7.0",
 ]
 
@@ -83,9 +84,8 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project.optional-dependencies]
-semantic = [
-    "sentence-transformers>=3.0.0",
-]
+# Kept for backward-compatible install scripts; embeddings are core since 0.21.0.
+semantic = []
 
 [dependency-groups]
 dev = [

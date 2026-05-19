@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 import shutil
 import subprocess
 import sys
@@ -106,6 +105,45 @@ def _pip_install_sentence_transformers() -> tuple[bool, str]:
     return False, last_msg
 
 
+def _ensure_embedding_stack(*, quiet: bool = False) -> int:
+    """Install sentence-transformers if needed, then download and warm the embedding model."""
+    import importlib.util
+
+    from ..embeddings import DEFAULT_EMBEDDING_MODEL, embedding_model_name, warmup_embeddings
+
+    if not importlib.util.find_spec("sentence_transformers"):
+        if not quiet:
+            print(f"\n  {yellow('!')} 임베딩 엔진 미설치 — 자동 설치 중...")
+        ok, detail = _pip_install_sentence_transformers()
+        if not ok:
+            if not quiet:
+                print(f"     {red('✗')} sentence-transformers 설치 실패")
+                if detail:
+                    print(f"     {detail}")
+                print(
+                    f"     수동: {bold(f'{sys.executable} -m pip install --user maru-deep-pro-search')}"
+                )
+            return 1
+        if not quiet:
+            print(f"     {green('✓')} sentence-transformers 설치 완료 ({detail})")
+
+    model = embedding_model_name() or DEFAULT_EMBEDDING_MODEL
+    if not quiet:
+        print(f"\n  {yellow('…')} 임베딩 모델 다운로드·로드 중 ({model})...")
+    try:
+        warmup_embeddings()
+    except Exception as exc:
+        if not quiet:
+            print(f"\n  {red('✗')} 임베딩 모델 준비 실패: {exc}")
+            print("     네트워크로 Hugging Face 모델을 받을 수 있는지 확인하세요.")
+            print(f"     재시도: {bold('maru-deep-pro-search-setup warmup-embeddings')}")
+        return 1
+
+    if not quiet:
+        print(f"\n  {green('✓')} 시맨틱 랭킹 활성 ({model})")
+    return 0
+
+
 def cmd_list(args: argparse.Namespace) -> int:
     """Show detected agents and their installation status."""
     print("\n🔍 설치된 AI 에이전트 감지 중...\n")
@@ -174,39 +212,8 @@ def cmd_setup(args: argparse.Namespace) -> int:
         elif result.get("skills_supported") is False:
             print("   ℹ SKILL.md 규칙 파일 미지원")
 
-    # Semantic search is useful but heavy. Keep default setup quiet and avoid
-    # surprise model downloads in MCP stdio environments.
-    import importlib.util
-
-    if importlib.util.find_spec("sentence_transformers"):
-        print(f"\n  {green('✓')} semantic search (sentence-transformers) 설치됨")
-    elif os.environ.get("MARU_ENABLE_SEMANTIC_INSTALL", "").strip().lower() in (
-        "1",
-        "true",
-        "yes",
-    ):
-        print(f"\n  {yellow('!')} semantic search 미설치 — 자동 설치 시도 중...")
-        ok, detail = _pip_install_sentence_transformers()
-        if ok:
-            print(f"     {green('✓')} sentence-transformers 설치 완료 ({detail})")
-        else:
-            print(f"     {yellow('!')} 자동 설치 실패")
-            if detail:
-                print(f"     {detail}")
-            print(
-                f"     수동: {bold(f'{sys.executable} -m pip install --user {_SENTENCE_TRANSFORMERS_PIP}')}"
-            )
-            print(f"     또는: {bold(f'uv pip install --system {_SENTENCE_TRANSFORMERS_PIP}')}")
-            print(
-                "     PyPI 패키지는 Python 3.10+ 필요: "
-                + bold("python3.12 -m pip install 'maru-deep-pro-search[semantic]'")
-            )
-    else:
-        print(f"\n  {yellow('!')} semantic search 미설치 — 기본 설정에서는 자동 설치하지 않음")
-        print(f"     필요하면: {bold('MARU_ENABLE_SEMANTIC_INSTALL=1 maru-deep-pro-search setup')}")
-        print(
-            f"     수동: {bold(f'{sys.executable} -m pip install --user {_SENTENCE_TRANSFORMERS_PIP}')}"
-        )
+    if _ensure_embedding_stack() != 0:
+        return 1
 
     print(f"\n{green('✅ 완료!')} 에이전트를 재시작하면 적용됩니다.")
     print(f"   되돌리려면: {bold('maru-deep-pro-search setup --restore')}")
@@ -385,6 +392,7 @@ def main(argv: list[str] | None = None) -> int:
             "  maru-deep-pro-search setup --repair     # 낡은 훅·중복 프로토콜 수리\n"
             "  maru-deep-pro-search setup --repair --repair-skills  # SKILL까지 덮어쓰기\n"
             "  maru-deep-pro-search setup --restore    # 백업에서 복원\n"
+            "  maru-deep-pro-search-setup warmup-embeddings  # 임베딩 HF 사전 다운로드\n"
             "  maru-deep-pro-search update --with-setup  # 업그레이드 후 자동 repair\n"
             "\n지원 에이전트: " + ", ".join(sorted(ADAPTER_REGISTRY.keys()))
         ),
@@ -431,6 +439,21 @@ def main(argv: list[str] | None = None) -> int:
         help="With --repair, also overwrite packaged SKILL.md files",
     )
 
+    warmup_parser = subparsers.add_parser(
+        "warmup-embeddings",
+        help="임베딩 모델 사전 다운로드 (첫 deep_research 콜드스타트 방지)",
+        description=(
+            "Hugging Face에서 기본 임베딩 모델을 받고 probe encode로 워밍합니다. "
+            "install.sh가 패키지 설치 직후 호출합니다."
+        ),
+    )
+    warmup_parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="오류만 출력 (설치 스크립트용)",
+    )
+
     # sync command
     subparsers.add_parser(
         "sync",
@@ -462,6 +485,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "sync":
         return cmd_sync(args)
+
+    if args.command == "warmup-embeddings":
+        from .embeddings_cmd import cmd_warmup_embeddings
+
+        return cmd_warmup_embeddings(args)
 
     # Default: run setup if no subcommand given
     return cmd_setup(args)

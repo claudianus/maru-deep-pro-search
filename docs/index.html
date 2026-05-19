@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#042f2e">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>maru-deep-pro-search — 에이전트 하네스 · 딥리서치 슈퍼셋 MCP</title>
-<meta name="description" content="v0.20.0 무료 MCP: 9엔진 RRF+BM25, Research Trace·Insights·Clusters, 21 에이전트 하네스, API 키 $0.">
+<meta name="description" content="v0.22.1 무료 MCP: 9엔진 RRF+BM25, Research Trace·Insights·Clusters, 21 에이전트 하네스, API 키 $0.">
 <link rel="canonical" href="https://claudianus.github.io/maru-deep-pro-search/">
 <meta property="og:title" content="maru-deep-pro-search — agent harness + deep-research superset (MCP)">
 <meta property="og:description" content="Installable harness for coding agents: multi-engine deep search, re-ranking, citations, failover, query gate, drift guard, auto-fetch. Free, no API keys.">
@@ -26,7 +26,7 @@
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Any",
   "programmingLanguage": "Python",
-  "softwareVersion": "0.20.0",
+  "softwareVersion": "0.22.1",
   "license": "https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE",
   "codeRepository": "https://github.com/claudianus/maru-deep-pro-search",
   "downloadUrl": "https://pypi.org/project/maru-deep-pro-search/",
@@ -189,8 +189,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
     <div class="mb-10">
         <span class="inline-flex flex-wrap items-center justify-center gap-2 px-3 py-1 rounded-full bg-maru-500/10 border border-maru-500/20 text-maru-300 text-sm font-mono">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="ko">v0.20.0 — 딥리서치 품질 오버홀 · 기본 30개 출처 · 인사이트 클러스터</span>
-        <span class="en hidden">v0.20.0 — deep-research quality overhaul · 30 sources by default · insight clusters</span>
+        <span class="ko">v0.22.1 — 딥리서치 품질 오버홀 · 기본 30개 출처 · 인사이트 클러스터</span>
+        <span class="en hidden">v0.22.1 — deep-research quality overhaul · 30 sources by default · insight clusters</span>
       </span>
     </div>
     <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -894,7 +894,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
   <div class="max-w-5xl mx-auto px-4">
     <div class="glass rounded-2xl p-6 md:p-8 border border-maru-500/20 scroll-reveal">
       <div class="flex flex-wrap items-center gap-3 mb-4">
-        <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider">v0.20.0</span>
+        <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider">v0.22.1</span>
         <span class="text-gray-400 text-sm ko">딥리서치 품질 파이프라인 오버홀</span>
         <span class="text-gray-400 text-sm en hidden">Deep-research quality pipeline overhaul</span>
       </div>
@@ -1314,9 +1314,9 @@ then explain using only official issue/release links.</pre>
         <p class="text-gray-500 leading-relaxed en hidden"><span class="kbd">0</span> disables rejection; optimization stays on.</p>
       </div>
       <div class="glass-card rounded-xl p-4">
-        <div class="font-mono text-maru-300 mb-1">MARU_ENABLE_SEMANTIC_INSTALL</div>
-        <p class="text-gray-500 leading-relaxed ko"><span class="kbd">setup</span>에서 시맨틱 랭킹 패키지까지 설치.</p>
-        <p class="text-gray-500 leading-relaxed en hidden">Opt into installing <span class="kbd">sentence-transformers</span> during setup.</p>
+        <div class="font-mono text-maru-300 mb-1">MARU_EMBEDDING_MODEL</div>
+        <p class="text-gray-500 leading-relaxed ko">시맨틱 랭킹 Hugging Face 모델 (기본 <span class="kbd">ibm-granite/granite-embedding-97m-multilingual-r2</span>).</p>
+        <p class="text-gray-500 leading-relaxed en hidden">Hugging Face model for semantic ranking (default <span class="kbd">ibm-granite/granite-embedding-97m-multilingual-r2</span>).</p>
       </div>
       <div class="glass-card rounded-xl p-4">
         <div class="font-mono text-maru-300 mb-1">MARU_DEBUG</div>
@@ -1364,21 +1364,21 @@ then explain using only official issue/release links.</pre>
           <span class="text-xs text-gray-500 font-mono">uv (직접 설치)</span>
           <button onclick="copyCode(this)" class="text-xs text-gray-500 hover:text-white transition" aria-label="Copy to clipboard"><i class="far fa-copy mr-1"></i> Copy</button>
         </div>
-        <pre class="p-4 text-sm font-mono text-gray-300 overflow-x-auto">uv tool install --python 3.12 "maru-deep-pro-search[semantic]"</pre>
+        <pre class="p-4 text-sm font-mono text-gray-300 overflow-x-auto">uv tool install --python 3.12 maru-deep-pro-search</pre>
       </div>
       <div class="code-block">
         <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
-          <span class="text-xs text-gray-500 font-mono">uv (git, semantic 포함)</span>
+          <span class="text-xs text-gray-500 font-mono">uv (git)</span>
           <button onclick="copyCode(this)" class="text-xs text-gray-500 hover:text-white transition" aria-label="Copy to clipboard"><i class="far fa-copy mr-1"></i> Copy</button>
         </div>
-        <pre class="p-4 text-sm font-mono text-gray-300 overflow-x-auto">uv tool install --python 3.12 --with "sentence-transformers>=3.0.0" git+https://github.com/claudianus/maru-deep-pro-search.git</pre>
+        <pre class="p-4 text-sm font-mono text-gray-300 overflow-x-auto">uv tool install --python 3.12 git+https://github.com/claudianus/maru-deep-pro-search.git</pre>
       </div>
       <div class="code-block">
         <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <span class="text-xs text-gray-500 font-mono">PyPI + 에이전트 설정</span>
           <button type="button" onclick="copyCode(this)" class="text-xs text-gray-500 hover:text-white transition" aria-label="Copy to clipboard"><i class="far fa-copy mr-1"></i> Copy</button>
         </div>
-        <pre class="p-4 text-sm font-mono text-gray-300 overflow-x-auto">python3 -m pip install --user "maru-deep-pro-search[semantic]"
+        <pre class="p-4 text-sm font-mono text-gray-300 overflow-x-auto">python3 -m pip install --user maru-deep-pro-search
 maru-deep-pro-search setup
 maru-deep-pro-search init   # 프로젝트에 .maru 하네스</pre>
       </div>
@@ -1424,7 +1424,7 @@ maru-deep-pro-search setup --check</pre>
           <i class="fas fa-search text-white text-sm"></i>
         </div>
         <span class="font-bold">maru-deep-pro-search</span>
-        <span class="text-gray-600 text-sm">v0.20.0</span>
+        <span class="text-gray-600 text-sm">v0.22.1</span>
       </div>
       <div class="flex items-center gap-6 text-sm text-gray-500">
         <a href="#playbook" class="hover:text-white transition"><i class="fas fa-book-open mr-1"></i><span class="ko">플레이북</span><span class="en hidden">Playbook</span></a>

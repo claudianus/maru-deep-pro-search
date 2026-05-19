@@ -20,7 +20,7 @@ COPY pyproject.toml README.md ./
 COPY src/ ./src/
 
 # Install dependencies
-RUN uv pip install --system -e ".[semantic]"
+RUN uv pip install --system -e .
 
 # Create cache directories with correct permissions
 RUN mkdir -p /app/.maru && chown -R maru:maru /app

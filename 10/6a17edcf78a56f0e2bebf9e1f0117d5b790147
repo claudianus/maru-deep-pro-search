@@ -1,0 +1,19 @@
+scripts/embed_marketing_panels.py
+  s_cd3ca1e4e1701e::t_91adbe3ec5f250 28-30,32,38-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "106a17edcf78a56f0e2bebf9e1f0117d5b790147",
+  "prompts": {},
+  "sessions": {
+    "s_cd3ca1e4e1701e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "347928d3-5d1b-4541-8c07-6cb9e19ed80f",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

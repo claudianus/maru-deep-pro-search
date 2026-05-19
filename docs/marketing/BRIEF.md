@@ -17,11 +17,12 @@
 
 | 섹션 | 카피 담당 | 스크린샷 |
 |------|-----------|----------|
-| Hero | Brand | `tech_compare@2x.png` |
-| Product tour | Product Mkt | 6장 (trace, answer, signals, granite, warmup, compare) |
-| Compare | TPM | `compare_split`, `quality_signals` |
-| Playbook | UX | `korean_market` + synthesis 발췌 |
-| Install | UX | `setup_flow` |
+| Hero | Brand | `@panel:tech_compare` (live HTML) |
+| Product tour | Product Mkt | 6 panels (trace, answer, signals, granite, warmup, compare) |
+| Compare | TPM | `compare_split`, `quality_signals` panels |
+| Playbook | UX | `korean_market` panel + synthesis 발췌 |
+| Install | UX | `setup_flow` panel |
+| OG / Twitter | Brand | `og-card@2x.png` only (Playwright) |
 | What's new | TPM | `embedding` |
 
 ## 금지

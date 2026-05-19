@@ -91,4 +91,4 @@ benchmark/search_quality_report.json
 
 # ── Screenshots / Artifacts ──
 *.png
-!docs/assets/screenshots/*.png
+!docs/assets/screenshots/og-card@2x.png

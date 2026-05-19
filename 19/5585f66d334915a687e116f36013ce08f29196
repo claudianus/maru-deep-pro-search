@@ -1,0 +1,19 @@
+docs/index.html
+  s_cd3ca1e4e1701e::t_6b3a49a30e6769 192-193
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "195585f66d334915a687e116f36013ce08f29196",
+  "prompts": {},
+  "sessions": {
+    "s_cd3ca1e4e1701e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "347928d3-5d1b-4541-8c07-6cb9e19ed80f",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

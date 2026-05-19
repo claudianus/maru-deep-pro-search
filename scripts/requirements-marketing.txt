@@ -1,0 +1,2 @@
+# Optional: marketing fixture capture + Playwright screenshots (not CI default)
+playwright>=1.49.0

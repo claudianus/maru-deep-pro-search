@@ -16,6 +16,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="maru-deep-pro-search — agent harness + deep-research superset (MCP)">
 <meta name="twitter:description" content="Harness for coding agents: multi-engine deep search, re-ranked SERPs, citations, failover, query gate—free, no API keys.">
+<meta property="og:image" content="https://claudianus.github.io/maru-deep-pro-search/assets/screenshots/og-card@2x.png">
+<meta name="twitter:image" content="https://claudianus.github.io/maru-deep-pro-search/assets/screenshots/og-card@2x.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔍%3C/text%3E%3C/svg%3E">
 <script type="application/ld+json">
 {
@@ -33,7 +35,8 @@
   "featureList": [
     "18 MCP tools (search, fetch, validate, introspect, drift)",
     "9-engine failover search with query-aware selection",
-    "BM25 + semantic ranking",
+    "Granite 97M semantic ranking",
+    "Install-time embedding warmup",
     "Native citations",
     "72-layer prompt injection defense",
     "MCP audit logging",
@@ -113,6 +116,13 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
 .section-kicker { letter-spacing: 0.2em; font-size: 0.65rem; text-transform: uppercase; color: #64748b; font-weight: 600; }
 .prompt-bad { border-left: 3px solid #f87171; }
 .prompt-good { border-left: 3px solid #34d399; }
+.shot-frame { border: 1px solid rgba(255,255,255,.08); border-radius: 12px; overflow: hidden; background: #0d1117; box-shadow: 0 20px 50px rgba(0,0,0,.45); }
+.shot-frame img { display: block; width: 100%; height: auto; }
+.shot-caption { font-size: 11px; color: #64748b; padding: 8px 12px; border-top: 1px solid rgba(255,255,255,.06); }
+.tour-grid { display: grid; gap: 1.5rem; }
+@media (min-width: 768px) { .tour-grid { grid-template-columns: 1fr 1fr; } }
+.dual-panel { display: grid; gap: 1rem; }
+@media (min-width: 1024px) { .dual-panel { grid-template-columns: 1fr 1fr; } }
 @media (prefers-reduced-motion: reduce) {
   .scroll-reveal { opacity: 1; transform: none; transition: none; }
   .typing-cursor::after { animation: none; }
@@ -139,12 +149,13 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       </div>
       <div class="hidden md:flex flex-1 min-w-0 items-center justify-end gap-1 lg:gap-4 overflow-x-auto no-scrollbar py-1">
         <a href="#problem" class="text-xs lg:text-sm text-gray-400 hover:text-white transition whitespace-nowrap shrink-0"><span class="ko">문제</span><span class="en hidden">Problem</span></a>
+        <a href="#product-tour" class="text-xs lg:text-sm text-maru-300/90 hover:text-maru-200 transition whitespace-nowrap shrink-0 font-medium"><span class="ko">제품</span><span class="en hidden">Product</span></a>
         <a href="#solution" class="text-xs lg:text-sm text-gray-400 hover:text-white transition whitespace-nowrap shrink-0"><span class="ko">해결</span><span class="en hidden">Solution</span></a>
         <a href="#security" class="text-xs lg:text-sm text-gray-400 hover:text-white transition whitespace-nowrap shrink-0"><span class="ko">보안</span><span class="en hidden">Security</span></a>
         <a href="#adapters" class="text-xs lg:text-sm text-gray-400 hover:text-white transition whitespace-nowrap shrink-0"><span class="ko">에이전트</span><span class="en hidden">Agents</span></a>
         <a href="#compare" class="text-xs lg:text-sm text-gray-400 hover:text-white transition whitespace-nowrap shrink-0"><span class="ko">비교</span><span class="en hidden">Compare</span></a>
         <a href="#architecture" class="text-xs lg:text-sm text-gray-400 hover:text-white transition whitespace-nowrap shrink-0"><span class="ko">구조</span><span class="en hidden">Architecture</span></a>
-        <a href="#whats-new" class="text-xs lg:text-sm text-maru-300/90 hover:text-maru-200 transition whitespace-nowrap shrink-0 font-medium"><span class="ko">v0.20</span><span class="en hidden">v0.20</span></a>
+        <a href="#whats-new" class="text-xs lg:text-sm text-maru-300/90 hover:text-maru-200 transition whitespace-nowrap shrink-0 font-medium"><span class="ko">v0.22.1</span><span class="en hidden">v0.22.1</span></a>
         <a href="#playbook" class="text-xs lg:text-sm text-maru-300/90 hover:text-maru-200 transition whitespace-nowrap shrink-0 font-medium"><span class="ko">플레이북</span><span class="en hidden">Playbook</span></a>
         <a href="#prompts" class="text-xs lg:text-sm text-maru-300/90 hover:text-maru-200 transition whitespace-nowrap shrink-0 font-medium"><span class="ko">프롬프트</span><span class="en hidden">Prompts</span></a>
         <a href="#tools" class="text-xs lg:text-sm text-gray-400 hover:text-white transition whitespace-nowrap shrink-0"><span class="ko">툴</span><span class="en hidden">Tools</span></a>
@@ -224,8 +235,67 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
         <div class="text-xs text-gray-500 mt-1 ko">에이전트 어댑터</div><div class="text-xs text-gray-500 mt-1 en hidden">Agent adapters</div>
       </div>
     </div>
+    <div class="mt-12 max-w-5xl mx-auto scroll-reveal">
+      <div class="shot-frame">
+        <img src="assets/screenshots/tech_compare@2x.png" width="2560" height="1440" loading="eager" alt="deep_research MCP output in Cursor"/>
+        <div class="shot-caption ko">실제 deep_research 출력 — FastAPI vs Django (live capture, v0.22.1)</div>
+        <div class="shot-caption en hidden">Live deep_research — FastAPI vs Django (v0.22.1)</div>
+      </div>
+    </div>
   </div>
 </section>
+
+
+<!-- Product tour -->
+<section id="product-tour" class="py-24 relative border-t border-white/[0.04]">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="text-center mb-14 scroll-reveal">
+      <p class="section-kicker ko">실데이터 제품 투어</p>
+      <p class="section-kicker en hidden">Product tour — live fixtures</p>
+      <h2 class="text-3xl md:text-5xl font-bold mt-2">
+        <span class="ko">MCP 패킷 → <span class="gradient-text">에이전트 리포트</span></span>
+        <span class="en hidden">MCP packet → <span class="gradient-text">agent report</span></span>
+      </h2>
+      <p class="text-gray-400 mt-4 max-w-2xl mx-auto text-sm ko">스크린샷은 <code class="kbd">scripts/capture_marketing_fixtures.py</code>로 실제 툴 호출 후 Playwright로 렌더했습니다.</p>
+      <p class="text-gray-400 mt-4 max-w-2xl mx-auto text-sm en hidden">Screenshots from live tool runs + Playwright templates.</p>
+    </div>
+    <div class="tour-grid">
+      <article class="glass-card rounded-2xl p-5 scroll-reveal">
+        <h3 class="font-bold text-maru-300 mb-2">① Research Trace · Insights</h3>
+        <div class="shot-frame mb-3"><img src="assets/screenshots/tech_compare@2x.png" width="1280" height="720" loading="lazy" alt="Research Trace"/></div>
+        <p class="text-gray-400 text-xs ko">7단계 조사 · 인사이트 카드 · Evidence Clusters</p>
+        <p class="text-gray-400 text-xs en hidden">Seven-step trace, insights, clusters</p>
+      </article>
+      <article class="glass-card rounded-2xl p-5 scroll-reveal">
+        <h3 class="font-bold text-blue-400 mb-2">② answer() · 한국어</h3>
+        <div class="shot-frame mb-3"><img src="assets/screenshots/korean_market@2x.png" width="1280" height="720" loading="lazy" alt="answer tool"/></div>
+        <p class="text-gray-400 text-xs ko">시세·추천 — 근거 패킷 + [N] 인용</p>
+        <p class="text-gray-400 text-xs en hidden">Market queries with citation-ready packet</p>
+      </article>
+      <article class="glass-card rounded-2xl p-5 scroll-reveal">
+        <h3 class="font-bold text-purple-400 mb-2">③ Source quality signals</h3>
+        <div class="shot-frame mb-3"><img src="assets/screenshots/quality_signals@2x.png" width="1280" height="640" loading="lazy" alt="Source scores"/></div>
+        <p class="text-gray-400 text-xs ko">score · coverage · access · noise</p>
+        <p class="text-gray-400 text-xs en hidden">Live CVE research metadata</p>
+      </article>
+      <article class="glass-card rounded-2xl p-5 scroll-reveal">
+        <h3 class="font-bold text-emerald-400 mb-2">④ Granite 97M R2</h3>
+        <div class="shot-frame mb-3"><img src="assets/screenshots/embedding@2x.png" width="1280" height="720" loading="lazy" alt="Granite embedding"/></div>
+        <p class="text-gray-400 text-xs ko">기본 <code class="kbd">ibm-granite/granite-embedding-97m-multilingual-r2</code> · install 시 warmup</p>
+        <p class="text-gray-400 text-xs en hidden">Default Granite 97M · embedding warmup on install</p>
+      </article>
+      <article class="glass-card rounded-2xl p-5 scroll-reveal md:col-span-2">
+        <h3 class="font-bold text-orange-400 mb-2 ko">⑤ warmup · ⑥ vs 내장 검색</h3>
+        <h3 class="font-bold text-orange-400 mb-2 en hidden">⑤ warmup · ⑥ vs built-in</h3>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="shot-frame"><img src="assets/screenshots/setup_flow@2x.png" width="960" height="520" loading="lazy" alt="warmup CLI"/><div class="shot-caption">warmup-embeddings</div></div>
+          <div class="shot-frame"><img src="assets/screenshots/compare_split@2x.png" width="1100" height="620" loading="lazy" alt="compare"/><div class="shot-caption">P@5 +86% · 9 engines · $0</div></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
 
 <!-- Problem -->
 <section id="problem" class="py-24 relative">
@@ -460,6 +530,11 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
 <!-- Comparison Table -->
 <section id="compare" class="py-24 relative">
   <div class="max-w-5xl mx-auto px-4">
+
+    <div class="grid lg:grid-cols-2 gap-6 mb-10 scroll-reveal">
+      <div class="shot-frame"><img src="assets/screenshots/compare_split@2x.png" width="1100" height="620" loading="lazy" alt="Built-in vs maru benchmark"/><div class="shot-caption ko">벤치마크: Precision@5 +86% · NDCG@10 +36%</div><div class="shot-caption en hidden">Benchmark: P@5 +86% · NDCG@10 +36%</div></div>
+      <div class="shot-frame"><img src="assets/screenshots/quality_signals@2x.png" width="1280" height="640" loading="lazy" alt="Source quality metadata"/><div class="shot-caption ko">출처 메타: score · coverage · access · noise</div><div class="shot-caption en hidden">Per-source quality signals</div></div>
+    </div>
     <div class="text-center mb-16 scroll-reveal">
       <h2 class="text-3xl md:text-5xl font-bold mb-4">
         <span class="ko">직접 <span class="gradient-text">비교</span>해 보세요</span>
@@ -889,7 +964,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
   </div>
 </section>
 
-<!-- What's New v0.20 -->
+<!-- What's New v0.22 -->
 <section id="whats-new" class="py-12 relative">
   <div class="max-w-5xl mx-auto px-4">
     <div class="glass rounded-2xl p-6 md:p-8 border border-maru-500/20 scroll-reveal">
@@ -951,6 +1026,17 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
             <h4 class="text-white font-semibold text-sm en hidden">setup --repair</h4>
             <p class="text-gray-400 text-xs mt-1 ko">업그레이드 후 `update --with-setup` · `setup --check`로 에이전트 설정 동기화.</p>
             <p class="text-gray-400 text-xs mt-1 en hidden">Sync agent configs after upgrade via `update --with-setup` and `setup --check`.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3 md:col-span-2 lg:col-span-3">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-brain text-cyan-400 text-sm"></i></div>
+          <div class="flex-1">
+            <h4 class="text-white font-semibold text-sm ko">Granite 97M R2 · mandatory semantic rank</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">Granite 97M R2 · mandatory semantic rank</h4>
+            <p class="text-gray-400 text-xs mt-1 ko">기본 <code class="kbd">ibm-granite/granite-embedding-97m-multilingual-r2</code>. install.sh / setup가 <code class="kbd">warmup-embeddings</code>로 HF 가중치를 미리 받습니다.</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">Default Granite 97M multilingual R2; install runs warmup-embeddings for HF prefetch.</p>
+            <div class="shot-frame mt-3 max-w-xl"><img src="assets/screenshots/embedding@2x.png" width="960" height="540" loading="lazy" alt="Granite embedding research output"/></div>
           </div>
         </div>
       </div>
@@ -1110,6 +1196,18 @@ _deep research: 28 sources | 7 steps | 22 open-access candidates_
 2) Open only official docs/advisories; summarize what you verified.
 3) Before edits, check whether the workspace changed since your last look.
 4) Draft code only after research happened in this session.</pre>
+    </div>
+    <div class="mt-10 scroll-reveal">
+      <p class="text-center text-xs text-gray-500 mb-4 ko">플레이북 예시: MCP 패킷 → 호스트 LLM 합성 (fixture, 환각 없음)</p>
+      <p class="text-center text-xs text-gray-500 mb-4 en hidden">Playbook example: packet → host synthesis (fixture, no hallucination)</p>
+      <div class="dual-panel">
+        <div class="shot-frame"><img src="assets/screenshots/korean_market@2x.png" width="1280" height="720" loading="lazy" alt="answer MCP packet"/><div class="shot-caption">answer · 갤럭시 S24 중고 시세</div></div>
+        <div class="glass rounded-2xl p-5 border border-maru-500/20 text-sm text-gray-300 leading-relaxed">
+          <h4 class="text-maru-300 font-bold mb-2">Synthesis (발췌)</h4>
+          <p class="mb-2"><strong>Direct answer:</strong> 중고 갤럭시 S24 시세는 용량·등급·출시 시점에 따라 편차가 큽니다. 구매 전 최근 거래가 분포와 보증/배터리 상태를 교차 확인하세요.</p>
+          <p class="text-xs text-gray-500">Sources: [1]–[6] from MCP packet · <a href="fixtures/synthesis/korean_market.md" class="text-maru-300 hover:underline">full synthesis</a></p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -1344,6 +1442,19 @@ then explain using only official issue/release links.</pre>
       <p class="text-gray-400 ko">Python 3.10+ 필요. 스크립트가 자동으로 처리합니다.</p>
       <p class="text-gray-400 en hidden">Python 3.10+ required. The script handles everything.</p>
     </div>
+      <div class="shot-frame mb-8 scroll-reveal">
+      <div class="shot-frame mb-8 scroll-reveal">
+        <img src="assets/screenshots/setup_flow@2x.png" width="1280" height="720" loading="lazy" alt="setup check and warmup-embeddings"/>
+        <div class="shot-caption ko">install.sh → setup --check → warmup-embeddings (Granite 97M 사전 다운로드)</div>
+        <div class="shot-caption en hidden">install.sh → setup --check → warmup-embeddings (Granite 97M prefetch)</div>
+      </div>
+      <div class="glass-card rounded-2xl p-5 mb-6 border border-emerald-500/20 scroll-reveal">
+        <h3 class="text-emerald-300 font-bold text-sm mb-2"><i class="fas fa-fire mr-2"></i><span class="ko">임베딩 워밍 (v0.22.1)</span><span class="en hidden">Embedding warmup (v0.22.1)</span></h3>
+        <pre class="text-[11px] font-mono text-gray-300">maru-deep-pro-search warmup-embeddings -q
+maru-deep-pro-search setup --check</pre>
+        <p class="text-gray-400 text-xs mt-2 ko">시맨틱 랭킹은 기본 포함입니다. 첫 deep_research 전에 모델을 받아 둡니다.</p>
+        <p class="text-gray-400 text-xs mt-2 en hidden">Semantic ranking is always on; prefetch avoids cold-start on first deep_research.</p>
+      </div>
     <div class="space-y-6 scroll-reveal">
       <div class="code-block">
         <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">

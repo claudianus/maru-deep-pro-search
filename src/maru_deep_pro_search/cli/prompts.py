@@ -107,6 +107,14 @@ def strip_existing_protocol(text: str) -> str:
         # Also clean up stray border-only blocks left behind
         cleaned = re.sub(r"═+\s*", "", cleaned)
 
+    # 3. Cursor adapter prepends this title outside markers; strip stale copies.
+    cleaned = re.sub(
+        r"(?:^# maru-deep-pro-search Research Protocol\s*\n)+",
+        "",
+        cleaned,
+        flags=re.MULTILINE,
+    )
+
     # Normalise excessive blank lines left behind by the removal
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned.strip()

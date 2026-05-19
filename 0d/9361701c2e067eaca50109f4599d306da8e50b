@@ -1,0 +1,22 @@
+src/maru_deep_pro_search/cli/agents/codex.py
+  s_3c74d6fb77ecf6::t_a282430f0eb814 263
+  s_3c74d6fb77ecf6::t_9770c41c82eb43 213-215
+docs/index.html
+  s_3c74d6fb77ecf6::t_8e4c68acfd106f 898-899,903,905-908
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "0d9361701c2e067eaca50109f4599d306da8e50b",
+  "prompts": {},
+  "sessions": {
+    "s_3c74d6fb77ecf6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2f523410-2e6f-439e-b862-d5a149b7f8ce",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+scripts/capture_marketing_fixtures.py
+  s_cd3ca1e4e1701e::t_8d1e5dccfd1d60 186,188-191
+  s_cd3ca1e4e1701e::t_89bf4fe4589a1d 213-218
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "15f8cc8a7ad6f999c780328759decfc49d875e55",
+  "prompts": {},
+  "sessions": {
+    "s_cd3ca1e4e1701e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "347928d3-5d1b-4541-8c07-6cb9e19ed80f",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+pyproject.toml
+  s_3c74d6fb77ecf6::t_f1c21eb7d19521 3
+docs/index.html
+  s_3c74d6fb77ecf6::t_29e0e1d9d1d686 8,29,192-193,897,1427
+src/maru_deep_pro_search/__init__.py
+  s_3c74d6fb77ecf6::t_737b2fd18fd9fa 7
+src/maru_deep_pro_search/cli/agents/codex.py
+  s_3c74d6fb77ecf6::t_6ea58f88992302 182-211,224-238,241-242,264-268
+src/maru_deep_pro_search/cli/verify_status.py
+  s_3c74d6fb77ecf6::t_6ea58f88992302 9,83-88,91
+src/maru_deep_pro_search/cli/doctor.py
+  s_3c74d6fb77ecf6::t_6ea58f88992302 9,133-137
+CHANGELOG.md
+  s_3c74d6fb77ecf6::t_d33929ed6f6db2 11-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "da93f7784954ba47b56a39ca1ba261b02a878f40",
+  "prompts": {},
+  "sessions": {
+    "s_3c74d6fb77ecf6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2f523410-2e6f-439e-b862-d5a149b7f8ce",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

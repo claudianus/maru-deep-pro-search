@@ -183,12 +183,12 @@ def _sanitize_cli_output(text: str) -> str:
 @contextmanager
 def _isolated_maru_cwd():
     prev = os.getcwd()
-    tmp = tempfile.mkdtemp(prefix="maru-fixture-")
-    try:
+    with tempfile.TemporaryDirectory(prefix="maru-fixture-") as tmp:
         os.chdir(tmp)
-        yield
-    finally:
-        os.chdir(prev)
+        try:
+            yield
+        finally:
+            os.chdir(prev)
 
 
 def _capture_cli(spec: FixtureSpec) -> str:
@@ -210,7 +210,12 @@ def _capture_cli(spec: FixtureSpec) -> str:
                 env=env,
             )
             out = _sanitize_cli_output((proc.stdout or "") + (proc.stderr or ""))
-            if "Traceback" in out or not out.strip():
+            cmd_failed = (
+                "Traceback" in out
+                or not out.strip()
+                or (proc.returncode != 0 and args[0] == "warmup-embeddings")
+            )
+            if cmd_failed:
                 failures += 1
             chunks.append("```text")
             chunks.append(out.strip() or "(no output)")

@@ -1,0 +1,37 @@
+docs/index.html
+  s_3039b9bd4d38b4::t_b54b0039c9c102 22-33
+  s_3039b9bd4d38b4::t_8cac1faf09d202 71-74
+  s_3039b9bd4d38b4::t_53d616024667f4 424-425,427-430,432-436,439-440
+  s_3039b9bd4d38b4::t_94dfe457572ae8 290
+  s_3039b9bd4d38b4::t_59ada41e390194 208-210,212
+  s_3039b9bd4d38b4::t_9adef1d4035f5d 446
+  s_3039b9bd4d38b4::t_8733abe82358b7 5
+  s_3039b9bd4d38b4::t_9e377fbec2292c 102-104
+  s_3039b9bd4d38b4::t_6e978eff608820 443
+  s_3039b9bd4d38b4::t_b273e194cb4f04 11
+  s_3039b9bd4d38b4::t_ecb9504017ad5a 140
+  s_3039b9bd4d38b4::t_f6b121383fef02 333
+  s_3039b9bd4d38b4::t_43115f15c51b5b 431,437
+  s_3039b9bd4d38b4::t_ff5f951ef8a793 7
+  s_3039b9bd4d38b4::t_4f6baa05c097bd 181-185
+  s_3039b9bd4d38b4::t_d0a98decd91d60 8
+  s_3039b9bd4d38b4::t_0c10422b4c1418 420-421
+  s_3039b9bd4d38b4::t_2adf2980e22c2e 163,167,169-180,186-196
+  s_3039b9bd4d38b4::t_c868830000f0e7 281,283-285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "ea5cfbc3dfd4f524428579daf8539a1c883ecc64",
+  "prompts": {},
+  "sessions": {
+    "s_3039b9bd4d38b4": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "606a6cef-3e1c-48f9-9af6-e767acad7fe4",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

@@ -136,7 +136,7 @@ Claude Code MCP snippet (`~/.claude/settings.json`):
 
 **All 18 tools:** [Website #tools](https://claudianus.github.io/maru-deep-pro-search/#tools)
 
-**21-agent matrix:** [agent_matrix.html](https://claudianus.github.io/maru-deep-pro-search/agent_matrix.html)
+**21 agents:** [Website #agents](https://claudianus.github.io/maru-deep-pro-search/#agents)
 
 ---
 

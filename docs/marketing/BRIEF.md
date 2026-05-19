@@ -22,7 +22,8 @@
 | #prompts | 복붙 프롬프트 + Copy 버튼 |
 | #demo | `korean_market` 패널 1장 (발췌) |
 | #install | curl 1줄 + details(Windows/수동) |
-| #more | README · agent_matrix · PyPI 링크 |
+| #agents | 추천 5 + 그 외 16 pill · AGENT_COMPATIBILITY.md 링크 |
+| #more | README · PyPI · Changelog |
 | OG | `og-card@2x.png` (Playwright) |
 
 기술 섹션(투어·아키텍처·ENV·18툴 표)은 README로 이관.

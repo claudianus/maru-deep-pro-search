@@ -136,7 +136,7 @@ Claude Code MCP 예시 (`~/.claude/settings.json`):
 
 **전체 18툴 · 선택 가이드:** [웹사이트 #tools](https://claudianus.github.io/maru-deep-pro-search/#tools)
 
-**21 에이전트 어댑터 매트릭스:** [agent_matrix.html](https://claudianus.github.io/maru-deep-pro-search/agent_matrix.html)
+**21 에이전트 지원:** [웹사이트 #agents](https://claudianus.github.io/maru-deep-pro-search/#agents)
 
 ---
 

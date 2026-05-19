@@ -354,6 +354,29 @@ details.install-more summary::-webkit-details-marker { display: none; }
 details.install-more[open] summary { border-bottom: 1px solid var(--border); }
 .install-more-body { padding: 1rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-tertiary); line-height: 1.7; }
 
+/* Agents */
+.agent-tiers { display: grid; gap: 1rem; margin-top: 2rem; }
+@media (min-width: 640px) { .agent-tiers { grid-template-columns: 1fr 1fr; } }
+.agent-tier {
+  padding: clamp(1.25rem, 3vw, 1.5rem); border-radius: var(--radius-lg);
+  border: 1px solid var(--border); background: var(--surface);
+}
+.agent-tier h3 { font-size: 1rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem; }
+.agent-tier p { margin: 0 0 1rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; }
+.agent-tier.featured { border-color: rgba(46,196,182,0.3); background: var(--accent-dim); }
+.agent-tier.featured h3 { color: var(--accent); }
+.agent-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.agent-name {
+  font-size: 0.8125rem; font-weight: 500; padding: 0.4rem 0.7rem;
+  border-radius: 999px; background: var(--bg-elevated); border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.agent-tier.featured .agent-name { color: var(--text); border-color: rgba(46,196,182,0.25); }
+.agents-note {
+  margin-top: 1.25rem; font-size: 0.8125rem; color: var(--text-tertiary); text-align: center;
+}
+.agents-note a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
 /* More + footer */
 .link-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.25rem 2rem; margin-top: 1.5rem; }
 .link-row a { font-size: 0.9375rem; color: var(--text-secondary); transition: color 0.2s; }
@@ -395,6 +418,7 @@ details.install-more[open] summary { border-bottom: 1px solid var(--border); }
       <a href="#prompts" class="nav-cta"><span class="ko">프롬프트</span><span class="en hidden">Prompts</span></a>
       <a href="#demo"><span class="ko">예시</span><span class="en hidden">Demo</span></a>
       <a href="#install"><span class="ko">설치</span><span class="en hidden">Install</span></a>
+      <a href="#agents"><span class="ko">에이전트</span><span class="en hidden">Agents</span></a>
       <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" rel="noopener">GitHub</a>
     </nav>
     <div class="nav-actions">
@@ -409,6 +433,7 @@ details.install-more[open] summary { border-bottom: 1px solid var(--border); }
     <a href="#prompts" class="mobile-link"><span class="ko">프롬프트</span><span class="en hidden">Prompts</span></a>
     <a href="#demo" class="mobile-link"><span class="ko">예시</span><span class="en hidden">Demo</span></a>
     <a href="#install" class="mobile-link"><span class="ko">설치</span><span class="en hidden">Install</span></a>
+    <a href="#agents" class="mobile-link"><span class="ko">에이전트</span><span class="en hidden">Agents</span></a>
     <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" rel="noopener">GitHub</a>
   </nav>
 </header>
@@ -601,18 +626,67 @@ details.install-more[open] summary { border-bottom: 1px solid var(--border); }
     </div>
   </section>
 
+  <section id="agents" class="section">
+    <div class="wrap">
+      <p class="section-label scroll-in"><span class="ko">에이전트</span><span class="en hidden">Agents</span></p>
+      <h2 class="scroll-in"><span class="ko">21개 코딩 에이전트 지원</span><span class="en hidden">21 coding agents supported</span></h2>
+      <p class="lead scroll-in" style="margin-top:0.75rem">
+        <span class="ko"><code>maru-deep-pro-search setup</code>이 MCP 연결과 (가능한) User Rules·SKILL까지 맞춰 줍니다. 아래 전부 <strong>딥리서치·[1][2] 인용</strong>은 됩니다.</span>
+        <span class="en hidden"><code>maru-deep-pro-search setup</code> wires MCP plus rules and SKILLs where supported. Every agent below gets <strong>deep research and [1][2] cites</strong>.</span>
+      </p>
+      <div class="agent-tiers scroll-in">
+        <div class="agent-tier featured">
+          <h3><span class="ko">추천</span><span class="en hidden">Recommended</span></h3>
+          <p><span class="ko">코딩 전 검색·수정 제한이 비교적 잘 걸리는 편입니다.</span><span class="en hidden">Stronger hooks — research-before-code sticks better.</span></p>
+          <div class="agent-grid">
+            <span class="agent-name">Cursor</span>
+            <span class="agent-name">Claude Code</span>
+            <span class="agent-name">Codex</span>
+            <span class="agent-name">Aider</span>
+            <span class="agent-name">Hermes</span>
+          </div>
+        </div>
+        <div class="agent-tier">
+          <h3><span class="ko">그 외 16개</span><span class="en hidden">16 more</span></h3>
+          <p><span class="ko">MCP + 전역 지침. 에이전트마다 “막는” 세기는 다릅니다.</span><span class="en hidden">MCP + injected instructions; enforcement varies by host.</span></p>
+          <div class="agent-grid">
+            <span class="agent-name">Windsurf</span>
+            <span class="agent-name">Zed</span>
+            <span class="agent-name">Continue</span>
+            <span class="agent-name">GitHub Copilot</span>
+            <span class="agent-name">Cline</span>
+            <span class="agent-name">JetBrains</span>
+            <span class="agent-name">OpenCode</span>
+            <span class="agent-name">Kimi</span>
+            <span class="agent-name">Kilo Code</span>
+            <span class="agent-name">Tabnine</span>
+            <span class="agent-name">Codeium</span>
+            <span class="agent-name">Cody</span>
+            <span class="agent-name">Devin</span>
+            <span class="agent-name">Amazon Q</span>
+            <span class="agent-name">AntiGravity</span>
+            <span class="agent-name">Supermaven</span>
+          </div>
+        </div>
+      </div>
+      <p class="agents-note scroll-in">
+        <span class="ko">레이어별 상세 표는 <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/AGENT_COMPATIBILITY.md" target="_blank" rel="noopener">AGENT_COMPATIBILITY.md</a></span>
+        <span class="en hidden">Full layer matrix: <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/AGENT_COMPATIBILITY.md" target="_blank" rel="noopener">AGENT_COMPATIBILITY.md</a></span>
+      </p>
+    </div>
+  </section>
+
   <section id="more" class="section" style="padding-top:0">
     <div class="wrap" style="text-align:center">
       <p class="section-label scroll-in"><span class="ko">더 보기</span><span class="en hidden">More</span></p>
       <div class="link-row scroll-in">
         <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/README.md">README</a>
-        <a href="agent_matrix.html">21 agents</a>
         <a href="https://pypi.org/project/maru-deep-pro-search/">PyPI</a>
         <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/CHANGELOG.md">Changelog</a>
       </div>
       <p class="lead scroll-in" style="margin:1.5rem auto 0;font-size:0.875rem">
-        <span class="ko">9엔진 · 18툴 · ENV — README에 정리</span>
-        <span class="en hidden">9 engines · 18 tools · ENV — see README</span>
+        <span class="ko">9엔진 · 18 MCP 툴 · ENV — README에 정리</span>
+        <span class="en hidden">9 engines · 18 MCP tools · ENV — see README</span>
       </p>
     </div>
   </section>

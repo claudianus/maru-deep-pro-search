@@ -1,66 +1,51 @@
-# 마케팅 스크린샷 재생성
+# 마케팅 패널·OG 이미지 재생성
 
-실제 MCP 출력 → HTML 템플릿 → Playwright PNG (WebP 미지원 시 PNG 사용).
+GitHub Pages 본문은 **라이브 HTML 패널** (fixture → embed). **PNG는 `og:image` 한 장만** Playwright.
 
-## 요구 사항
-
-- Python 3.10+, 네트워크 (fixture 캡처)
-- `uv sync --all-groups` 후:
-
-```bash
-uv pip install playwright
-playwright install chromium
-```
-
-또는:
-
-```bash
-pip install -r scripts/requirements-marketing.txt
-playwright install chromium
-```
-
-## 1. Fixture 캡처 (live)
+## 1. Fixture 캡처 (live, 네트워크)
 
 ```bash
 uv run python scripts/capture_marketing_fixtures.py
 ```
 
-출력:
+출력: `docs/fixtures/raw/`, `synthesis/`, `manifest.json`
 
-- `docs/fixtures/raw/{id}.md`
-- `docs/fixtures/synthesis/{id}.md`
-- `docs/fixtures/manifest.json`
+## 2. HTML 패널 임베드 (Pages 본문)
 
-실패한 ID만:
+PNG `<img>` 블록이 남아 있으면 (main 복원 직후 등):
 
 ```bash
-uv run python scripts/capture_marketing_fixtures.py --only embedding
+uv run python scripts/patch_index_markers.py
 ```
 
-## 2. 스크린샷 렌더
+```bash
+uv run python scripts/embed_marketing_panels.py
+```
+
+출력:
+
+- `docs/partials/panels/{id}.html` — 조각 (재사용·디버그)
+- `docs/assets/marketing/panels.css` — 스코프 CSS
+- `docs/index.html` — `<!--@panel:ID@-->` 마커를 **인라인 HTML**로 치환
+
+마커만 두고 fetch 로딩:
 
 ```bash
+uv run python scripts/embed_marketing_panels.py --fetch
+```
+
+## 3. OG 카드 PNG (소셜 프리뷰만)
+
+```bash
+uv pip install playwright
+playwright install chromium
 uv run python scripts/render_marketing_screenshots.py
 ```
 
-출력 (`docs/assets/screenshots/`):
-
-| 파일 | 용도 |
-|------|------|
-| `tech_compare@2x.png` | Hero, Research Trace |
-| `korean_market@2x.png` | answer 카드 |
-| `quality_signals@2x.png` | 출처 메타 |
-| `embedding@2x.png` | Granite |
-| `setup_flow@2x.png` | install / warmup |
-| `compare_split@2x.png` | vs 내장 검색 |
-| `og-card@2x.png` | og:image (1200×630) |
-
-## 3. Pages 반영
-
-`docs/index.html`에서 `<img src="assets/screenshots/...">` 경로 확인 후 `main` 머지 → GitHub Pages workflow.
+→ `docs/assets/screenshots/og-card@2x.png`
 
 ## 릴리스마다
 
-1. `manifest.json` `captured_at` 갱신 확인
-2. 스크린샷 내 `[N]`·도메인이 raw fixture와 일치하는지 눈으로 검수
-3. `ruff check scripts/capture_marketing_fixtures.py scripts/render_marketing_screenshots.py`
+1. fixture 캡처 → `embed_marketing_panels.py` → (선택) `render_marketing_screenshots.py`
+2. `manifest.json` `captured_at` 확인
+3. `ruff check scripts/marketing_panels.py scripts/embed_marketing_panels.py scripts/capture_marketing_fixtures.py`

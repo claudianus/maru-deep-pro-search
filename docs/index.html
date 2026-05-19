@@ -2,13 +2,13 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#141820">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>maru-deep-pro-search — Cursor에 붙이는 무료 딥리서치</title>
-<meta name="description" content="API 키 없이 Cursor·Claude Code에 붙는 무료 MCP. 설치 한 줄, 채팅에 「딥리서치 활용해」만 넣어도 웹 조사부터 시작.">
+<title>maru-deep-pro-search — Cursor·Claude Code·Codex 딥리서치 MCP</title>
+<meta name="description" content="설치 한 번으로 Cursor·Claude Code·Codex가 딥리서치 후 최신 정보로 코딩. 무료 MCP + 전역 규칙·SKILL 자동 적용. API 키 없음.">
 <link rel="canonical" href="https://claudianus.github.io/maru-deep-pro-search/">
 <meta property="og:title" content="maru-deep-pro-search — 무료 딥리서치 MCP">
-<meta property="og:description" content="설치 한 줄. 채팅에 「딥리서치 활용해」— 코딩 전에 웹부터 보도록. API 키 $0.">
+<meta property="og:description" content="Cursor·Claude Code·Codex가 딥리서치 후 최신 정보로 코딩. 무료 딥리서치 MCP 슈퍼셋 + 전역 규칙·SKILL.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://claudianus.github.io/maru-deep-pro-search/">
 <meta property="og:image" content="https://claudianus.github.io/maru-deep-pro-search/assets/screenshots/og-card@2x.png">
@@ -19,18 +19,18 @@
 <style>
 /* ── Design tokens (clarity · restraint · depth) ── */
 :root {
-  --bg: #000000;
-  --bg-elevated: #0a0a0c;
-  --surface: rgba(255,255,255,0.04);
-  --surface-hover: rgba(255,255,255,0.07);
-  --border: rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.12);
-  --text: #f5f5f7;
-  --text-secondary: #a1a1a6;
-  --text-tertiary: #6e6e73;
-  --accent: #30d5c8;
-  --accent-dim: rgba(48,213,200,0.15);
-  --accent-glow: rgba(48,213,200,0.35);
+  --bg: #141820;
+  --bg-elevated: #1c222c;
+  --surface: rgba(255,255,255,0.055);
+  --surface-hover: rgba(255,255,255,0.09);
+  --border: rgba(255,255,255,0.1);
+  --border-strong: rgba(255,255,255,0.14);
+  --text: #eceef2;
+  --text-secondary: #9aa3b2;
+  --text-tertiary: #6b7585;
+  --accent: #2ec4b6;
+  --accent-dim: rgba(46,196,182,0.14);
+  --accent-glow: rgba(46,196,182,0.22);
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
@@ -68,9 +68,10 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
 .ambient {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(48,213,200,0.12), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 100% 50%, rgba(14,165,233,0.06), transparent 50%),
-    var(--bg);
+    radial-gradient(ellipse 90% 60% at 50% -15%, rgba(46,196,182,0.09), transparent 50%),
+    radial-gradient(ellipse 50% 45% at 0% 40%, rgba(99,102,241,0.06), transparent 45%),
+    radial-gradient(ellipse 45% 40% at 100% 70%, rgba(56,189,248,0.05), transparent 45%),
+    linear-gradient(180deg, #181e28 0%, var(--bg) 45%, #12161d 100%);
 }
 
 /* Layout */
@@ -98,9 +99,9 @@ h2 { font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); }
 .nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   height: var(--nav-h);
-  background: rgba(0,0,0,0.72);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: rgba(20,24,32,0.78);
+  backdrop-filter: saturate(160%) blur(18px);
+  -webkit-backdrop-filter: saturate(160%) blur(18px);
   border-bottom: 1px solid var(--border);
 }
 .nav-inner {
@@ -136,7 +137,7 @@ h2 { font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); }
 @media (min-width: 768px) { .menu-btn { display: none; } }
 .mobile-drawer {
   display: none; position: fixed; top: var(--nav-h); left: 0; right: 0; z-index: 99;
-  background: rgba(0,0,0,0.95); backdrop-filter: blur(24px);
+  background: rgba(20,24,32,0.96); backdrop-filter: blur(24px);
   border-bottom: 1px solid var(--border); padding: 1rem var(--page-pad) 1.5rem;
   flex-direction: column; gap: 0.25rem;
 }
@@ -159,14 +160,40 @@ h2 { font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); }
   display: inline-flex; align-items: center; gap: 0.5rem;
   padding: 0.4rem 0.9rem; border-radius: 999px;
   background: var(--surface); border: 1px solid var(--border);
-  font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1.75rem;
+  font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1.25rem;
 }
 .hero-badge::before {
   content: ''; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent); box-shadow: 0 0 12px var(--accent-glow);
+  background: var(--accent); box-shadow: 0 0 10px var(--accent-glow);
 }
-.hero h1 { margin-bottom: 1.25rem; max-width: 14ch; }
-.hero .lead { margin-inline: auto; margin-bottom: 2.5rem; text-align: center; }
+.hero h1 {
+  margin-bottom: 1rem; max-width: 22ch;
+  font-size: clamp(1.75rem, 4.2vw + 0.75rem, 3.25rem);
+  line-height: 1.15; font-weight: 650;
+}
+.hero-explain {
+  font-size: clamp(0.9375rem, 1.2vw + 0.5rem, 1.125rem);
+  color: var(--text-secondary); line-height: 1.65;
+  max-width: 40em; margin-inline: auto; margin-bottom: 1.75rem;
+  text-align: center;
+}
+.hero-explain strong { color: var(--text); font-weight: 550; }
+.hero-explain code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
+  padding: 0.1em 0.35em; border-radius: 4px;
+  background: var(--accent-dim); color: var(--accent);
+}
+.hero-agents {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;
+  margin-bottom: 2rem; max-width: 28rem;
+}
+.agent-pill {
+  font-size: 0.75rem; font-weight: 500; padding: 0.35rem 0.75rem;
+  border-radius: 999px; background: var(--surface);
+  border: 1px solid var(--border); color: var(--text-secondary);
+}
+.agent-pill.highlight { color: var(--accent); border-color: rgba(46,196,182,0.35); background: var(--accent-dim); }
+.hero .lead { margin-inline: auto; margin-bottom: 2rem; text-align: center; font-size: 1rem; }
 .hero-cta { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 20rem; }
 @media (min-width: 480px) {
   .hero-cta { flex-direction: row; max-width: none; justify-content: center; }
@@ -178,10 +205,11 @@ h2 { font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); }
 }
 .btn:active { transform: scale(0.98); }
 .btn-primary {
-  background: var(--text); color: var(--bg);
-  box-shadow: 0 4px 24px rgba(255,255,255,0.12);
+  background: linear-gradient(135deg, #2ec4b6 0%, #22a399 100%);
+  color: #0c1218; font-weight: 600;
+  box-shadow: 0 4px 20px rgba(46,196,182,0.25);
 }
-.btn-primary:hover { box-shadow: 0 8px 32px rgba(255,255,255,0.18); }
+.btn-primary:hover { box-shadow: 0 8px 28px rgba(46,196,182,0.35); filter: brightness(1.05); }
 .btn-secondary {
   background: var(--surface); border: 1px solid var(--border); color: var(--text);
 }
@@ -250,16 +278,16 @@ h2 { font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); }
 .demo-window {
   text-align: left; border-radius: var(--radius-xl);
   border: 1px solid var(--border-strong);
-  background: #0d0d0f;
+  background: #1a2029;
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.03) inset,
-    0 40px 80px -20px rgba(0,0,0,0.8),
-    0 0 120px -40px var(--accent-glow);
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 24px 48px -12px rgba(0,0,0,0.45),
+    0 0 80px -30px var(--accent-glow);
   overflow: hidden; max-width: 56rem; margin-inline: auto;
 }
 .demo-chrome {
   display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.75rem 1rem; background: #161618; border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem; background: #222933; border-bottom: 1px solid var(--border);
 }
 .demo-dot { width: 10px; height: 10px; border-radius: 50%; }
 .demo-dot.r { background: #ff5f57; } .demo-dot.y { background: #febc2e; } .demo-dot.g { background: #28c840; }
@@ -302,7 +330,7 @@ h2 { font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); }
 /* Install */
 .install-block {
   margin-top: 2rem; border-radius: var(--radius-lg); overflow: hidden;
-  border: 1px solid var(--border); background: #0d0d0f;
+  border: 1px solid var(--border); background: var(--bg-elevated);
 }
 .install-hdr {
   display: flex; justify-content: space-between; align-items: center;
@@ -389,22 +417,33 @@ details.install-more[open] summary { border-bottom: 1px solid var(--border); }
   <section class="hero section">
     <div class="wrap">
       <p class="hero-badge scroll-in">
-        <span class="ko">무료 · API 키 없음</span>
-        <span class="en hidden">Free · no API keys</span>
+        <span class="ko">딥리서치 MCP · 100% 무료</span>
+        <span class="en hidden">Deep-research MCP · 100% free</span>
       </p>
       <h1 class="scroll-in">
-        <span class="ko">코딩 전에<br><span class="accent-word">웹부터</span> 보라</span>
-        <span class="en hidden">Search the web<br><span class="accent-word">before</span> you code</span>
+        <span class="ko">이것만 설치하면 <span class="accent-word">Cursor</span>·<span class="accent-word">Claude Code</span>·<span class="accent-word">Codex</span>가<br>딥리서치 후 최신 정보로 코딩합니다</span>
+        <span class="en hidden">Install once — <span class="accent-word">Cursor</span>, <span class="accent-word">Claude Code</span>, and <span class="accent-word">Codex</span><br>research the web first, then code with fresh facts</span>
       </h1>
+      <p class="hero-explain scroll-in">
+        <span class="ko"><strong>maru-deep-pro-search</strong>는 API 키 없이 쓰는 자체 딥리서치 <strong>MCP 슈퍼셋</strong>입니다. 9개 검색 엔진·<code>[1][2]</code> 인용·<strong>전역 규칙(User Rules)·SKILL·세션 게이트</strong>를 한 번에 붙여, 에이전트가 추측하지 않고 웹 근거로 코드를 짜게 만드는 솔루션입니다.</span>
+        <span class="en hidden"><strong>maru-deep-pro-search</strong> is a free deep-research <strong>MCP super-set</strong>—no API keys. It wires up nine search engines, <code>[1][2]</code> citations, and <strong>global rules, SKILLs, and session gates</strong> so your agent researches before it codes instead of guessing.</span>
+      </p>
+      <div class="hero-agents scroll-in" aria-label="Supported agents">
+        <span class="agent-pill highlight">Cursor</span>
+        <span class="agent-pill highlight">Claude Code</span>
+        <span class="agent-pill highlight">Codex</span>
+        <span class="agent-pill ko">+ 18 more</span>
+        <span class="agent-pill en hidden">+ 18 more</span>
+      </div>
       <p class="lead scroll-in">
-        <span class="ko">설치 한 줄. Cursor 재시작. 채팅에 <strong>「딥리서치 활용해」</strong> — 끝.</span>
-        <span class="en hidden">One-line install. Restart Cursor. Type <strong>“use deep research”</strong> — done.</span>
+        <span class="ko">설치 한 줄 → 에이전트 재시작 → 채팅에 <strong>「딥리서치 활용해」</strong></span>
+        <span class="en hidden">One-line install → restart agent → say <strong>“use deep research”</strong></span>
       </p>
       <div class="hero-cta scroll-in">
-        <a href="#install" class="btn btn-primary"><span class="ko">설치하기</span><span class="en hidden">Install</span></a>
+        <a href="#install" class="btn btn-primary"><span class="ko">1줄 설치</span><span class="en hidden">Install</span></a>
         <a href="#prompts" class="btn btn-secondary"><span class="ko">프롬프트 복사</span><span class="en hidden">Copy prompts</span></a>
       </div>
-      <p class="hero-meta scroll-in">v0.22.3 · Cursor · Claude Code · 21 agents</p>
+      <p class="hero-meta scroll-in">v0.22.3 · API 키 $0 · 21 agent adapters</p>
     </div>
   </section>
 

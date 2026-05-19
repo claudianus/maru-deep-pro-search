@@ -1,0 +1,25 @@
+README.en.md
+  s_c02c70d8048b9b::t_0872e02e335b21 469
+  s_c02c70d8048b9b::t_4e8054df0c2ddf 479
+docs/index.html
+  s_c02c70d8048b9b::t_87290e99df4d29 943-944
+README.md
+  s_c02c70d8048b9b::t_2ac806eb562da0 497
+  s_c02c70d8048b9b::t_988839c19a7d53 474
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "968c1b23dab92e00c87869db0c4069daf8aa1259",
+  "prompts": {},
+  "sessions": {
+    "s_c02c70d8048b9b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3c108dec-7b35-4937-9ec6-f3974623beef",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

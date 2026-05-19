@@ -25,6 +25,12 @@ from ..prompts import (
     inject_protocol,
     text_has_research_protocol,
 )
+from ..toml_edit import (
+    first_table_header_index,
+    insert_root_block,
+    key_at_root,
+    remove_toml_key,
+)
 from .base import AgentAdapter, get_mcp_server_command_list
 
 
@@ -141,56 +147,15 @@ class CodexAdapter(AgentAdapter):
     @staticmethod
     def _remove_developer_instructions(lines: list[str]) -> list[str]:
         """Remove developer_instructions key (including multiline strings) from TOML lines."""
-        # Handles:
-        # - developer_instructions = """..."""
-        # - developer_instructions = "..."
-        # - developer_instructions = '''...'''
-        result: list[str] = []
-        state = "normal"  # normal | in_ml_double | in_ml_single
-        for line in lines:
-            stripped = line.strip()
-            if state == "normal":
-                if stripped.startswith("developer_instructions"):
-                    # Check if multiline starts on same line
-                    rest = stripped.split("=", 1)[1].strip() if "=" in stripped else ""
-                    if rest.startswith('"""'):
-                        if rest.endswith('"""') and len(rest) > 3:
-                            # Single-line multiline — skip entirely
-                            continue
-                        state = "in_ml_double"
-                        continue
-                    elif rest.startswith("'''"):
-                        if rest.endswith("'''") and len(rest) > 3:
-                            continue
-                        state = "in_ml_single"
-                        continue
-                    else:
-                        # Single-line non-multiline — skip
-                        continue
-                result.append(line)
-            elif state == "in_ml_double":
-                if stripped.endswith('"""'):
-                    state = "normal"
-                continue
-            elif state == "in_ml_single":
-                if stripped.endswith("'''"):
-                    state = "normal"
-                continue
-        return result
+        return remove_toml_key(lines, "developer_instructions")
 
     @staticmethod
     def _first_table_header_index(lines: list[str]) -> int:
-        """Index of the first TOML table header, or len(lines) if none."""
-        for i, line in enumerate(lines):
-            if line.strip().startswith("["):
-                return i
-        return len(lines)
+        return first_table_header_index(lines)
 
     @staticmethod
     def _insert_root_block(lines: list[str], block: list[str]) -> list[str]:
-        """Insert *block* at root level (before the first ``[table]`` header)."""
-        idx = CodexAdapter._first_table_header_index(lines)
-        return lines[:idx] + block + lines[idx:]
+        return insert_root_block(lines, block)
 
     @staticmethod
     def _build_developer_instructions_block(
@@ -211,8 +176,7 @@ class CodexAdapter(AgentAdapter):
 
     @staticmethod
     def _has_approval_policy_at_root(lines: list[str]) -> bool:
-        first_table = CodexAdapter._first_table_header_index(lines)
-        return any(line.strip().startswith("approval_policy") for line in lines[:first_table])
+        return key_at_root(lines, "approval_policy")
 
     @staticmethod
     def _has_developer_instructions_key(lines: list[str]) -> bool:
@@ -221,10 +185,7 @@ class CodexAdapter(AgentAdapter):
     @staticmethod
     def developer_instructions_at_root(lines: list[str]) -> bool:
         """True when ``developer_instructions`` sits before the first TOML table."""
-        first_table = CodexAdapter._first_table_header_index(lines)
-        return any(
-            line.strip().startswith("developer_instructions") for line in lines[:first_table]
-        )
+        return key_at_root(lines, "developer_instructions")
 
     @staticmethod
     def has_nested_developer_instructions(lines: list[str]) -> bool:

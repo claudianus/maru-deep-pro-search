@@ -1136,7 +1136,7 @@ wheels = [
 
 [[package]]
 name = "maru-deep-pro-search"
-version = "0.22.1"
+version = "0.22.3"
 source = { editable = "." }
 dependencies = [
     { name = "htmldate" },

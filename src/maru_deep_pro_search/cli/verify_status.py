@@ -7,8 +7,10 @@ from typing import Any
 
 from .agents.base import AgentAdapter
 from .agents.codex import CodexAdapter
+from .agents.kimi_toml import KIMI_SYSTEM_MARKER, system_prompt_at_root
 from .backup import read_json_safe, read_text_safe
 from .prompts import PROTOCOL_START_MARKER, text_has_research_protocol
+from .toml_edit import first_table_header_index
 
 
 def rules_text_ok(text: str) -> bool:
@@ -94,9 +96,14 @@ def verify_adapter(adapter: AgentAdapter, scope: str = "user") -> dict[str, bool
     if name == "kimi":
         mcp = Path.home() / ".kimi" / "mcp.json"
         toml = Path.home() / ".kimi" / "config.toml"
+        text = read_text_safe(toml)
+        lines = text.splitlines() if text else []
+        first_table = first_table_header_index(lines)
+        root_text = "\n".join(lines[:first_table])
+        config_rules_ok = system_prompt_at_root(lines) and KIMI_SYSTEM_MARKER in root_text
         return {
             "mcp": json_mcp_ok(read_json_safe(mcp)),
-            "rules": "# MARU-SYSTEM-PROMPT" in read_text_safe(toml),
+            "rules": config_rules_ok,
         }
 
     if name == "cline":

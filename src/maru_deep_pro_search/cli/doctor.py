@@ -7,7 +7,9 @@ from pathlib import Path
 
 from .agents.base import AgentAdapter
 from .agents.codex import CodexAdapter
+from .agents.kimi_toml import has_nested_system_prompt
 from .backup import read_text_safe
+from .hermes_yaml import has_legacy_eof_shell_hooks
 from .hooks_templates import hook_script_stale, is_managed_hook
 from .prompts import PROTOCOL_START_MARKER
 from .verify_status import verify_adapter
@@ -135,6 +137,15 @@ def diagnose_adapter(adapter: AgentAdapter, scope: str = "user") -> Diagnosis:
         lines = read_text_safe(codex_config).splitlines()
         if CodexAdapter.has_nested_developer_instructions(lines):
             warnings.append("codex_nested_developer_instructions (run setup --repair)")
+    if adapter.name == "kimi":
+        kimi_config = Path.home() / ".kimi" / "config.toml"
+        lines = read_text_safe(kimi_config).splitlines()
+        if has_nested_system_prompt(lines):
+            warnings.append("kimi_nested_system_prompt (run setup --repair)")
+    if adapter.name == "hermes":
+        hermes_config = read_text_safe(Path.home() / ".hermes" / "config.yaml")
+        if has_legacy_eof_shell_hooks(hermes_config):
+            warnings.append("hermes_legacy_eof_hooks (run setup --repair)")
     if scope == "user":
         _legacy_project_scope_warnings(warnings)
 

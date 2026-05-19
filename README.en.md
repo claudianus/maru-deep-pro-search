@@ -466,7 +466,7 @@ docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search
 - **Source quality signals** — `coverage`, `access`, `noise`, `missing` in ranking, receipts, and output metadata
 - **Higher defaults** — `deep_research` 30 sources · 7 subqueries · SERP cap 50 · `answer(deep)` 30 sources / 6 fetches
 - **SERP-level RRF + fuzzy dedupe** — less same-engine duplication and shopping-guide noise
-- **Stress benchmark** — `--suite stress` for Korean, Transformers, Apple Silicon quality probes
+- **Stress benchmark** — `MARU_BENCHMARK_SUITE=stress` for Korean, Transformers, Apple Silicon quality probes
 
 > **Tradeoff:** Multi-engine + 30 sources improves quality but latency is ~2× vs a single engine. Use `max_sources=10` or `web_search` for fast tasks.
 
@@ -476,7 +476,7 @@ docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search
 
 ```bash
 uv run python benchmark/search_quality_benchmark.py
-uv run python benchmark/search_quality_benchmark.py --suite stress
+MARU_BENCHMARK_SUITE=stress uv run python benchmark/search_quality_benchmark.py
 ```
 
 Multi-engine vs single-engine (TREC-style, 10 queries): Precision@5 **+86%** · NDCG@10 **+36%** · MRR **+25%**

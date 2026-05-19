@@ -471,7 +471,7 @@ docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search
 - **출처 품질 시그널** — `coverage`, `access`, `noise`, `missing` 메타가 랭킹·receipt·출력에 반영
 - **기본값 상향** — `deep_research` 30소스 · 7서브쿼리 · 엔진당 SERP 50 · `answer(deep)` 30소스/6 fetch
 - **SERP 단위 RRF + fuzzy dedupe** — 동일 엔진 중복·구매가이드 노이즈 감소
-- **Stress benchmark** — `--suite stress`로 한국어·Transformers·Apple Silicon 등 품질 스트레스 검증
+- **Stress benchmark** — `MARU_BENCHMARK_SUITE=stress`로 한국어·Transformers·Apple Silicon 등 품질 스트레스 검증
 
 > **트레이드오프:** 다중 엔진 + 30소스는 품질이 올라가지만 응답 시간은 단일 엔진 대비 ~2배입니다. 빠른 작업은 `max_sources=10` 또는 `web_search`를 쓰세요.
 
@@ -494,7 +494,7 @@ docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search
 
 ```bash
 uv run python benchmark/search_quality_benchmark.py
-uv run python benchmark/search_quality_benchmark.py --suite stress
+MARU_BENCHMARK_SUITE=stress uv run python benchmark/search_quality_benchmark.py
 ```
 
 다중 엔진 vs 단일 엔진 (TREC 표준, 10쿼리): Precision@5 **+86%** · NDCG@10 **+36%** · MRR **+25%**

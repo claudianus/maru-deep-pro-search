@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .agents.base import AgentAdapter
+from .agents.codex import CodexAdapter
 from .backup import read_text_safe
 from .hooks_templates import hook_script_stale, is_managed_hook
 from .prompts import PROTOCOL_START_MARKER
@@ -129,6 +130,11 @@ def diagnose_adapter(adapter: AgentAdapter, scope: str = "user") -> Diagnosis:
 
     _warn_duplicate_protocol(protocol_check_paths(adapter), warnings)
     _warn_stale_hooks(managed_hook_paths(adapter), warnings)
+    if adapter.name == "codex":
+        codex_config = Path.home() / ".codex" / "config.toml"
+        lines = read_text_safe(codex_config).splitlines()
+        if CodexAdapter.has_nested_developer_instructions(lines):
+            warnings.append("codex_nested_developer_instructions (run setup --repair)")
     if scope == "user":
         _legacy_project_scope_warnings(warnings)
 

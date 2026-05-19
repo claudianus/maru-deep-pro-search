@@ -1,0 +1,74 @@
+src/maru_deep_pro_search/skills/deep-research/SKILL.md
+  s_c02c70d8048b9b::t_d974265aebcf8a 31
+  s_c02c70d8048b9b::t_2a70f6fc8fde14 54
+README.en.md
+  s_c02c70d8048b9b::t_7f5f229c998842 463-485
+  s_c02c70d8048b9b::t_2f27639e839934 5
+  s_c02c70d8048b9b::t_90731b14bcf930 39
+  s_c02c70d8048b9b::t_7fa5e6c4abc66c 127
+  s_c02c70d8048b9b::t_c00b3a7018e738 307-320,323,325-327
+  s_c02c70d8048b9b::t_8a27f52a1815c0 153-154
+  s_c02c70d8048b9b::t_a8f70b86e86f30 220
+README.md
+  s_c02c70d8048b9b::t_3812e11833aec8 156-157
+  s_c02c70d8048b9b::t_cce2767632032d 212
+  s_c02c70d8048b9b::t_aabae72c20aa4b 126
+  s_c02c70d8048b9b::t_6fd816bb8980b6 39
+  s_c02c70d8048b9b::t_e1e34207fb7233 5
+  s_c02c70d8048b9b::t_9ff6d5f996e749 223
+  s_c02c70d8048b9b::t_a66030f4c449b2 310-325,328,330-332
+  s_c02c70d8048b9b::t_0247363a234f84 468-503
+  s_c02c70d8048b9b::t_fe9f01e7ab06e2 168
+  s_c02c70d8048b9b::t_b01697a15b611c 48
+  s_c02c70d8048b9b::t_e6e041aff1318f 269-270
+docs/index.html
+  s_c02c70d8048b9b::t_5c7e03d89f5e71 582-584
+  s_c02c70d8048b9b::t_8f8f558b6551b4 668-669
+  s_c02c70d8048b9b::t_eb8f469ac94bdb 8
+  s_c02c70d8048b9b::t_3e740535477330 534-539
+  s_c02c70d8048b9b::t_fd9420248c96cc 984-1013
+  s_c02c70d8048b9b::t_6cc498719bf4bc 116-121
+  s_c02c70d8048b9b::t_2e074abaf55a4b 350-351
+  s_c02c70d8048b9b::t_07d246fe85590b 25
+  s_c02c70d8048b9b::t_0ce4d8e967cd9e 367
+  s_c02c70d8048b9b::t_7c3255b46cd16a 407
+  s_c02c70d8048b9b::t_8524a1879b72da 43-46
+  s_c02c70d8048b9b::t_860515850ba02a 1552,1555,1557
+  s_c02c70d8048b9b::t_e52193a5ecaa33 156-159
+  s_c02c70d8048b9b::t_79e4600fd9c665 1277-1300,1303-1304
+  s_c02c70d8048b9b::t_bd1cffd4c57e02 1232
+  s_c02c70d8048b9b::t_752119d97c69f6 41
+  s_c02c70d8048b9b::t_86eaf2eead6ca4 1431-1432
+  s_c02c70d8048b9b::t_314cb7631da20f 1542,1545,1547-1548
+  s_c02c70d8048b9b::t_4ea955845d42e1 642-643
+  s_c02c70d8048b9b::t_8b185fc803f46e 334-335
+  s_c02c70d8048b9b::t_38b4cfc2bba5eb 1367-1373
+  s_c02c70d8048b9b::t_b6fd38d91a554c 1532
+  s_c02c70d8048b9b::t_987fa92a04b67d 1403
+  s_c02c70d8048b9b::t_77dfaa48ec2ee3 1491
+  s_c02c70d8048b9b::t_0c653e68bd2b4a 220,223-224
+  s_c02c70d8048b9b::t_956571a491c933 892-893,896-899,903,905-908,912,914-917,921,923-926,930,932-935,939,941-944,947-948,950-953,961-983,1014-1047
+  s_c02c70d8048b9b::t_4838c28526ea87 147
+docs/agent_matrix.html
+  s_c02c70d8048b9b::t_fbdd80914d3e4c 7
+  s_c02c70d8048b9b::t_a24562fa1eefd4 30
+docs/sitemap.xml
+  s_c02c70d8048b9b::t_309fc54a69066d 9-14
+  s_c02c70d8048b9b::t_e3a2c82325fcbf 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "1d2dfe72af6c25ec9df18a239a798ec8cb44a7ab",
+  "prompts": {},
+  "sessions": {
+    "s_c02c70d8048b9b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3c108dec-7b35-4937-9ec6-f3974623beef",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

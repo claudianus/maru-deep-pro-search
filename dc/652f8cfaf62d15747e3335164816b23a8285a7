@@ -1,0 +1,31 @@
+scripts/embed_marketing_panels.py
+  s_cd3ca1e4e1701e::t_449e07bc4db908 21,25
+  s_cd3ca1e4e1701e::t_62ca2899aee8a0 12,24,26-41,44-59,63-65,81,93-94,96,98,100
+  s_cd3ca1e4e1701e::t_a2eee202166c62 42-43
+  s_cd3ca1e4e1701e::t_0dee9eb8aa9a25 95
+  s_cd3ca1e4e1701e::t_d09ebcf880c087 84-90
+docs/assets/marketing/panels.css
+  s_cd3ca1e4e1701e::t_f163b57fab07da 13
+scripts/patch_index_markers.py
+  s_cd3ca1e4e1701e::t_b17eca780f9e9c 129-135
+  s_cd3ca1e4e1701e::t_7a7546f11475a6 19
+scripts/marketing_panels.py
+  s_cd3ca1e4e1701e::t_6803f3f566d6a9 105-106
+  s_cd3ca1e4e1701e::t_f8ef36e09fb7cf 245-249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "dc652f8cfaf62d15747e3335164816b23a8285a7",
+  "prompts": {},
+  "sessions": {
+    "s_cd3ca1e4e1701e": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "347928d3-5d1b-4541-8c07-6cb9e19ed80f",
+        "model": "composer-2.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

@@ -43,20 +43,12 @@ def main() -> int:
             '<div class="shot-frame mcp-demo-host mb-3"><!--@panel:tech_compare@--></div>',
         ),
         (
-            '<div class="shot-frame mb-3"><img src="assets/screenshots/tech_compare@2x.png" width="1280" height="720" loading="lazy" alt="Research Trace"/></div>',
-            '<div class="shot-frame mcp-demo-host mb-3"><!--@panel:tech_compare@--></div>',
-        ),
-        (
             '<div class="shot-frame mb-3"><img src="assets/screenshots/korean_market@2x.png" width="1280" height="720" loading="lazy" alt="answer tool"/></div>',
             '<div class="shot-frame mcp-demo-host mb-3"><!--@panel:korean_market@--></div>',
         ),
         (
             '<div class="shot-frame mb-3"><img src="assets/screenshots/quality_signals@2x.png" width="1280" height="640" loading="lazy" alt="Source scores"/></div>',
             '<div class="shot-frame mcp-demo-host mb-3"><!--@panel:quality_signals@--></div>',
-        ),
-        (
-            '<div class="shot-frame mb-3"><img src="assets/screenshots/embedding@2x.png" width="1280" height="720" loading="lazy" alt="Granite embedding"/></div>',
-            '<div class="shot-frame mcp-demo-host mb-3"><!--@panel:embedding@--></div>',
         ),
         (
             '<div class="shot-frame mb-3"><img src="assets/screenshots/embedding@2x.png" width="1280" height="720" loading="lazy" alt="Granite embedding"/></div>',
@@ -79,20 +71,12 @@ def main() -> int:
             '<div class="shot-frame mcp-demo-host"><!--@panel:compare_split@--><div class="shot-caption ko">',
         ),
         (
-            '<div class="shot-frame"><img src="assets/screenshots/compare_split@2x.png" width="1100" height="620" loading="lazy" alt="Built-in vs maru benchmark"/><div class="shot-caption ko">',
-            '<div class="shot-frame mcp-demo-host"><!--@panel:compare_split@--><div class="shot-caption ko">',
-        ),
-        (
             '<div class="shot-frame"><img src="assets/screenshots/quality_signals@2x.png" width="1280" height="640" loading="lazy" alt="Source quality metadata"/><div class="shot-caption ko">',
             '<div class="shot-frame mcp-demo-host"><!--@panel:quality_signals@--><div class="shot-caption ko">',
         ),
         (
             '<div class="shot-frame mt-3 max-w-xl"><img src="assets/screenshots/embedding@2x.png" width="960" height="540" loading="lazy" alt="Granite embedding research output"/></div>',
             '<div class="shot-frame mcp-demo-host mt-3 max-w-xl"><!--@panel:embedding@--></div>',
-        ),
-        (
-            '<div class="shot-frame"><img src="assets/screenshots/korean_market@2x.png" width="1280" height="720" loading="lazy" alt="answer MCP packet"/><div class="shot-caption">answer · 갤럭시 S24 중고 시세</div></div>',
-            '<div class="shot-frame mcp-demo-host"><!--@panel:korean_market@--><div class="shot-caption">answer · 갤럭시 S24 중고 시세</div></div>',
         ),
         (
             '<div class="shot-frame"><img src="assets/screenshots/korean_market@2x.png" width="1280" height="720" loading="lazy" alt="answer MCP packet"/><div class="shot-caption">answer · 갤럭시 S24 중고 시세</div></div>',

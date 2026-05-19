@@ -25,23 +25,31 @@ def _mcp_demo_open(panel_id: str) -> str:
     return '<div class="mcp-demo" data-panel="' + panel_id + '"'
 
 
-def _replace_one_mcp_demo(html: str, panel_id: str, replacement: str) -> tuple[str, bool]:
-    """Replace the first mcp-demo block for panel_id (balanced div walk)."""
-    start = html.find(_mcp_demo_open(panel_id))
+def _mcp_demo_span(html: str, panel_id: str, search_from: int = 0) -> tuple[int, int] | None:
+    """Return [start, end) of the next mcp-demo block for panel_id."""
+    start = html.find(_mcp_demo_open(panel_id), search_from)
     if start < 0:
-        return html, False
+        return None
     depth = 0
-    end = -1
     for m in _DIV_TAG.finditer(html, start):
         depth += -1 if m.group(1) else 1
         if depth == 0:
             end = html.find(">", m.end()) + 1
-            break
-    if end <= 0:
-        return html, False
-    if html[start:end] == replacement:
-        return html, False
-    return html[:start] + replacement + html[end:], True
+            return start, end
+    return None
+
+
+def _replace_one_mcp_demo(html: str, panel_id: str, replacement: str) -> tuple[str, bool]:
+    """Replace the next mcp-demo block that differs from replacement."""
+    search_from = 0
+    while True:
+        span = _mcp_demo_span(html, panel_id, search_from)
+        if span is None:
+            return html, False
+        start, end = span
+        if html[start:end] != replacement:
+            return html[:start] + replacement + html[end:], True
+        search_from = end
 
 
 def _upsert_panel(html: str, panel_id: str, replacement: str) -> tuple[str, int]:

@@ -24,7 +24,7 @@ from ..backup import (
 from ..hooks_templates import template_body, write_managed_hook
 from ..prompts import get_protocol_for_agent
 from .base import AgentAdapter, get_mcp_server_command
-from .kimi_toml import upsert_kimi_hook_block, upsert_kimi_system_prompt
+from .kimi_toml import upsert_default_yolo_false, upsert_kimi_hook_block, upsert_kimi_system_prompt
 
 
 class KimiAdapter(AgentAdapter):
@@ -99,12 +99,7 @@ command = "python3 {hook_script}"
 timeout = 10"""
         content = upsert_kimi_hook_block(content, hook_block)
 
-        if "default_yolo" not in content:
-            content = (
-                content.rstrip()
-                + "\n\n# MARU: disable auto-approve so research gate works\n"
-                + "default_yolo = false\n"
-            )
+        content = upsert_default_yolo_false(content)
 
         write_text_safe(config_path, content)
         return True

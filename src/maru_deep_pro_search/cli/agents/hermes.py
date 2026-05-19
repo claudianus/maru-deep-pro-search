@@ -25,7 +25,6 @@ This adapter leverages **all** of these surfaces:
 
 from __future__ import annotations
 
-import re
 import shutil
 from pathlib import Path
 
@@ -38,8 +37,16 @@ from ..backup import (
     sorted_backup_paths,
     write_text_safe,
 )
+from ..hermes_yaml import (
+    dump_hermes_config,
+    load_hermes_config,
+    merge_mcp_servers,
+    merge_plugins,
+    merge_shell_hooks,
+    upsert_protocol_preamble,
+)
 from ..prompts import get_protocol_for_agent, inject_protocol
-from .base import AgentAdapter, get_mcp_server_yaml
+from .base import AgentAdapter
 
 
 class HermesAdapter(AgentAdapter):
@@ -104,18 +111,10 @@ class HermesAdapter(AgentAdapter):
     # ── install MCP ──────────────────────────────────────────────
     def install_mcp(self, scope: str = "user") -> bool:
         config_path = self._config_path(scope)
-        # Hermes uses YAML config — we read/write as text with safe append
         content = read_text_safe(config_path) or ""
-
-        # Ensure mcp_servers section
-        if "mcp_servers" not in content:
-            content += "\nmcp_servers:\n"
-
-        marker = "# maru-deep-pro-search MCP"
-        if marker not in content:
-            content += f"\n{marker}\n" + get_mcp_server_yaml()
-            write_text_safe(config_path, content)
-
+        preamble, data = load_hermes_config(content)
+        merge_mcp_servers(data)
+        write_text_safe(config_path, dump_hermes_config(preamble, data))
         return True
 
     # ── inject rules ─────────────────────────────────────────────
@@ -133,62 +132,16 @@ class HermesAdapter(AgentAdapter):
         config_path = self._config_path(scope)
         content = read_text_safe(config_path) or ""
 
-        # Inject protocol as YAML comment block
-        protocol = get_protocol_for_agent(self.name)
         protocol_yaml = (
             "# MARU-RESEARCH-PROTOCOL-START\n"
             + "\n".join(f"# {line}" for line in protocol.splitlines())
             + "\n# MARU-RESEARCH-PROTOCOL-END\n"
         )
-        if "MARU-RESEARCH-PROTOCOL-START" in content:
-            content = re.sub(
-                r"# MARU-RESEARCH-PROTOCOL-START.*?# MARU-RESEARCH-PROTOCOL-END\n",
-                protocol_yaml,
-                content,
-                count=1,
-                flags=re.DOTALL,
-            )
-        else:
-            content = protocol_yaml + "\n" + content
-
-        # Enable our plugin (idempotent: won't duplicate)
-        lines = content.splitlines()
-        plugins_idx = None
-        enabled_idx = None
-        maru_present = False
-
-        for i, line in enumerate(lines):
-            if line.rstrip() == "plugins:":
-                plugins_idx = i
-            if plugins_idx is not None and line.strip() == "enabled:":
-                enabled_idx = i
-            if "maru-research-gate" in line:
-                maru_present = True
-
-        if plugins_idx is None:
-            lines.append("plugins:")
-            lines.append("  enabled:")
-            lines.append("    - maru-research-gate")
-        elif enabled_idx is None:
-            lines.insert(plugins_idx + 1, "  enabled:")
-            lines.insert(plugins_idx + 2, "    - maru-research-gate")
-        elif not maru_present:
-            lines.insert(enabled_idx + 1, "    - maru-research-gate")
-
-        content = "\n".join(lines) + "\n"
-
-        # Shell hooks for audit logging
-        shell_hook_marker = "# maru-shell-hooks"
-        if shell_hook_marker not in content:
-            content += (
-                f"\n{shell_hook_marker}\n"
-                "hooks:\n"
-                "  post_tool_call:\n"
-                "    - command: echo\n"
-                '      args: ["[MARU-AUDIT] tool executed"]\n'
-            )
-
-        write_text_safe(config_path, content)
+        content = upsert_protocol_preamble(content, protocol_yaml)
+        preamble, data = load_hermes_config(content)
+        merge_plugins(data)
+        merge_shell_hooks(data)
+        write_text_safe(config_path, dump_hermes_config(preamble, data))
 
         # 3. Plugin directory — write plugin.yaml + __init__.py
         plugin_dir = self._plugins_dir(scope) / "maru-research-gate"

@@ -8,6 +8,13 @@
 
 ## [Unreleased]
 
+## [0.22.3] - 2026-05-19
+
+### Fixed
+- **Kimi `config.toml`** — `system_prompt`·`default_yolo` EOF append → nested under last TOML table (예: `mcp.client`). 첫 `[table]` 앞 루트 삽입 + `setup --repair`.
+- **Hermes `config.yaml`** — MCP/hooks EOF text append가 `mcp_servers` 밖으로 빠지거나 `hooks:` duplicate로 기존 훅 덮어쓰던 문제. YAML merge로 `mcp_servers`·`plugins`·`hooks.post_tool_call` 병합.
+- **공통** — `toml_edit` 헬퍼 추출; Codex adapter도 공유.
+
 ## [0.22.2] - 2026-05-19
 
 ### Fixed

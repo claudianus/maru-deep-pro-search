@@ -895,17 +895,17 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
     <div class="glass rounded-2xl p-6 md:p-8 border border-maru-500/20 scroll-reveal">
       <div class="flex flex-wrap items-center gap-3 mb-4">
         <span class="px-3 py-1 rounded-full bg-maru-500/20 text-maru-300 text-xs font-bold tracking-wider">v0.22.2</span>
-        <span class="text-gray-400 text-sm ko">딥리서치 품질 파이프라인 오버홀</span>
-        <span class="text-gray-400 text-sm en hidden">Deep-research quality pipeline overhaul</span>
+        <span class="text-gray-400 text-sm ko">Codex config.toml 수리 — setup/repair</span>
+        <span class="text-gray-400 text-sm en hidden">Codex config.toml fix — setup/repair</span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="flex items-start gap-3">
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-route text-emerald-400 text-sm"></i></div>
+          <div class="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-microchip text-green-400 text-sm"></i></div>
           <div>
-            <h4 class="text-white font-semibold text-sm ko">Research Trace</h4>
-            <h4 class="text-white font-semibold text-sm en hidden">Research Trace</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">조사 단계·엔진·소스 수를 구조화해 Perplexity Deep Research에 가깝게 소비.</p>
-            <p class="text-gray-400 text-xs mt-1 en hidden">Structured investigation steps, engines, and source counts—no server LLM.</p>
+            <h4 class="text-white font-semibold text-sm ko">Codex TOML 루트 삽입</h4>
+            <h4 class="text-white font-semibold text-sm en hidden">Codex TOML root insert</h4>
+            <p class="text-gray-400 text-xs mt-1 ko"><code>developer_instructions</code>가 마지막 테이블 안으로 들어가 Desktop 파싱 오류를 내던 버그 수정. <code>setup --repair --agents codex</code>로 수리.</p>
+            <p class="text-gray-400 text-xs mt-1 en hidden">Fixes <code>developer_instructions</code> nested under tables (e.g. <code>tui.model_availability_nux</code>). Run <code>setup --repair --agents codex</code>.</p>
           </div>
         </div>
         <div class="flex items-start gap-3">

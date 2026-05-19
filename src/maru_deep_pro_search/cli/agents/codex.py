@@ -210,12 +210,9 @@ class CodexAdapter(AgentAdapter):
         return block
 
     @staticmethod
-    def _has_approval_policy(lines: list[str]) -> bool:
-        for line in lines:
-            stripped = line.strip()
-            if stripped.startswith("approval_policy"):
-                return True
-        return False
+    def _has_approval_policy_at_root(lines: list[str]) -> bool:
+        first_table = CodexAdapter._first_table_header_index(lines)
+        return any(line.strip().startswith("approval_policy") for line in lines[:first_table])
 
     @staticmethod
     def _has_developer_instructions_key(lines: list[str]) -> bool:
@@ -263,7 +260,7 @@ class CodexAdapter(AgentAdapter):
             lines = self._remove_developer_instructions(lines)
             root_block = self._build_developer_instructions_block(
                 protocol,
-                include_approval_policy=not self._has_approval_policy(lines),
+                include_approval_policy=not self._has_approval_policy_at_root(lines),
             )
             lines = self._insert_root_block(lines, root_block)
             write_text_safe(config_path, "\n".join(lines) + "\n")

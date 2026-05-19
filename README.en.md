@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>Force your AI agent to research before it codes.</strong><br>
-  Zero API keys · 9-engine failover · BM25+semantic ranking · Native citations · 20 AI agents
+  Zero API keys · 9-engine RRF+BM25 · insight clusters · Native citations · 21 AI agents
 </p>
 
 <p align="center">
@@ -36,7 +36,7 @@
 | **Citations** | Hallucinated or none | **Native `[1]`, `[2]` IDs with real URLs** |
 | **Defense** | None | **72-signature prompt injection + zero-width char sanitization** |
 | **Enforcement** | "Please search first" (ignored) | **3-layer technical gatekeeping + code validation** |
-| **Agents** | Generic | **20 dedicated adapters with skill file injection** |
+| **Agents** | Generic | **21 dedicated adapters with skill file injection** |
 | **Cost** | Varies | **$0 forever — zero API keys** |
 
 ---
@@ -124,7 +124,7 @@ Ask your agent: *"Latest used Galaxy phone prices"* for `answer()`, or *"Researc
 Initialize **repo-local** `.maru/knowledge.db`, `.maru/harness.yaml`, and optional `AGENTS.md`:
 
 ```bash
-maru-deep-pro-search-init
+maru-deep-pro-search init
 ```
 
 **Agent configs (MCP, rules, skills) are never written inside the repository.** On each machine, run `maru-deep-pro-search setup` once to install into **global** paths (home directory, etc.) — same scope as MCP.
@@ -150,7 +150,8 @@ Search tools prefer **keyword-style** queries (3–12 terms: product/library + a
 | **Citations** | Native `[N]` | Yes | Yes |
 | **Enforces research** | **3-layer technical gate** | ❌ | ❌ |
 | **Prompt injection defense** | **72-pattern + semantic** | Basic | Basic |
-| **Agent adapters** | **20 agents** | Generic | Generic |
+| **Agent adapters** | **21 agents** | Generic | Generic |
+| **Deep-research UI blocks** | **Trace · Insights · Clusters** | ❌ | ❌ |
 
 ---
 
@@ -216,7 +217,7 @@ User request?
 
 ---
 
-## 🤖 20 AI Agents — Extension Mechanism Matrix
+## 🤖 21 AI Agents — Extension Mechanism Matrix
 
 One setup injects research-first rules via **every extension surface** each agent offers — hooks, commands, plugins, cron, permissions, and more.
 
@@ -303,14 +304,27 @@ For deep technical details, see [`docs/engine_insights.md`](./docs/engine_insigh
 ```markdown
 ## Research: FastAPI vs Django 2025
 _engines: duckduckgo_lite, bing, yahoo_
+quality: 87 (A)
+
+### Research Trace
+_deep research: 28 sources analyzed | 7 steps complete | 22 open-access candidates_
+1. Query intent normalized and expanded into 5 orthogonal searches
+...
+
+### Insights
+- [1] **FastAPI Documentation** (official docs) — FastAPI is a modern, high-performance web framework...
+- [2] **Django 5.1 Release Notes** (official docs) — Django 5.1 adds async ORM improvements...
+
+### Evidence Clusters
+- official docs: [1], [2] (avg coverage 82%)
+
 ### Sources
 #### [1] FastAPI Documentation — fastapi.tiangolo.com
-_score: 0.92 | [OFFICIAL-DOCS] | engines: 2 | relevance: 0.89
-FastAPI is a modern, fast (high-performance) web framework for building APIs...
+_score: 0.92 | [OFFICIAL-DOCS] | engines: 2 | coverage: 0.89 | access: open
 
-#### [2] Django 5.1 Release Notes — docs.djangoproject.com
-_score: 0.88 | [OFFICIAL-DOCS] | engines: 2 | relevance: 0.85
-Django 5.1 adds async ORM improvements, simplified field choices, and...
+### Answer Blueprint
+- Start with a direct recommendation/answer in the first paragraph.
+- Primary anchors to cite first: [1], [2]
 ```
 </details>
 
@@ -443,6 +457,29 @@ docker run --rm -i maru-search
 # With persistent knowledge store
 docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search
 ```
+
+---
+
+## 🆕 v0.20.0 highlights
+
+- **Research Trace / Insights / Evidence Clusters / Answer Blueprint** — Perplexity Deep Research–style structured output (no server LLM)
+- **Source quality signals** — `coverage`, `access`, `noise`, `missing` in ranking, receipts, and output metadata
+- **Higher defaults** — `deep_research` 30 sources · 7 subqueries · SERP cap 50 · `answer(deep)` 30 sources / 6 fetches
+- **SERP-level RRF + fuzzy dedupe** — less same-engine duplication and shopping-guide noise
+- **Stress benchmark** — `MARU_BENCHMARK_SUITE=stress` for Korean, Transformers, Apple Silicon quality probes
+
+> **Tradeoff:** Multi-engine + 30 sources improves quality but latency is ~2× vs a single engine. Use `max_sources=10` or `web_search` for fast tasks.
+
+---
+
+## 📊 Benchmark
+
+```bash
+uv run python benchmark/search_quality_benchmark.py
+MARU_BENCHMARK_SUITE=stress uv run python benchmark/search_quality_benchmark.py
+```
+
+Multi-engine vs single-engine (TREC-style, 10 queries): Precision@5 **+86%** · NDCG@10 **+36%** · MRR **+25%**
 
 ---
 

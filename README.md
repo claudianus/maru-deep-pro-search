@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>AI 에이전트가 코딩 전에 반드시 리서치하도록.</strong><br>
-  API 키 0개 · 9엔진 폴오버 · BM25+시맨틱 랭킹 · 네이티브 인용 · 20개 AI 에이전트
+  API 키 0개 · 9엔진 RRF+BM25 · 인사이트 클러스터 · 네이티브 인용 · 21개 AI 에이전트
 </p>
 
 <p align="center">
@@ -36,7 +36,7 @@
 | **인용** | 환각 또는 없음 | **`[1]`, `[2]` 네이티브 ID + 실제 URL** |
 | **방어** | 없음 | **72시그니처 프롬프트 인젝션 + 제로폭 문자 정제** |
 | **강제** | "검색해주세요" (무시됨) | **3계층 기술적 게이트키핑 + 코드 검증** |
-| **에이전트** | 범용 | **20개 전용 어댑터 + 스킬 파일 주입** |
+| **에이전트** | 범용 | **21개 전용 어댑터 + 스킬 파일 주입** |
 | **비용** | 변동 | **영원히 $0 — API 키 불필요** |
 
 ---
@@ -45,7 +45,7 @@
 
 1. **설치** → `maru-deep-pro-search setup` → 사용 중인 에이전트(Cursor, Claude Code 등) **재시작**
 2. **일반 질문**(시세·추천·쇼핑) → 에이전트에게 평문으로 *「갤럭시 중고폰 최신 시세」* — 내부적으로 `answer`가 근거와 `[1]` 인용을 모읍니다
-3. **코드·보안·설계** → *「FastAPI vs Django 2025 아키텍처 비교」*처럼 기술·깊은 조사 — `deep_research`가 먼저 돌고(기본 **10개** 출처) 그다음 코드
+3. **코드·보안·설계** → *「FastAPI vs Django 2025 아키텍처 비교」*처럼 기술·깊은 조사 — `deep_research`가 먼저 돌고(기본 **30개** 출처 · 7서브쿼리) 그다음 코드
 4. **이미 쓰는 중** → `pip install -U maru-deep-pro-search` 후 `maru-deep-pro-search update --with-setup` (또는 `setup --repair`) → `setup --check`로 확인
 
 ---
@@ -123,7 +123,7 @@ maru-deep-pro-search setup --check    # 진단만
 작업 중인 저장소에 **프로젝트 전용** `.maru/knowledge.db`, `.maru/harness.yaml`, 선택적 `AGENTS.md`만 만들려면:
 
 ```bash
-maru-deep-pro-search-init
+maru-deep-pro-search init
 ```
 
 에이전트(MCP·규칙·스킬)는 **저장소 안에 쓰지 않습니다.** 각 개발 머신에서 한 번 `maru-deep-pro-search setup`으로 **전역(홈 등)** 에만 설정합니다. MCP와 동일한 단위입니다.
@@ -153,7 +153,8 @@ maru-deep-pro-search-init
 | **인용** | 네이티브 `[N]` | 있음 | 있음 |
 | **리서치 강제** | **3계층 기술 게이트** | ❌ | ❌ |
 | **프롬프트 인젝션 방어** | **72패턴 + 시맨틱** | 기본 | 기본 |
-| **에이전트 어댑터** | **20개** | 범용 | 범용 |
+| **에이전트 어댑터** | **21개** | 범용 | 범용 |
+| **딥리서치 UI** | **Trace·Insights·Clusters** | ❌ | ❌ |
 
 ---
 
@@ -164,7 +165,7 @@ maru-deep-pro-search-init
 | 툴 | 한 줄 설명 | 예시 질문 |
 |------|-----------|-----------|
 | `answer` | 일반 웹 질문 — 랭킹된 출처 + 인용 패킷 | 갤럭시 중고 시세, 추천 |
-| `deep_research` | 다중 엔진 깊은 조사(기본 10소스) + 선택 자동 페치 | 라이브러리 비교, CVE, 아키텍처 |
+| `deep_research` | 다중 엔진 깊은 조사(기본 30소스) + Trace·Insights·Clusters | 라이브러리 비교, CVE, 아키텍처 |
 | `fetch_page` | 찾은 URL 본문 읽기(정제·방어 적용) | 공식 문서 링크 하나만 열기 |
 
 아래 표는 **고급·진단** 툴입니다. 대부분의 작업은 위 세 가지와 에이전트 대화만으로 충분합니다.
@@ -208,7 +209,7 @@ maru-deep-pro-search-init
 사용자 요청?
 ├── 일반 웹 질문 / 최신 시세 / 추천? → answer(query, mode="balanced")
 ├── 코드 / 보안 / 아키텍처 / 깊은 조사? → deep_research(query, auto_fetch=3)
-│   ├── 기본 max_sources=10; 더 필요하면 max_sources만 올리기
+│   ├── 기본 max_sources=30; 빠른 작업은 10–15로 낮추기
     ├── 다각도 분석? → parallel_search
     ├── 특정 URL 읽기? → fetch_page / fetch_bulk
     ├── 사이트 차단? → stealthy_fetch (최후 수단)
@@ -219,7 +220,7 @@ maru-deep-pro-search-init
 
 ---
 
-## 🤖 20개 AI 에이전트 — 확장 메커니즘 매트릭스
+## 🤖 21개 AI 에이전트 — 확장 메커니즘 매트릭스
 
 한 번의 설정으로 모든 에이전트의 **확장 표면**에 리서치 우선 규칙을 주입합니다 — hooks, commands, plugins, cron, permissions 등.
 
@@ -265,8 +266,8 @@ MCP 클라이언트 (Claude, Cursor, Kimi, Windsurf, ...)
 ┌──────────────────────────────────────────────────────────────┐
 │  maru-deep-pro-search MCP 서버                               │
 │  ├─ 18개 툴 (검색, 페치, 인용, 검증, 인트로스펙션)           │
-│  ├─ 9엔진 폴오버 + RRF 융합 (기본 10소스, 짧고 빠른 응답)      │
-│  ├─ 하이브리드 랭킹 (BM25 + 시맨틱 + 권위/신선도)            │
+│  ├─ 9엔진 폴오버 + SERP 단위 RRF 융합 (기본 30소스 · 7서브쿼리) │
+│  ├─ 하이브리드 랭킹 (RRF + BM25 + 시맨틱 + 커버리지/접근성)   │
 │  ├─ 3계층 강제 + 리서치 품질 점수 (A-F)                        │
 │  ├─ 72시그니처 정제 + 제로폭 문자 방어                         │
 │  ├─ SQLite 지식 저장소 (정확일치 → FTS → 시맨틱)             │
@@ -306,14 +307,29 @@ SQLite 기반 연구 캐시 (`./.maru/knowledge.db`):
 ```markdown
 ## Research: FastAPI vs Django 2025
 _engines: duckduckgo_lite, bing, yahoo_
+quality: 87 (A)
+
+### Research Trace
+_deep research: 28 sources analyzed | 7 steps complete | 22 open-access candidates_
+1. Query intent normalized and expanded into 5 orthogonal searches
+2. 28 deduplicated sources analyzed across 3 engines
+...
+
+### Insights
+- [1] **FastAPI Documentation** (official docs) — FastAPI is a modern, high-performance web framework...
+- [2] **Django 5.1 Release Notes** (official docs) — Django 5.1 adds async ORM improvements...
+
+### Evidence Clusters
+- official docs: [1], [2] (avg coverage 82%)
+- community: [3], [4] (avg coverage 61%)
+
 ### Sources
 #### [1] FastAPI Documentation — fastapi.tiangolo.com
-_score: 0.92 | [OFFICIAL-DOCS] | engines: 2 | relevance: 0.89
-FastAPI is a modern, fast (high-performance) web framework for building APIs...
+_score: 0.92 | [OFFICIAL-DOCS] | engines: 2 | coverage: 0.89 | access: open
 
-#### [2] Django 5.1 Release Notes — docs.djangoproject.com
-_score: 0.88 | [OFFICIAL-DOCS] | engines: 2 | relevance: 0.85
-Django 5.1 adds async ORM improvements, simplified field choices, and...
+### Answer Blueprint
+- Start with a direct recommendation/answer in the first paragraph.
+- Primary anchors to cite first: [1], [2]
 ```
 </details>
 
@@ -446,6 +462,42 @@ docker run --rm -i maru-search
 # 지속적인 지식 저장소와 함께 실행
 docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search
 ```
+
+---
+
+## 🆕 v0.20.0 하이라이트
+
+- **Research Trace / Insights / Evidence Clusters / Answer Blueprint** — Perplexity Deep Research에 가까운 구조화 출력 (서버 LLM 없음)
+- **출처 품질 시그널** — `coverage`, `access`, `noise`, `missing` 메타가 랭킹·receipt·출력에 반영
+- **기본값 상향** — `deep_research` 30소스 · 7서브쿼리 · 엔진당 SERP 50 · `answer(deep)` 30소스/6 fetch
+- **SERP 단위 RRF + fuzzy dedupe** — 동일 엔진 중복·구매가이드 노이즈 감소
+- **Stress benchmark** — `MARU_BENCHMARK_SUITE=stress`로 한국어·Transformers·Apple Silicon 등 품질 스트레스 검증
+
+> **트레이드오프:** 다중 엔진 + 30소스는 품질이 올라가지만 응답 시간은 단일 엔진 대비 ~2배입니다. 빠른 작업은 `max_sources=10` 또는 `web_search`를 쓰세요.
+
+---
+
+## 🔍 검색 엔진 (9 + fetch)
+
+| 엔진 | 용도 |
+|------|------|
+| `duckduckgo_lite` | 기본 SERP (가벼움) |
+| `duckduckgo` | DDG 풀 버전 |
+| `bing`, `yahoo`, `google`, `ecosia` | 글로벌 폴오버 |
+| `naver`, `baidu` | 한·중 로케일 부스트 |
+| `startpage` | Playwright — `MARU_ENABLE_STARTPAGE=1`일 때만 자동 추천 |
+| `duckduckgo_fetch` | fetch 전용 (SERP 추천 제외) |
+
+---
+
+## 📊 벤치마크
+
+```bash
+uv run python benchmark/search_quality_benchmark.py
+MARU_BENCHMARK_SUITE=stress uv run python benchmark/search_quality_benchmark.py
+```
+
+다중 엔진 vs 단일 엔진 (TREC 표준, 10쿼리): Precision@5 **+86%** · NDCG@10 **+36%** · MRR **+25%**
 
 ---
 

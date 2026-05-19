@@ -8,6 +8,11 @@
 
 ## [Unreleased]
 
+## [0.22.2] - 2026-05-19
+
+### Fixed
+- **Codex `config.toml`** — `developer_instructions`를 파일 끝에 append하던 버그 수정. 마지막 TOML 테이블(예: `[tui.model_availability_nux]`) 안으로 들어가 Codex Desktop이 `expected u32` 파싱 오류를 내던 문제. 이제 첫 `[table]` 앞 루트에 삽입. nested 감지 시 `setup --repair`로 수리.
+
 ## [0.22.1] - 2026-05-19
 
 ### Added

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .agents.base import AgentAdapter
+from .agents.codex import CodexAdapter
 from .backup import read_json_safe, read_text_safe
 from .prompts import PROTOCOL_START_MARKER, text_has_research_protocol
 
@@ -79,9 +80,15 @@ def verify_adapter(adapter: AgentAdapter, scope: str = "user") -> dict[str, bool
         codex_config = Path.home() / ".codex" / "config.toml"
         agents = Path.home() / ".codex" / "AGENTS.md"
         text = read_text_safe(codex_config)
+        lines = text.splitlines() if text else []
+        first_table = CodexAdapter._first_table_header_index(lines)
+        root_text = "\n".join(lines[:first_table])
+        config_rules_ok = CodexAdapter.developer_instructions_at_root(lines) and (
+            PROTOCOL_START_MARKER in root_text
+        )
         return {
             "mcp": "[mcp_servers.maru-deep-pro-search]" in text,
-            "rules": rules_text_ok(read_text_safe(agents)) or (PROTOCOL_START_MARKER in text),
+            "rules": rules_text_ok(read_text_safe(agents)) or config_rules_ok,
         }
 
     if name == "kimi":

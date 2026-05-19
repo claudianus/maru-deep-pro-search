@@ -179,6 +179,37 @@ class CodexAdapter(AgentAdapter):
         return result
 
     @staticmethod
+    def _first_table_header_index(lines: list[str]) -> int:
+        """Index of the first TOML table header, or len(lines) if none."""
+        for i, line in enumerate(lines):
+            if line.strip().startswith("["):
+                return i
+        return len(lines)
+
+    @staticmethod
+    def _insert_root_block(lines: list[str], block: list[str]) -> list[str]:
+        """Insert *block* at root level (before the first ``[table]`` header)."""
+        idx = CodexAdapter._first_table_header_index(lines)
+        return lines[:idx] + block + lines[idx:]
+
+    @staticmethod
+    def _build_developer_instructions_block(
+        protocol: str, *, include_approval_policy: bool
+    ) -> list[str]:
+        block = ["", 'developer_instructions = """']
+        block.extend(protocol.strip().splitlines())
+        block.append('"""')
+        if include_approval_policy:
+            block.extend(
+                [
+                    "",
+                    "# Auto-approve MCP tool calls from maru-deep-pro-search",
+                    'approval_policy = "on-request"',
+                ]
+            )
+        return block
+
+    @staticmethod
     def _has_approval_policy(lines: list[str]) -> bool:
         for line in lines:
             stripped = line.strip()
@@ -191,7 +222,24 @@ class CodexAdapter(AgentAdapter):
         return any(line.strip().startswith("developer_instructions") for line in lines)
 
     @staticmethod
+    def developer_instructions_at_root(lines: list[str]) -> bool:
+        """True when ``developer_instructions`` sits before the first TOML table."""
+        first_table = CodexAdapter._first_table_header_index(lines)
+        return any(
+            line.strip().startswith("developer_instructions") for line in lines[:first_table]
+        )
+
+    @staticmethod
+    def has_nested_developer_instructions(lines: list[str]) -> bool:
+        """True when ``developer_instructions`` was appended inside a TOML table."""
+        return CodexAdapter._has_developer_instructions_key(
+            lines
+        ) and not CodexAdapter.developer_instructions_at_root(lines)
+
+    @staticmethod
     def _should_manage_developer_instructions(content: str, lines: list[str]) -> bool:
+        if CodexAdapter.has_nested_developer_instructions(lines):
+            return True
         if not CodexAdapter._has_developer_instructions_key(lines):
             return True
         return text_has_research_protocol(content) or PROTOCOL_START_MARKER in content
@@ -213,15 +261,11 @@ class CodexAdapter(AgentAdapter):
 
         if self._should_manage_developer_instructions(config_content, lines):
             lines = self._remove_developer_instructions(lines)
-            lines.append("")
-            lines.append('developer_instructions = """')
-            for rule_line in protocol.strip().splitlines():
-                lines.append(rule_line)
-            lines.append('"""')
-            if not self._has_approval_policy(lines):
-                lines.append("")
-                lines.append("# Auto-approve MCP tool calls from maru-deep-pro-search")
-                lines.append('approval_policy = "on-request"')
+            root_block = self._build_developer_instructions_block(
+                protocol,
+                include_approval_policy=not self._has_approval_policy(lines),
+            )
+            lines = self._insert_root_block(lines, root_block)
             write_text_safe(config_path, "\n".join(lines) + "\n")
 
         return True

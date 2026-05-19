@@ -8,6 +8,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- **`strip_existing_protocol`** — Cursor `maru-research-protocol.md`에서 마커 밖 `# maru-deep-pro-search Research Protocol` H1이 `setup`마다 중복 쌓이던 문제. 재주입 전 stale H1 제거.
+
 ## [0.22.3] - 2026-05-19
 
 ### Fixed

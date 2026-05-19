@@ -18,7 +18,7 @@
 
 <p align="center">
   <a href="https://claudianus.github.io/maru-deep-pro-search/">🌐 웹사이트</a> ·
-  <a href="https://claudianus.github.io/maru-deep-pro-search/#product-tour">📸 제품 투어</a> ·
+  <a href="https://claudianus.github.io/maru-deep-pro-search/#prompts">💬 복붙 프롬프트</a> ·
   <a href="https://pypi.org/project/maru-deep-pro-search/">📦 PyPI</a> ·
   <a href="https://github.com/claudianus/maru-deep-pro-search">💻 GitHub</a>
 </p>
@@ -37,7 +37,7 @@
 | **딥리서치 UI** | 없음 | **Trace · Insights · Clusters** |
 | **비용** | 변동 | **$0 · API 키 없음** |
 
-상세 스크린샷·플레이북·18툴 표·ENV 전체: **[GitHub Pages](https://claudianus.github.io/maru-deep-pro-search/)**
+바이브코더용 빠른 시작·복붙 프롬프트: **[GitHub Pages](https://claudianus.github.io/maru-deep-pro-search/)** · 18툴·ENV는 README
 
 ---
 

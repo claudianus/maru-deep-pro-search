@@ -13,17 +13,19 @@
 3. **Research Trace · Insights · Clusters** — 호스트 LLM이 종합할 구조화 패킷 (서버 LLM 없음).
 4. **9엔진 · P@5 +86%** — README/CHANGELOG 벤치 수치와 일치할 때만 사용.
 
-## IA (GitHub Pages)
+## IA (GitHub Pages) — vibecoder-first
 
-| 섹션 | 카피 담당 | 스크린샷 |
-|------|-----------|----------|
-| Hero | Brand | `@panel:tech_compare` (live HTML) |
-| Product tour | Product Mkt | 6 panels (trace, answer, signals, granite, warmup, compare) |
-| Compare | TPM | `compare_split`, `quality_signals` panels |
-| Playbook | UX | `korean_market` panel + synthesis 발췌 |
-| Install | UX | `setup_flow` panel |
-| OG / Twitter | Brand | `og-card@2x.png` only (Playwright) |
-| What's new | TPM | `embedding` |
+| 섹션 | 내용 |
+|------|------|
+| Hero | 한 줄 가치 · 「딥리서치 활용해」 |
+| #start | 3단계 (설치 → 재시작 → 프롬프트) |
+| #prompts | 복붙 프롬프트 + Copy 버튼 |
+| #demo | `korean_market` 패널 1장 (발췌) |
+| #install | curl 1줄 + details(Windows/수동) |
+| #more | README · agent_matrix · PyPI 링크 |
+| OG | `og-card@2x.png` (Playwright) |
+
+기술 섹션(투어·아키텍처·ENV·18툴 표)은 README로 이관.
 
 ## 금지
 

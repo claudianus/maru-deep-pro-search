@@ -18,7 +18,7 @@
 
 <p align="center">
   <a href="https://claudianus.github.io/maru-deep-pro-search/">🌐 Website</a> ·
-  <a href="https://claudianus.github.io/maru-deep-pro-search/#product-tour">📸 Product tour</a> ·
+  <a href="https://claudianus.github.io/maru-deep-pro-search/#prompts">💬 Copy-paste prompts</a> ·
   <a href="https://pypi.org/project/maru-deep-pro-search/">📦 PyPI</a> ·
   <a href="https://github.com/claudianus/maru-deep-pro-search">💻 GitHub</a>
 </p>
@@ -37,7 +37,7 @@
 | **Deep-research UI** | None | **Trace · Insights · Clusters** |
 | **Cost** | Varies | **$0 · no API keys** |
 
-Screenshots, playbook, full 18-tool table, ENV cheatsheet: **[GitHub Pages](https://claudianus.github.io/maru-deep-pro-search/)**
+Quick start & copy-paste prompts: **[GitHub Pages](https://claudianus.github.io/maru-deep-pro-search/)** · full tool/ENV tables in README
 
 ---
 

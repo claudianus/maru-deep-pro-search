@@ -63,6 +63,10 @@ def _read_fixture(fid: str) -> tuple[str, str]:
 def _inject(template: str, **slots: str) -> str:
     for key, val in slots.items():
         template = template.replace(f"{{{{{key}}}}}", val)
+    leftover = re.findall(r"\{\{(\w+)\}\}", template)
+    if leftover:
+        msg = ", ".join(sorted(set(leftover)))
+        raise ValueError(f"Unfilled template placeholders: {msg}")
     return template
 
 

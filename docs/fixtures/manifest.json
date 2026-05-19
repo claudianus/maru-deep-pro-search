@@ -1,69 +1,30 @@
 {
-  "captured_at": "2026-05-19T03:02:04.893298+00:00",
+  "captured_at": "2026-05-19T03:13:48.730711+00:00",
   "package_version": "0.22.1",
   "fixtures": [
     {
       "id": "tech_compare",
       "tool": "deep_research",
-      "query": "FastAPI vs Django 2026 architecture comparison",
+      "query": "Django vs FastAPI 2026 when to choose architecture comparison",
       "status": "ok",
-      "captured_at": "2026-05-19T03:01:44.794512+00:00",
+      "captured_at": "2026-05-19T03:13:37.582326+00:00",
       "package_version": "0.22.1",
       "raw_file": "raw/tech_compare.md",
       "synthesis_file": "synthesis/tech_compare.md",
-      "char_count": 4067,
-      "quality": "\u26ab F (36/100)_",
-      "engines": "duckduckgo_lite=16 bing=4 | sources: 20 | 4512ms | quality: \u26ab F (36/100)_"
-    },
-    {
-      "id": "korean_market",
-      "tool": "answer",
-      "query": "\uac24\ub7ed\uc2dc S24 \uc911\uace0 \uc2dc\uc138 \ucd94\ucc9c 2026",
-      "status": "ok",
-      "captured_at": "2026-05-19T03:02:04.828064+00:00",
-      "package_version": "0.22.1",
-      "raw_file": "raw/korean_market.md",
-      "synthesis_file": "synthesis/korean_market.md",
-      "char_count": 7059,
-      "quality": "\ud83d\udd34 D (43/100)_",
-      "engines": "duckduckgo_lite=7 naver=4 bing=2 | sources: 12 | 16648ms | quality: \ud83d\udd34 D (43/100)_"
-    },
-    {
-      "id": "security",
-      "tool": "deep_research",
-      "query": "CVE httpx python security advisory 2025",
-      "status": "ok",
-      "captured_at": "2026-05-19T03:02:04.829051+00:00",
-      "package_version": "0.22.1",
-      "raw_file": "raw/security.md",
-      "synthesis_file": "synthesis/security.md",
-      "char_count": 4067,
-      "quality": "\u26ab F (37/100)_",
-      "engines": "duckduckgo_lite=16 bing=3 | sources: 18 | 5751ms | quality: \u26ab F (37/100)_"
-    },
-    {
-      "id": "embedding",
-      "tool": "deep_research",
-      "query": "ibm-granite granite-embedding-97m-multilingual-r2 MTEB retrieval benchmark",
-      "status": "ok",
-      "captured_at": "2026-05-19T03:02:04.829644+00:00",
-      "package_version": "0.22.1",
-      "raw_file": "raw/embedding.md",
-      "synthesis_file": "synthesis/embedding.md",
-      "char_count": 4067,
-      "quality": "\u26ab F (37/100)_",
-      "engines": "duckduckgo_lite=14 bing=2 | sources: 16 | 14956ms | quality: \u26ab F (37/100)_"
+      "char_count": 10325,
+      "quality": "\u26ab F (32/100)_",
+      "engines": "duckduckgo_lite=16 bing=8 | sources: 24 | 4303ms | quality: \u26ab F (32/100)_"
     },
     {
       "id": "setup_flow",
       "tool": "cli",
       "query": "setup --check && warmup-embeddings -q",
       "status": "ok",
-      "captured_at": "2026-05-19T03:02:04.893257+00:00",
+      "captured_at": "2026-05-19T03:13:48.730676+00:00",
       "package_version": "0.22.1",
       "raw_file": "raw/setup_flow.md",
       "synthesis_file": "synthesis/setup_flow.md",
-      "char_count": 663
+      "char_count": 1367
     }
   ]
 }

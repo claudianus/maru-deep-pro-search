@@ -1,4 +1,4 @@
-## Synthesis: FastAPI vs Django 2026 architecture comparison
+## Synthesis: Django vs FastAPI 2026 when to choose architecture comparison
 
 _Host agent report — cites only sources from the MCP packet below._
 
@@ -8,16 +8,19 @@ _Host agent report — cites only sources from the MCP packet below._
 
 ### Sources used
 
-- [1] FastAPI vs Express Performance Test - GitHub **[HIGH]**
-- [2] FastAPI **[HIGH]**
-- [3] Testing - FastAPI **[HI
+- [1] Performance and optimization | Django documentation **[HIGH]**
+- [2] Django  documentation |  Django  documentation **[HIGH]**
+- [3] Performance, load and stress testing in Django - Stack Overflow **[HIGH]**
+- [4] FastAPI vs Django vs Flask in 2026: Choosing the Right Python Web Framework
+- [5] Django vs. FastAPI for SaaS in 2026: When to Choose Each (With ... - Medium
+- [6] Django vs FastAPI: When to Use Each in 2026 - Codism
 
 ### Key evidence
 
-- FastAPI
-- How to Build a REST API in 10 Minutes with  FastAPI  (2025 Guide)
-- FastAPI  -  Wikipedia
-- FastAPI  Tutorial - Online Tutorials Library
+- Django  documentation |  Django  documentation
+- What is  Django  (Python)? - learndjango.com
+- Free  Django Tutorials  | LearnDjango.com
+- Django (web framework ) - Wikipedia
 
 ### Next steps
 

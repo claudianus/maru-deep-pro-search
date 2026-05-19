@@ -13,17 +13,20 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURES_RAW = ROOT / "docs" / "fixtures" / "raw"
-FIXTURES_SYN = ROOT / "docs" / "fixtures" / "synthesis"
-MANIFEST_PATH = ROOT / "docs" / "fixtures" / "manifest.json"
+FIXTURES_RAW = (ROOT / "docs" / "fixtures" / "raw").resolve()
+FIXTURES_SYN = (ROOT / "docs" / "fixtures" / "synthesis").resolve()
+MANIFEST_PATH = (ROOT / "docs" / "fixtures" / "manifest.json").resolve()
 
 # Allow running without package install
 sys.path.insert(0, str(ROOT / "src"))
@@ -43,8 +46,8 @@ SPECS: list[FixtureSpec] = [
     FixtureSpec(
         id="tech_compare",
         tool="deep_research",
-        query="FastAPI vs Django 2026 architecture comparison",
-        kwargs={"max_sources": 20, "expand_queries": True},
+        query="Django vs FastAPI 2026 when to choose architecture comparison",
+        kwargs={"max_sources": 24, "expand_queries": True},
     ),
     FixtureSpec(
         id="korean_market",
@@ -173,13 +176,29 @@ async def _capture_tool(spec: FixtureSpec) -> str:
     raise ValueError(f"Unknown tool: {spec.tool}")
 
 
+def _sanitize_cli_output(text: str) -> str:
+    return re.sub(r"/Users/[^/\s]+/", "/home/user/", text)
+
+
+@contextmanager
+def _isolated_maru_cwd():
+    prev = os.getcwd()
+    tmp = tempfile.mkdtemp(prefix="maru-fixture-")
+    try:
+        os.chdir(tmp)
+        yield
+    finally:
+        os.chdir(prev)
+
+
 def _capture_cli(spec: FixtureSpec) -> str:
     py = sys.executable
-    setup_main = str(ROOT / "src" / "maru_deep_pro_search" / "cli" / "setup.py")
+    env = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
     chunks: list[str] = ["# CLI: setup check + embedding warmup", ""]
+    failures = 0
     for args in (["setup", "--check"], ["warmup-embeddings", "-q"]):
-        cmd = [py, setup_main, *args]
-        chunks.append(f"```bash\n$ {' '.join(args)}\n```")
+        cmd = [py, "-m", "maru_deep_pro_search.cli.setup", *args]
+        chunks.append(f"```bash\n$ maru-deep-pro-search {' '.join(args)}\n```")
         chunks.append("")
         try:
             proc = subprocess.run(
@@ -188,25 +207,26 @@ def _capture_cli(spec: FixtureSpec) -> str:
                 text=True,
                 timeout=600,
                 cwd=str(ROOT),
+                env=env,
             )
-            out = (proc.stdout or "") + (proc.stderr or "")
+            out = _sanitize_cli_output((proc.stdout or "") + (proc.stderr or ""))
+            if "Traceback" in out or not out.strip():
+                failures += 1
             chunks.append("```text")
             chunks.append(out.strip() or "(no output)")
             chunks.append("```")
         except subprocess.TimeoutExpired:
+            failures += 1
             chunks.append("```text\n(timeout)\n```")
         chunks.append("")
+    if failures:
+        raise RuntimeError(f"CLI capture failed for {failures} command(s)")
     return "\n".join(chunks)
 
 
 async def capture_all(only: set[str] | None = None) -> dict[str, object]:
     FIXTURES_RAW.mkdir(parents=True, exist_ok=True)
     FIXTURES_SYN.mkdir(parents=True, exist_ok=True)
-
-    from maru_deep_pro_search.utils.cache import get_fetch_cache, get_search_cache
-
-    get_search_cache().clear()
-    get_fetch_cache().clear()
 
     entries: list[dict[str, object]] = []
     for spec in SPECS:
@@ -217,7 +237,12 @@ async def capture_all(only: set[str] | None = None) -> dict[str, object]:
             if spec.tool == "cli":
                 raw = _capture_cli(spec)
             else:
-                raw = await _capture_tool(spec)
+                from maru_deep_pro_search.utils.cache import get_fetch_cache, get_search_cache
+
+                with _isolated_maru_cwd():
+                    get_search_cache().clear()
+                    get_fetch_cache().clear()
+                    raw = await _capture_tool(spec)
             status = "ok"
         except Exception as exc:
             raw = f"## Capture failed\n\n{exc}"

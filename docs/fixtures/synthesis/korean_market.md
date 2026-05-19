@@ -18,9 +18,9 @@ _Host agent report — cites only sources from the MCP packet below._
 ### Key evidence
 
 - 갤럭시 S24
-- 갤럭시-s24-중고가격-지금이-구매-최적기인-이유-3가지
-- 중고-갤럭시-s24-구매-가이드-안전하고-현명한-선택을
-- 갤럭시-s24-중고가격-가장-비싸게-파는-방법-5단계-전략
+- 2025 갤럭시 중고폰 시세 총정리 (S24 포함)
+- 중고 갤럭시 S24 구매 가이드
+- 갤럭시 S24 중고 시세 — 최신 평균가
 
 ### Next steps
 

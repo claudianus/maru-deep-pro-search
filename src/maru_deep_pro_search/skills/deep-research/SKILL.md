@@ -28,7 +28,7 @@ triggers:
 result = await deep_research(
     query="FastAPI rate limiting middleware best practices",  # be specific
     engine="auto",           # auto = multi-engine failover
-    max_sources=10,          # 5-10 for most tasks
+    max_sources=30,          # server default; use 10-15 for fast/narrow tasks
     expand_queries=True,     # True for broad topics
 )
 ```
@@ -51,7 +51,7 @@ For ordinary user searches like "갤럭시 중고폰 최신 시세 추천", pref
 
 ## Performance
 
-Multi-engine deep_research is slower than single `web_search` but ranks sources better; use `max_sources=10` by default.
+Multi-engine deep_research is slower than single `web_search` but ranks sources better; server default is 30 sources — lower to 10–15 when latency matters.
 
 ## Anti-Patterns
 

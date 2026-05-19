@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="theme-color" content="#042f2e">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>maru-deep-pro-search — Cursor에 붙이는 무료 딥리서치</title>
 <meta name="description" content="API 키 없이 Cursor·Claude Code에 붙는 무료 MCP. 설치 한 줄, 채팅에 「딥리서치 활용해」만 넣어도 웹 조사부터 시작.">
 <link rel="canonical" href="https://claudianus.github.io/maru-deep-pro-search/">
@@ -11,347 +11,628 @@
 <meta property="og:description" content="설치 한 줄. 채팅에 「딥리서치 활용해」— 코딩 전에 웹부터 보도록. API 키 $0.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://claudianus.github.io/maru-deep-pro-search/">
-<meta property="og:locale" content="ko_KR">
-<meta property="og:locale:alternate" content="en_US">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="maru-deep-pro-search">
-<meta name="twitter:description" content="One-line install. Tell your agent to use deep research. Free, no API keys.">
 <meta property="og:image" content="https://claudianus.github.io/maru-deep-pro-search/assets/screenshots/og-card@2x.png">
-<meta name="twitter:image" content="https://claudianus.github.io/maru-deep-pro-search/assets/screenshots/og-card@2x.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔍%3C/text%3E%3C/svg%3E">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "maru-deep-pro-search",
-  "description": "Free MCP for coding agents: multi-engine web research with citations. No API keys.",
-  "applicationCategory": "DeveloperApplication",
-  "softwareVersion": "0.22.3",
-  "license": "https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE",
-  "codeRepository": "https://github.com/claudianus/maru-deep-pro-search",
-  "downloadUrl": "https://pypi.org/project/maru-deep-pro-search/",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
-}
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+KR:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link rel="stylesheet" href="maru-tailwind.css">
-<link rel="stylesheet" href="assets/marketing/panels.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+/* ── Design tokens (clarity · restraint · depth) ── */
+:root {
+  --bg: #000000;
+  --bg-elevated: #0a0a0c;
+  --surface: rgba(255,255,255,0.04);
+  --surface-hover: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.12);
+  --text: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-tertiary: #6e6e73;
+  --accent: #30d5c8;
+  --accent-dim: rgba(48,213,200,0.15);
+  --accent-glow: rgba(48,213,200,0.35);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --page-pad: clamp(1rem, 4vw, 2.5rem);
+  --page-max: min(68rem, calc(100vw - var(--page-pad) * 2));
+  --section-gap: clamp(4rem, 10vw, 7rem);
+  --nav-h: 3.25rem;
+  font-size: clamp(15px, 0.9rem + 0.2vw, 17px);
+}
+@media (min-width: 1920px) {
+  :root {
+    --page-max: min(80rem, calc(100vw - 8rem));
+    font-size: 18px;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  margin: 0;
+  font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
 .hidden { display: none !important; }
-body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; color: #e2e8f0; overflow-x: hidden; }
-.particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-.glass { background: rgba(18,18,26,0.75); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
-.glass-card { background: rgba(26,26,46,0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); transition: border-color 0.2s, transform 0.2s; }
-.glass-card:hover { border-color: rgba(20,184,166,0.25); transform: translateY(-2px); }
-.gradient-text { background: linear-gradient(135deg, #2dd4bf, #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
-.code-block pre { overflow-x: auto; white-space: pre-wrap; word-break: break-word; padding: 1rem; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; color: #cbd5e1; }
-.scroll-reveal { opacity: 0; transform: translateY(24px); transition: all 0.6s ease; }
-.scroll-reveal.visible { opacity: 1; transform: none; }
-.prompt-chip { font-size: 1.05rem; line-height: 1.6; color: #f1f5f9; }
-.copy-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
-.copy-row:last-child { border-bottom: none; }
-.shot-frame { border: 1px solid rgba(255,255,255,.08); border-radius: 12px; overflow: hidden; background: #0d1117; }
-.shot-frame.mcp-demo-host { padding: 0; }
-.shot-caption { font-size: 11px; color: #64748b; padding: 8px 12px; border-top: 1px solid rgba(255,255,255,.06); }
-.step-num { width: 2.5rem; height: 2.5rem; border-radius: 9999px; background: rgba(20,184,166,0.15); color: #2dd4bf; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* Ambient */
+.ambient {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(48,213,200,0.12), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 50%, rgba(14,165,233,0.06), transparent 50%),
+    var(--bg);
+}
+
+/* Layout */
+.page { position: relative; z-index: 1; }
+.wrap { width: 100%; max-width: var(--page-max); margin-inline: auto; padding-inline: var(--page-pad); }
+.section { padding-block: var(--section-gap); }
+.section-label {
+  font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 0.75rem;
+}
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
+h1 { font-size: clamp(2.25rem, 5vw + 1rem, 4.25rem); font-weight: 700; }
+h2 { font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); }
+.lead {
+  font-size: clamp(1.0625rem, 1.5vw + 0.5rem, 1.3125rem);
+  color: var(--text-secondary); line-height: 1.55; max-width: 36em;
+}
+.lead strong { color: var(--text); font-weight: 600; }
+.accent-word {
+  background: linear-gradient(135deg, #5eead4 0%, #38bdf8 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+/* Nav */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--nav-h);
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  height: 100%; max-width: var(--page-max); margin-inline: auto;
+  padding-inline: var(--page-pad);
+  display: flex; align-items: center; gap: 1rem;
+}
+.nav-brand {
+  font-size: 0.8125rem; font-weight: 600; letter-spacing: -0.02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: min(12rem, 40vw);
+}
+@media (min-width: 480px) { .nav-brand { max-width: none; } }
+.nav-links {
+  display: none; align-items: center; gap: clamp(1rem, 3vw, 2rem);
+  margin-left: auto; font-size: 0.875rem; color: var(--text-secondary);
+}
+.nav-links a:hover { color: var(--text); }
+.nav-links a.nav-cta { color: var(--accent); font-weight: 500; }
+@media (min-width: 768px) { .nav-links { display: flex; } }
+.nav-actions { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+@media (min-width: 768px) { .nav-actions { margin-left: 0; } }
+.lang-btn {
+  font-size: 0.6875rem; font-weight: 500; padding: 0.35rem 0.65rem;
+  border-radius: 999px; border: 1px solid var(--border); color: var(--text-secondary);
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+.lang-btn:hover { border-color: var(--border-strong); color: var(--text); }
+.menu-btn {
+  display: flex; width: 2.5rem; height: 2.5rem; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
+}
+@media (min-width: 768px) { .menu-btn { display: none; } }
+.mobile-drawer {
+  display: none; position: fixed; top: var(--nav-h); left: 0; right: 0; z-index: 99;
+  background: rgba(0,0,0,0.95); backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border); padding: 1rem var(--page-pad) 1.5rem;
+  flex-direction: column; gap: 0.25rem;
+}
+.mobile-drawer.open { display: flex; }
+.mobile-drawer a {
+  padding: 0.875rem 0; font-size: 1.125rem; font-weight: 500;
+  border-bottom: 1px solid var(--border);
+}
+.mobile-drawer a:last-child { border-bottom: none; }
+
+/* Hero */
+.hero {
+  min-height: 100svh; min-height: 100dvh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding-top: calc(var(--nav-h) + 2rem); padding-bottom: 3rem;
+  text-align: center;
+}
+.hero .wrap { display: flex; flex-direction: column; align-items: center; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.4rem 0.9rem; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border);
+  font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1.75rem;
+}
+.hero-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 12px var(--accent-glow);
+}
+.hero h1 { margin-bottom: 1.25rem; max-width: 14ch; }
+.hero .lead { margin-inline: auto; margin-bottom: 2.5rem; text-align: center; }
+.hero-cta { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 20rem; }
+@media (min-width: 480px) {
+  .hero-cta { flex-direction: row; max-width: none; justify-content: center; }
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 0.875rem 1.5rem; border-radius: 980px; font-size: 1rem; font-weight: 500;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary {
+  background: var(--text); color: var(--bg);
+  box-shadow: 0 4px 24px rgba(255,255,255,0.12);
+}
+.btn-primary:hover { box-shadow: 0 8px 32px rgba(255,255,255,0.18); }
+.btn-secondary {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+}
+.btn-secondary:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+.hero-meta { margin-top: 2.5rem; font-size: 0.75rem; color: var(--text-tertiary); }
+
+/* Steps */
+.steps { list-style: none; padding: 0; margin: 2.5rem 0 0; display: flex; flex-direction: column; gap: 1rem; }
+.step-card {
+  display: flex; gap: 1.25rem; align-items: flex-start;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-radius: var(--radius-lg);
+  background: var(--surface); border: 1px solid var(--border);
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+}
+.step-card:hover { border-color: var(--border-strong); background: var(--surface-hover); }
+.step-num {
+  flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8125rem; font-weight: 700; color: var(--accent);
+  background: var(--accent-dim);
+}
+.step-card h3 { font-size: 1.0625rem; margin-bottom: 0.35rem; }
+.step-card p { margin: 0; font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.5; }
+.step-card code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.8125em;
+  color: var(--accent); background: var(--accent-dim); padding: 0.1em 0.35em; border-radius: 4px;
+}
+
+/* Prompts */
+.prompt-panel {
+  border-radius: var(--radius-lg); overflow: hidden;
+  border: 1px solid var(--border); background: var(--bg-elevated);
+  margin-top: 2rem;
+}
+.prompt-row {
+  display: flex; align-items: center; gap: 1rem;
+  padding: clamp(1rem, 2.5vw, 1.25rem) clamp(1rem, 3vw, 1.5rem);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s var(--ease);
+}
+.prompt-row:last-child { border-bottom: none; }
+.prompt-row:hover { background: var(--surface); }
+.prompt-row.featured { background: var(--accent-dim); }
+.prompt-text {
+  flex: 1; font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+  line-height: 1.45; min-width: 0;
+}
+.copy-btn {
+  flex-shrink: 0; width: 2.25rem; height: 2.25rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-tertiary); border: 1px solid transparent;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+.copy-btn:hover { color: var(--accent); background: var(--accent-dim); border-color: var(--border); }
+.tip-card {
+  margin-top: 1.5rem; padding: 1.25rem 1.5rem; border-radius: var(--radius-md);
+  border: 1px solid rgba(251,191,36,0.2); background: rgba(251,191,36,0.06);
+  font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.55;
+}
+.tip-card strong { color: #fcd34d; font-weight: 600; }
+
+/* Demo window */
+.demo-section { text-align: center; }
+.demo-section .lead { margin-inline: auto; margin-bottom: 2rem; }
+.demo-window {
+  text-align: left; border-radius: var(--radius-xl);
+  border: 1px solid var(--border-strong);
+  background: #0d0d0f;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03) inset,
+    0 40px 80px -20px rgba(0,0,0,0.8),
+    0 0 120px -40px var(--accent-glow);
+  overflow: hidden; max-width: 56rem; margin-inline: auto;
+}
+.demo-chrome {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1rem; background: #161618; border-bottom: 1px solid var(--border);
+}
+.demo-dot { width: 10px; height: 10px; border-radius: 50%; }
+.demo-dot.r { background: #ff5f57; } .demo-dot.y { background: #febc2e; } .demo-dot.g { background: #28c840; }
+.demo-title { flex: 1; text-align: center; font-size: 0.75rem; color: var(--text-tertiary); font-weight: 500; }
+.demo-body { padding: 0; }
+.demo-user {
+  padding: 1rem clamp(1rem, 3vw, 1.5rem);
+  font-size: clamp(0.875rem, 2vw, 1rem); color: var(--text);
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.demo-user::before { content: 'You · '; color: var(--text-tertiary); font-weight: 500; }
+.demo-tool { margin: clamp(0.75rem, 2vw, 1rem); }
+.demo-tool-hdr {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.75rem; background: #1c1c1e; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border: 1px solid var(--border); border-bottom: none;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6875rem; color: var(--text-tertiary);
+}
+.demo-tool-hdr strong { color: var(--accent); font-weight: 500; }
+.demo-tool-body {
+  padding: clamp(0.875rem, 2vw, 1.125rem);
+  border: 1px solid var(--border); border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace; font-size: clamp(0.6875rem, 1.5vw, 0.75rem);
+  line-height: 1.55; color: #c8c8cc; max-height: min(420px, 55vh); overflow-y: auto;
+}
+.demo-tool-body .h2 { color: #5eead4; font-weight: 600; margin-bottom: 0.75rem; font-size: 0.8125rem; }
+.demo-tool-body .h3 { color: #7dd3fc; margin: 0.75rem 0 0.35rem; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.demo-tool-body .meta { color: #6e6e73; font-size: 0.625rem; margin-bottom: 0.5rem; }
+.demo-tool-body .li { margin: 0.25rem 0; padding-left: 0; }
+.demo-tool-body .p { margin: 0.35rem 0; }
+.demo-caption {
+  margin-top: 1rem; font-size: 0.8125rem; color: var(--text-tertiary);
+}
+@media (min-width: 768px) {
+  .demo-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .demo-user { grid-column: 1 / -1; }
+}
+
+/* Install */
+.install-block {
+  margin-top: 2rem; border-radius: var(--radius-lg); overflow: hidden;
+  border: 1px solid var(--border); background: #0d0d0f;
+}
+.install-hdr {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.75rem 1rem; border-bottom: 1px solid var(--border);
+  font-size: 0.75rem; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace;
+}
+.install-pre {
+  margin: 0; padding: clamp(1rem, 3vw, 1.25rem);
+  font-family: 'JetBrains Mono', monospace; font-size: clamp(0.75rem, 2vw, 0.875rem);
+  line-height: 1.6; color: #d4d4d8; overflow-x: auto; word-break: break-all;
+}
+details.install-more {
+  margin-top: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border);
+  background: var(--surface);
+}
+details.install-more summary {
+  padding: 1rem 1.25rem; cursor: pointer; color: var(--text-secondary); font-size: 0.9375rem;
+  list-style: none;
+}
+details.install-more summary::-webkit-details-marker { display: none; }
+details.install-more[open] summary { border-bottom: 1px solid var(--border); }
+.install-more-body { padding: 1rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-tertiary); line-height: 1.7; }
+
+/* More + footer */
+.link-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.25rem 2rem; margin-top: 1.5rem; }
+.link-row a { font-size: 0.9375rem; color: var(--text-secondary); transition: color 0.2s; }
+.link-row a:hover { color: var(--accent); }
+.link-row a:first-child { color: var(--accent); }
+.site-footer {
+  padding: 2.5rem var(--page-pad) calc(2.5rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border); text-align: center;
+}
+.footer-row {
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+  font-size: 0.875rem; color: var(--text-tertiary);
+}
+@media (min-width: 640px) {
+  .footer-row { flex-direction: row; justify-content: space-between; max-width: var(--page-max); margin-inline: auto; width: 100%; }
+}
+.footer-legal { margin-top: 1.25rem; font-size: 0.75rem; color: #424245; }
+
+/* Motion */
+.scroll-in {
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+}
+.scroll-in.visible { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
-  .scroll-reveal { opacity: 1; transform: none; transition: none; }
-  #particles { display: none; }
+  .scroll-in { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
 }
 </style>
 </head>
 <body>
+<div class="ambient" aria-hidden="true"></div>
 
-<canvas id="particles" class="particles" aria-hidden="true"></canvas>
-
-<nav class="fixed top-0 w-full z-50 glass border-b border-white/[0.04]">
-  <div class="max-w-3xl mx-auto px-4 flex items-center min-h-14 gap-3">
-    <span class="font-bold text-base shrink-0">maru-deep-pro-search</span>
-    <button type="button" onclick="toggleLang()" class="text-[10px] px-2 py-0.5 rounded-full glass text-maru-300 shrink-0" aria-label="Switch language">EN / KO</button>
-    <div class="ml-auto flex gap-4 text-sm text-gray-400">
-      <a href="#start" class="hover:text-white transition"><span class="ko">시작</span><span class="en hidden">Start</span></a>
-      <a href="#prompts" class="text-maru-300 hover:text-maru-200 transition font-medium"><span class="ko">프롬프트</span><span class="en hidden">Prompts</span></a>
-      <a href="#install" class="hover:text-white transition"><span class="ko">설치</span><span class="en hidden">Install</span></a>
-      <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" rel="noopener" class="hover:text-white transition">GitHub</a>
+<header class="nav" role="banner">
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">maru-deep-pro-search</a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#start"><span class="ko">시작</span><span class="en hidden">Start</span></a>
+      <a href="#prompts" class="nav-cta"><span class="ko">프롬프트</span><span class="en hidden">Prompts</span></a>
+      <a href="#demo"><span class="ko">예시</span><span class="en hidden">Demo</span></a>
+      <a href="#install"><span class="ko">설치</span><span class="en hidden">Install</span></a>
+      <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <div class="nav-actions">
+      <button type="button" class="lang-btn" onclick="toggleLang()" aria-label="Switch language">EN / KO</button>
+      <button type="button" class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="mobileNav" aria-label="Menu">
+        <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true"><path d="M0 1h18M0 7h18M0 13h18" stroke="currentColor" stroke-width="1.5"/></svg>
+      </button>
     </div>
   </div>
-</nav>
+  <nav id="mobileNav" class="mobile-drawer" aria-label="Mobile">
+    <a href="#start" class="mobile-link"><span class="ko">시작</span><span class="en hidden">Start</span></a>
+    <a href="#prompts" class="mobile-link"><span class="ko">프롬프트</span><span class="en hidden">Prompts</span></a>
+    <a href="#demo" class="mobile-link"><span class="ko">예시</span><span class="en hidden">Demo</span></a>
+    <a href="#install" class="mobile-link"><span class="ko">설치</span><span class="en hidden">Install</span></a>
+    <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
 
-<!-- Hero -->
-<section class="relative min-h-[85vh] flex items-center justify-center pt-20 pb-16">
-  <div class="relative z-10 max-w-2xl mx-auto px-4 text-center">
-    <p class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-maru-300 text-sm mb-6">
-      <span class="w-2 h-2 rounded-full bg-maru-400"></span>
-      <span class="ko">무료 · API 키 없음 · Cursor / Claude Code</span>
-      <span class="en hidden">Free · no API keys · Cursor / Claude Code</span>
-    </p>
-    <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-5 leading-tight">
-      <span class="ko">코딩하기 전에<br><span class="gradient-text">웹부터 보라</span>고 붙이기</span>
-      <span class="en hidden">Make your agent<br><span class="gradient-text">search the web first</span></span>
-    </h1>
-    <p class="text-lg text-gray-400 mb-8 leading-relaxed max-w-xl mx-auto">
-      <span class="ko">설치 스크립트 한 번 → 에이전트 재시작 → 채팅에 <strong class="text-white">「딥리서치 활용해」</strong> 정도면 됩니다. RRF·BM25 같은 건 몰라도 돼요.</span>
-      <span class="en hidden">Run the install script → restart your agent → type <strong class="text-white">“use deep research”</strong> in chat. No PhD required.</span>
-    </p>
-    <div class="flex flex-col sm:flex-row gap-3 justify-center">
-      <a href="#install" class="px-7 py-3.5 rounded-xl bg-gradient-to-r from-maru-600 to-maru-500 text-white font-bold hover:shadow-lg hover:shadow-maru-500/25 transition">
-        <i class="fas fa-download mr-2"></i><span class="ko">1줄 설치</span><span class="en hidden">Install</span>
-      </a>
-      <a href="#prompts" class="px-7 py-3.5 rounded-xl glass text-maru-200 font-semibold border border-maru-500/30 hover:bg-maru-500/10 transition">
-        <i class="fas fa-comment-dots mr-2"></i><span class="ko">복붙 프롬프트</span><span class="en hidden">Copy prompts</span>
-      </a>
+<main class="page">
+  <section class="hero section">
+    <div class="wrap">
+      <p class="hero-badge scroll-in">
+        <span class="ko">무료 · API 키 없음</span>
+        <span class="en hidden">Free · no API keys</span>
+      </p>
+      <h1 class="scroll-in">
+        <span class="ko">코딩 전에<br><span class="accent-word">웹부터</span> 보라</span>
+        <span class="en hidden">Search the web<br><span class="accent-word">before</span> you code</span>
+      </h1>
+      <p class="lead scroll-in">
+        <span class="ko">설치 한 줄. Cursor 재시작. 채팅에 <strong>「딥리서치 활용해」</strong> — 끝.</span>
+        <span class="en hidden">One-line install. Restart Cursor. Type <strong>“use deep research”</strong> — done.</span>
+      </p>
+      <div class="hero-cta scroll-in">
+        <a href="#install" class="btn btn-primary"><span class="ko">설치하기</span><span class="en hidden">Install</span></a>
+        <a href="#prompts" class="btn btn-secondary"><span class="ko">프롬프트 복사</span><span class="en hidden">Copy prompts</span></a>
+      </div>
+      <p class="hero-meta scroll-in">v0.22.3 · Cursor · Claude Code · 21 agents</p>
     </div>
-    <p class="mt-8 text-xs text-gray-600">v0.22.3</p>
-  </div>
-</section>
+  </section>
 
-<!-- 3 steps -->
-<section id="start" class="py-20 relative border-t border-white/[0.04]">
-  <div class="max-w-2xl mx-auto px-4">
-    <h2 class="text-2xl md:text-3xl font-bold text-center mb-10 scroll-reveal">
-      <span class="ko">이렇게만 하면 끝</span>
-      <span class="en hidden">Three steps</span>
-    </h2>
-    <ol class="space-y-6 scroll-reveal">
-      <li class="glass-card rounded-2xl p-5 flex gap-4">
-        <span class="step-num">1</span>
-        <div>
-          <h3 class="font-bold text-white mb-1"><span class="ko">터미널에 붙여넣기</span><span class="en hidden">Paste in terminal</span></h3>
-          <p class="text-gray-400 text-sm"><span class="ko">아래 설치 명령 한 줄. 끝나면 Cursor(또는 쓰는 에이전트)를 <strong class="text-gray-200">완전히 껐다 켜기</strong>.</span><span class="en hidden">Run the one-liner below, then <strong class="text-gray-200">fully restart</strong> Cursor (or your agent).</span></p>
-        </div>
-      </li>
-      <li class="glass-card rounded-2xl p-5 flex gap-4">
-        <span class="step-num">2</span>
-        <div>
-          <h3 class="font-bold text-white mb-1"><span class="ko">채팅에 한 줄</span><span class="en hidden">One line in chat</span></h3>
-          <p class="text-gray-400 text-sm"><span class="ko">예: <code class="text-maru-300">딥리서치 활용해</code> · <code class="text-maru-300">코드 짜기 전에 웹에서 최신 거 찾아</code></span><span class="en hidden">e.g. <code class="text-maru-300">use deep research</code> · <code class="text-maru-300">search the web before you code</code></span></p>
-        </div>
-      </li>
-      <li class="glass-card rounded-2xl p-5 flex gap-4">
-        <span class="step-num">3</span>
-        <div>
-          <h3 class="font-bold text-white mb-1"><span class="ko">평소처럼 시키기</span><span class="en hidden">Ask normally</span></h3>
-          <p class="text-gray-400 text-sm"><span class="ko">「FastAPI 스트리밍 끊김 고쳐줘」「이 CVE 진짜야?」처럼 말하면 알아서 웹 조사 후 답합니다. 출처는 [1] [2]로 붙어요.</span><span class="en hidden">“Fix my FastAPI stream” or “Is this CVE real?” — it researches first and cites with [1] [2].</span></p>
-        </div>
-      </li>
-    </ol>
-  </div>
-</section>
+  <section id="start" class="section">
+    <div class="wrap">
+      <p class="section-label scroll-in"><span class="ko">시작</span><span class="en hidden">Start</span></p>
+      <h2 class="scroll-in"><span class="ko">세 단계.</span><span class="en hidden">Three steps.</span></h2>
+      <ol class="steps">
+        <li class="step-card scroll-in">
+          <span class="step-num" aria-hidden="true">1</span>
+          <div>
+            <h3><span class="ko">설치</span><span class="en hidden">Install</span></h3>
+            <p><span class="ko">터미널에 curl 한 줄. 끝나면 에이전트 <strong>완전 종료 후 재실행</strong>.</span><span class="en hidden">Paste the curl one-liner. Then <strong>fully quit and reopen</strong> your agent.</span></p>
+          </div>
+        </li>
+        <li class="step-card scroll-in">
+          <span class="step-num" aria-hidden="true">2</span>
+          <div>
+            <h3><span class="ko">한 줄 규칙</span><span class="en hidden">One rule</span></h3>
+            <p><span class="ko"><code>딥리서치 활용해</code> — User Rules나 첫 메시지에 붙여넣기.</span><span class="en hidden"><code>use deep research</code> — paste into User Rules or your first message.</span></p>
+          </div>
+        </li>
+        <li class="step-card scroll-in">
+          <span class="step-num" aria-hidden="true">3</span>
+          <div>
+            <h3><span class="ko">개발 질문 던지기</span><span class="en hidden">Ask dev questions</span></h3>
+            <p><span class="ko">버전·스택·에러만 말하면 됩니다. 출처는 <code>[1]</code> <code>[2]</code>로 붙어요.</span><span class="en hidden">Mention version, stack, error. Citations show up as <code>[1]</code> <code>[2]</code>.</span></p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
 
-<!-- Prompts -->
-<section id="prompts" class="py-20 relative">
-  <div class="max-w-2xl mx-auto px-4">
-    <h2 class="text-2xl md:text-3xl font-bold text-center mb-2 scroll-reveal">
-      <span class="ko"><span class="gradient-text">복붙</span> 프롬프트</span>
-      <span class="en hidden"><span class="gradient-text">Copy-paste</span> prompts</span>
-    </h2>
-    <p class="text-center text-gray-500 text-sm mb-8 scroll-reveal">
-      <span class="ko">규칙·User Rules·첫 메시지 어디든 OK. 길게 쓸 필요 없음.</span>
-      <span class="en hidden">Rules, user rules, or first message — keep it short.</span>
-    </p>
-
-    <div class="glass rounded-2xl overflow-hidden mb-6 scroll-reveal" id="prompt-list">
-      <div class="copy-row bg-maru-950/30">
-        <p class="prompt-chip ko">딥리서치 활용해</p>
-        <p class="prompt-chip en hidden">Use deep research</p>
-        <button type="button" onclick="copyText(this)" class="text-xs text-gray-500 hover:text-maru-300 shrink-0" aria-label="Copy"><i class="far fa-copy"></i></button>
+  <section id="prompts" class="section">
+    <div class="wrap">
+      <p class="section-label scroll-in"><span class="ko">프롬프트</span><span class="en hidden">Prompts</span></p>
+      <h2 class="scroll-in"><span class="ko">복붙만 하세요.</span><span class="en hidden">Copy. Paste. Ship.</span></h2>
+      <p class="lead scroll-in" style="margin-top:0.75rem">
+        <span class="ko">길게 쓸 필요 없습니다.</span>
+        <span class="en hidden">Keep it short.</span>
+      </p>
+      <div class="prompt-panel scroll-in" id="prompt-list">
+        <div class="prompt-row featured">
+          <p class="prompt-text ko">딥리서치 활용해</p>
+          <p class="prompt-text en hidden">Use deep research</p>
+          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+        </div>
+        <div class="prompt-row">
+          <p class="prompt-text ko">코드 짜기 전에 웹에서 최신 거 찾고 [1][2] 출처 달아줘</p>
+          <p class="prompt-text en hidden">Search the web before coding; cite as [1][2]</p>
+          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+        </div>
+        <div class="prompt-row">
+          <p class="prompt-text ko">추측 금지. 공식 문서·릴리즈 노트부터 읽어</p>
+          <p class="prompt-text en hidden">No guessing — official docs and release notes first</p>
+          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+        </div>
+        <div class="prompt-row">
+          <p class="prompt-text ko">Next.js 15 app router — server action revalidate 오류. 웹 찾아서 고쳐줘</p>
+          <p class="prompt-text en hidden">Next.js 15 server action revalidate error — search the web and fix</p>
+          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+        </div>
+        <div class="prompt-row">
+          <p class="prompt-text ko">CVE-2026-40347 httpx — 우리 0.27.2 쓰는데 영향 있어? 공식 공지만 확인해</p>
+          <p class="prompt-text en hidden">CVE-2026-40347 httpx — we're on 0.27.2. Check official advisories only</p>
+          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+        </div>
+        <div class="prompt-row">
+          <p class="prompt-text ko">uv vs pip-tools — 팀 온보딩 쉬운 쪽으로 표로만 비교해줘</p>
+          <p class="prompt-text en hidden">uv vs pip-tools — compare in a table for easy team onboarding</p>
+          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+        </div>
       </div>
-      <div class="copy-row">
-        <p class="prompt-chip ko">코드 짜기 전에 항상 웹에서 최신 정보 찾고, 출처 [1] [2] 달아줘</p>
-        <p class="prompt-chip en hidden">Before coding, search the web for fresh info and cite sources as [1] [2]</p>
-        <button type="button" onclick="copyText(this)" class="text-xs text-gray-500 hover:text-maru-300 shrink-0" aria-label="Copy"><i class="far fa-copy"></i></button>
-      </div>
-      <div class="copy-row">
-        <p class="prompt-chip ko">추측하지 말고 공식 문서부터 읽어</p>
-        <p class="prompt-chip en hidden">No guessing — read official docs first</p>
-        <button type="button" onclick="copyText(this)" class="text-xs text-gray-500 hover:text-maru-300 shrink-0" aria-label="Copy"><i class="far fa-copy"></i></button>
-      </div>
-      <div class="copy-row">
-        <p class="prompt-chip ko">FastAPI 스트리밍이 중간에 끊겨. 웹 찾아보고 고쳐줘</p>
-        <p class="prompt-chip en hidden">FastAPI stream dies mid-flight — search the web and fix it</p>
-        <button type="button" onclick="copyText(this)" class="text-xs text-gray-500 hover:text-maru-300 shrink-0" aria-label="Copy"><i class="far fa-copy"></i></button>
-      </div>
-      <div class="copy-row">
-        <p class="prompt-chip ko">갤럭시 S24 중고 시세 알려줘</p>
-        <p class="prompt-chip en hidden">What’s a fair used Galaxy S24 price?</p>
-        <button type="button" onclick="copyText(this)" class="text-xs text-gray-500 hover:text-maru-300 shrink-0" aria-label="Copy"><i class="far fa-copy"></i></button>
+      <div class="tip-card scroll-in">
+        <span class="ko"><strong>피하기:</strong> 「알아서 해줘」「최신으로」— 뭉뚱그리면 검색도 뭉뚱그려집니다. <code>Next.js 15</code> · <code>httpx 0.27</code> · 에러 한 줄이면 충분해요.</span>
+        <span class="en hidden"><strong>Avoid:</strong> “figure it out” / “make it modern.” Add <code>Next.js 15</code>, <code>httpx 0.27</code>, or one error line.</span>
       </div>
     </div>
+  </section>
 
-    <div class="glass-card rounded-2xl p-5 scroll-reveal">
-      <h3 class="text-sm font-bold text-amber-300/90 mb-2"><i class="fas fa-lightbulb mr-2"></i><span class="ko">이렇게 말하면 손해</span><span class="en hidden">Skip these</span></h3>
-      <p class="text-gray-500 text-sm leading-relaxed">
-        <span class="ko">「공부 좀 해와」「최신으로 해줘」「알아서 찾아봐」처럼 뭉뚱그리면 검색도 뭉뚱그려집니다. 증상·버전·프레임워크만 한 줄 추가하면 충분해요.</span>
-        <span class="en hidden">“Figure it out” / “make it modern” — too vague. Add stack + symptom in one line.</span>
+  <section id="demo" class="section demo-section">
+    <div class="wrap">
+      <p class="section-label scroll-in"><span class="ko">예시</span><span class="en hidden">Demo</span></p>
+      <h2 class="scroll-in"><span class="ko">실제로 이렇게 나옵니다.</span><span class="en hidden">This is what you get.</span></h2>
+      <p class="lead scroll-in">
+        <span class="ko">보안·프레임워크 질문 → <code>deep_research</code> → 공식 출처 [1][2]</span>
+        <span class="en hidden">Security / framework question → <code>deep_research</code> → official [1][2] cites</span>
+      </p>
+
+      <article class="demo-window scroll-in" aria-label="MCP output example">
+        <div class="demo-chrome">
+          <span class="demo-dot r"></span><span class="demo-dot y"></span><span class="demo-dot g"></span>
+          <span class="demo-title">Cursor · Agent</span>
+        </div>
+        <div class="demo-body">
+          <p class="demo-user ko">CVE-2026-40347 httpx 0.27.2 영향 있는지 — 공식 advisory만 확인해줘</p>
+          <p class="demo-user en hidden">CVE-2026-40347 httpx 0.27.2 — affected? official advisories only</p>
+          <div class="demo-tool">
+            <div class="demo-tool-hdr">
+              <span>Called MCP tool</span>
+              <strong>deep_research</strong>
+            </div>
+            <div class="demo-tool-body">
+              <div class="h2">Research: CVE-2026-40347 httpx python advisory</div>
+              <div class="meta">engines: duckduckgo_lite · bing · sources: 18 · quality: official-heavy</div>
+              <div class="h3">Research Trace</div>
+              <div class="p">1. Query expanded → security + package version probes</div>
+              <div class="p">2. Official GitHub Advisory + PyPI release notes prioritized</div>
+              <div class="p">3. Version 0.27.x scope checked against CVE text</div>
+              <div class="h3">Key Findings</div>
+              <div class="p">[1] GitHub Advisory Database — httpx affected range documented. Verify pinned version in lockfile before deploy.</div>
+              <div class="h3">Sources</div>
+              <div class="li">[1] CVE-2026-40347 — GitHub Advisory Database</div>
+              <div class="li">[2] encode/httpx CHANGELOG.md — security fixes</div>
+              <div class="li">[3] RHSA-2026:5588 — Red Hat Customer Portal</div>
+              <div class="meta" style="margin-top:0.75rem">Host: summarize with [n] cites · fetch_page on [1] for full text</div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <p class="demo-caption scroll-in">
+        <span class="ko">실제 deep_research 출력 발췌 · 코딩·보안 워크플로</span>
+        <span class="en hidden">Excerpt from live deep_research · dev/security workflow</span>
       </p>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- Demo -->
-<section id="demo" class="py-16 relative border-t border-white/[0.04]">
-  <div class="max-w-3xl mx-auto px-4 scroll-reveal">
-    <h2 class="text-xl font-bold text-center mb-2">
-      <span class="ko">이렇게 나옵니다</span>
-      <span class="en hidden">What you get</span>
-    </h2>
-    <p class="text-center text-gray-500 text-sm mb-6">
-      <span class="ko">일반 질문 → 웹 조사 → [1][2] 출처 붙은 답</span>
-      <span class="en hidden">Question → web research → answer with [1][2] cites</span>
-    </p>
-    <div class="shot-frame mcp-demo-host">
-      <div class="mcp-demo" data-panel="korean_market" role="img" aria-label="answer demo">
-<div class="layout" style="min-height:auto;height:auto;">
-  <div class="sidebar">MCP · maru</div>
-  <div class="main">
-    <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span>Cursor</span></div>
-    <div class="chat">갤럭시 S24 중고 시세 추천 2026</div>
-    <div class="tool-block">
-      <div class="tool-hdr"><span>answer</span></div>
-      <div class="tool-body">
-<div class="h2">Synthesis: 갤럭시 S24 중고 시세 추천 2026</div>
-<div class='sp'></div>
-<div class="h3">Direct answer</div>
-<div class='sp'></div>
-<div class='p'>중고 <strong>갤럭시 S24</strong> 시세는 용량·등급에 따라 달라요. 구매 전 <strong>최근 거래가</strong>랑 <strong>배터리/보증</strong>만 교차 확인하세요.</div>
-<div class='sp'></div>
-<div class="h3">Sources used</div>
-<div class="li">[1] 갤럭시 S24</div>
-<div class="li">[2] 2025 갤럭시 중고폰 시세 총정리</div>
-<div class="li">[3] 갤럭시 S24 울트라 중고 시세 — 네이버 블로그</div>
-<div class='meta'>… 실제 MCP 출력 예시</div>
+  <section id="install" class="section">
+    <div class="wrap">
+      <p class="section-label scroll-in"><span class="ko">설치</span><span class="en hidden">Install</span></p>
+      <h2 class="scroll-in"><span class="ko">한 줄이면 됩니다.</span><span class="en hidden">One line.</span></h2>
+      <p class="lead scroll-in" style="margin-top:0.75rem">Python 3.10+</p>
+
+      <div class="install-block scroll-in">
+        <div class="install-hdr">
+          <span>macOS / Linux</span>
+          <button type="button" class="copy-btn" onclick="copyInstall(this)" aria-label="Copy">Copy</button>
+        </div>
+        <pre class="install-pre" id="installCmd">curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.sh | bash</pre>
       </div>
+
+      <details class="install-more scroll-in">
+        <summary><span class="ko">Windows · 수동 · 업그레이드</span><span class="en hidden">Windows · manual · upgrade</span></summary>
+        <div class="install-more-body">
+          <p># Windows<br>irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex</p>
+          <p style="margin-top:0.75rem"># Manual<br>python3 -m pip install --user maru-deep-pro-search<br>maru-deep-pro-search setup</p>
+          <p style="margin-top:0.75rem"># Upgrade<br>pip install -U maru-deep-pro-search<br>maru-deep-pro-search update --with-setup</p>
+        </div>
+      </details>
+
+      <p class="lead scroll-in" style="margin-top:1.5rem;text-align:center;font-size:0.9375rem">
+        <span class="ko">설치 → <strong>Cursor 완전 재시작</strong> → 「딥리서치 활용해」</span>
+        <span class="en hidden">Install → <strong>restart Cursor</strong> → “use deep research”</span>
+      </p>
     </div>
-  </div>
-</div>
+  </section>
+
+  <section id="more" class="section" style="padding-top:0">
+    <div class="wrap" style="text-align:center">
+      <p class="section-label scroll-in"><span class="ko">더 보기</span><span class="en hidden">More</span></p>
+      <div class="link-row scroll-in">
+        <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/README.md">README</a>
+        <a href="agent_matrix.html">21 agents</a>
+        <a href="https://pypi.org/project/maru-deep-pro-search/">PyPI</a>
+        <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/CHANGELOG.md">Changelog</a>
       </div>
-      <p class="shot-caption ko">실제 answer() 출력 발췌</p>
-      <p class="shot-caption en hidden">Excerpt from live answer() output</p>
+      <p class="lead scroll-in" style="margin:1.5rem auto 0;font-size:0.875rem">
+        <span class="ko">9엔진 · 18툴 · ENV — README에 정리</span>
+        <span class="en hidden">9 engines · 18 tools · ENV — see README</span>
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-row">
+    <span>maru-deep-pro-search <span style="color:#424245">v0.22.3</span></span>
+    <div style="display:flex;gap:1.5rem">
+      <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a>
     </div>
   </div>
-</section>
-
-<!-- Install -->
-<section id="install" class="py-20 relative">
-  <div class="max-w-2xl mx-auto px-4">
-    <h2 class="text-2xl md:text-3xl font-bold text-center mb-8 scroll-reveal">
-      <span class="ko"><span class="gradient-text">설치</span></span>
-      <span class="en hidden"><span class="gradient-text">Install</span></span>
-    </h2>
-    <p class="text-center text-gray-500 text-sm mb-6 scroll-reveal">Python 3.10+</p>
-
-    <div class="code-block mb-4 scroll-reveal">
-      <div class="copy-row border-0">
-        <span class="text-xs text-gray-500 font-mono">macOS / Linux</span>
-        <button type="button" onclick="copyCode(this)" class="text-xs text-gray-500 hover:text-white"><i class="far fa-copy"></i> Copy</button>
-      </div>
-      <pre>curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.sh | bash</pre>
-    </div>
-
-    <details class="glass rounded-xl mb-4 scroll-reveal text-sm">
-      <summary class="px-4 py-3 cursor-pointer text-gray-400 hover:text-white">
-        <span class="ko">Windows · 수동 설치 · 업그레이드</span>
-        <span class="en hidden">Windows · manual · upgrade</span>
-      </summary>
-      <div class="px-4 pb-4 space-y-3 text-gray-500 font-mono text-xs leading-relaxed">
-        <p><span class="text-gray-600"># Windows</span><br>irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex</p>
-        <p><span class="text-gray-600"># 수동</span><br>python3 -m pip install --user maru-deep-pro-search<br>maru-deep-pro-search setup</p>
-        <p><span class="text-gray-600"># 업그레이드</span><br>pip install -U maru-deep-pro-search<br>maru-deep-pro-search update --with-setup</p>
-      </div>
-    </details>
-
-    <p class="text-center text-gray-500 text-xs scroll-reveal">
-      <span class="ko">설치 후 <strong class="text-gray-300">Cursor 완전 재시작</strong> → 채팅에 「딥리서치 활용해」</span>
-      <span class="en hidden">After install: <strong class="text-gray-300">restart Cursor</strong> → “use deep research”</span>
-    </p>
-  </div>
-</section>
-
-<!-- More (nerds) -->
-<section id="more" class="py-16 relative border-t border-white/[0.04]">
-  <div class="max-w-2xl mx-auto px-4 text-center scroll-reveal">
-    <h2 class="text-lg font-bold text-gray-400 mb-4">
-      <span class="ko">더 깊게 보고 싶을 때</span>
-      <span class="en hidden">Want the technical deep dive?</span>
-    </h2>
-    <div class="flex flex-wrap justify-center gap-4 text-sm">
-      <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/README.md" class="text-maru-300 hover:underline">README</a>
-      <a href="agent_matrix.html" class="text-gray-400 hover:text-white">21 agents</a>
-      <a href="https://pypi.org/project/maru-deep-pro-search/" class="text-gray-400 hover:text-white">PyPI</a>
-      <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/CHANGELOG.md" class="text-gray-400 hover:text-white">Changelog</a>
-    </div>
-    <p class="mt-6 text-xs text-gray-600">
-      <span class="ko">9엔진 · 18 MCP 툴 · Granite 랭킹 · ENV 튜닝은 README에 정리돼 있어요.</span>
-      <span class="en hidden">Engines, tools, Granite ranking, ENV — all in README.</span>
-    </p>
-  </div>
-</section>
-
-<footer class="py-10 border-t border-white/5">
-  <div class="max-w-2xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
-    <span class="font-semibold text-gray-400">maru-deep-pro-search <span class="text-gray-600">v0.22.3</span></span>
-    <div class="flex gap-4">
-      <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" rel="noopener" class="hover:text-white">GitHub</a>
-      <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/SECURITY.md" target="_blank" class="hover:text-white">Security</a>
-    </div>
-  </div>
-  <p class="text-center text-xs text-gray-700 mt-4">MIT · 100% Free · No API Keys</p>
+  <p class="footer-legal">MIT · 100% Free · No API Keys</p>
 </footer>
 
 <script>
-const canvas = document.getElementById('particles');
-const ctx = canvas.getContext('2d');
-let particles = [];
-function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
-addEventListener('resize', resize); resize();
-if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  for (let i = 0; i < Math.min(innerWidth / 12, 60); i++) {
-    particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, s: Math.random() * 2, vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4, o: Math.random() * 0.4 });
-  }
-  (function loop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
-      if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
-      ctx.fillStyle = `rgba(20,184,166,${p.o})`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
+(function () {
+  const menuBtn = document.getElementById('menuBtn');
+  const mobileNav = document.getElementById('mobileNav');
+  menuBtn.addEventListener('click', () => {
+    const open = mobileNav.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('.mobile-link, .mobile-drawer a[href^="#"]').forEach(a => {
+    a.addEventListener('click', () => {
+      mobileNav.classList.remove('open');
+      menuBtn.setAttribute('aria-expanded', 'false');
     });
-    requestAnimationFrame(loop);
-  })();
-}
+  });
 
-const observer = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }), { threshold: 0.08 });
-document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.06, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.scroll-in').forEach(el => io.observe(el));
+})();
 
 function toggleLang() {
   document.querySelectorAll('.ko').forEach(el => el.classList.toggle('hidden'));
   document.querySelectorAll('.en').forEach(el => el.classList.toggle('hidden'));
   document.documentElement.lang = document.documentElement.lang === 'ko' ? 'en' : 'ko';
 }
-(function() {
+(function () {
   const lang = navigator.language || '';
   if (lang.startsWith('en') && document.documentElement.lang === 'ko') toggleLang();
 })();
 
-function copyCode(btn) {
-  const pre = btn.closest('.code-block').querySelector('pre');
-  copyToClipboard(pre.textContent.trim(), btn);
+function copyPrompt(btn) {
+  const row = btn.closest('.prompt-row');
+  const el = row.querySelector('.prompt-text:not(.hidden)') || row.querySelector('.prompt-text');
+  copyDone(btn, el.textContent.trim());
 }
-function copyText(btn) {
-  const row = btn.closest('.copy-row');
-  const text = row.querySelector('.prompt-chip:not(.hidden)')?.textContent || row.querySelector('.prompt-chip')?.textContent;
-  copyToClipboard(text.trim(), btn);
+function copyInstall(btn) {
+  copyDone(btn, document.getElementById('installCmd').textContent.trim());
 }
-function copyToClipboard(text, btn) {
+function copyDone(btn, text) {
   navigator.clipboard.writeText(text).then(() => {
-    const orig = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-check text-emerald-400"></i>';
-    setTimeout(() => { btn.innerHTML = orig; }, 1500);
+    btn.style.color = 'var(--accent)';
+    setTimeout(() => { btn.style.color = ''; }, 1200);
   });
 }
 </script>

@@ -161,11 +161,12 @@ class WindsurfAdapter(AgentAdapter):
             except Exception:
                 pass
 
-        # Merge hook definitions (idempotent)
+        # MARU freshness gate: inspect tool calls, not local edits or prompts.
+        for old_event in ("pre_write_code", "pre_user_prompt"):
+            hooks[old_event] = [h for h in hooks.get(old_event, []) if h.get("command") != cmd]
+
         hook_defs = {
-            "pre_write_code": [{"command": cmd, "show_output": True}],
             "pre_mcp_tool_use": [{"command": cmd, "show_output": False}],
-            "pre_user_prompt": [{"command": cmd, "show_output": False}],
         }
 
         for event, handlers in hook_defs.items():

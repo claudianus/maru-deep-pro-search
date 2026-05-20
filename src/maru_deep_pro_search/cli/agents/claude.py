@@ -119,7 +119,7 @@ class ClaudeAdapter(AgentAdapter):
 
     # ── helpers ─────────────────────────────────────────────────
     def _write_hooks(self, *, repair: bool = False) -> None:
-        """Install the research-gate hook scripts that PreToolUse/PostToolUse call."""
+        """Install freshness-gate hook scripts."""
         hooks_dir = Path.home() / ".claude" / "hooks"
         hooks_dir.mkdir(parents=True, exist_ok=True)
         write_managed_hook(
@@ -145,45 +145,59 @@ class ClaudeAdapter(AgentAdapter):
         if "hooks" not in settings:
             settings["hooks"] = {}
 
-        # 1. PreToolUse — BLOCK edit/write without research
+        # 1. PreToolUse — gate only freshness-sensitive search/network actions.
         if "PreToolUse" not in settings["hooks"]:
             settings["hooks"]["PreToolUse"] = []
+        # Migrate old edit gates away from broad research enforcement.
+        gate_script = Path.home() / ".claude" / "hooks" / "maru_research_gate.py"
+
+        def has_hook_command(entry: dict[str, Any], script: Path) -> bool:
+            hooks = entry.get("hooks", [])
+            if not isinstance(hooks, list):
+                return False
+            return any(
+                isinstance(hook, dict) and str(hook.get("command", "")).endswith(script.name)
+                for hook in hooks
+            )
+
+        settings["hooks"]["PreToolUse"] = [
+            h
+            for h in settings["hooks"]["PreToolUse"]
+            if not (
+                isinstance(h, dict)
+                and h.get("matcher") in {"Edit|Write", "Edit|Write|WebSearch|WebFetch"}
+                and has_hook_command(h, gate_script)
+            )
+        ]
         pre_matchers = [h.get("matcher", "") for h in settings["hooks"]["PreToolUse"]]
-        if "Edit|Write" not in pre_matchers:
+        target_matcher = "Bash|WebSearch|WebFetch"
+        if target_matcher not in pre_matchers:
             settings["hooks"]["PreToolUse"].append(
                 {
-                    "matcher": "Edit|Write",
+                    "matcher": target_matcher,
                     "hooks": [
                         {
                             "type": "command",
-                            "command": str(
-                                Path.home() / ".claude" / "hooks" / "maru_research_gate.py"
-                            ),
+                            "command": str(gate_script),
                         }
                     ],
                 }
             )
 
-        # 2. PostToolUse — REVERT un-researched Write/Edit
-        #    Workaround for PreToolUse exit 2 not blocking Write/Edit
-        #    (github.com/anthropics/claude-code/issues/13744)
+        # 2. Remove old PostToolUse edit-revert gates. Research freshness should not undo
+        # local edits; only external freshness-sensitive actions are gated.
         if "PostToolUse" not in settings["hooks"]:
             settings["hooks"]["PostToolUse"] = []
-        post_matchers = [h.get("matcher", "") for h in settings["hooks"]["PostToolUse"]]
-        if "Write|Edit" not in post_matchers:
-            settings["hooks"]["PostToolUse"].append(
-                {
-                    "matcher": "Write|Edit",
-                    "hooks": [
-                        {
-                            "type": "command",
-                            "command": str(
-                                Path.home() / ".claude" / "hooks" / "maru_research_revert.py"
-                            ),
-                        }
-                    ],
-                }
+        revert_script = Path.home() / ".claude" / "hooks" / "maru_research_revert.py"
+        settings["hooks"]["PostToolUse"] = [
+            h
+            for h in settings["hooks"]["PostToolUse"]
+            if not (
+                isinstance(h, dict)
+                and h.get("matcher") == "Write|Edit"
+                and has_hook_command(h, revert_script)
             )
+        ]
 
         # 3. SessionStart — inject research reminder
         if "SessionStart" not in settings["hooks"]:

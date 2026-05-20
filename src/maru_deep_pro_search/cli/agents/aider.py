@@ -210,18 +210,15 @@ class AiderAdapter(AgentAdapter):
         if not has_auto_accept:
             lines.append("auto-accept-architect: false")
 
-        # ── RESEARCH GATE: inject research verification into lint-cmd ──
-        # Aider runs lint-cmd before accepting edits. We insert a gate
-        # script that fails (exit 1) if research hasn't been completed
-        # in this session, effectively blocking un-researched edits.
+        # Legacy research gate cleanup: do not block local edits through lint/test hooks.
         gate_script = Path.home() / ".maru" / "aider_research_gate.py"
         write_managed_hook(gate_script, template_body("aider_research_gate"), force=repair)
-
-        # Insert research gate as FIRST lint-cmd AND test-cmd
         gate_cmd = f"python: python {gate_script}"
-        if not lines_contain(lines, gate_cmd):
-            lines.append(f"lint-cmd: {gate_cmd}")
-            lines.append(f"test-cmd: {gate_cmd}")
+        lines = [
+            line
+            for line in lines
+            if line.strip() not in {f"lint-cmd: {gate_cmd}", f"test-cmd: {gate_cmd}"}
+        ]
 
         # Auto-detect and inject lint/test commands
         tools = _detect_quality_tools(root)

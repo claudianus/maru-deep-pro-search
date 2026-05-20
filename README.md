@@ -1,56 +1,42 @@
-<h1 align="center"><code>maru-deep-pro-search</code></h1>
+# maru-deep-pro-search
 
-<p align="center">
-  <strong>AI 에이전트가 코딩 전에 반드시 리서치하도록.</strong><br>
-  API 키 0개 · 9엔진 RRF+BM25+Granite 97M · Research Trace · 21개 에이전트
-</p>
+AI 에이전트가 코딩 및 분석 작업 전에 관련 최신 정보를 검색하여 컨텍스트에 주입할 수 있도록 돕는 MCP(Model Context Protocol) 서버입니다. 추가적인 API 키 설정 없이, 9개의 무료 검색 엔진 통합, RRF(Reciprocal Rank Fusion)와 BM25를 결합한 하이브리드 검색, 그리고 Granite 97M 모델을 통한 로컬 시맨틱 재랭킹(Semantic Re-ranking)을 지원합니다.
 
-<p align="center">
-  <a href="./README.en.md">🇺🇸 English</a>
-</p>
+[🇺🇸 English](./README.en.md)
 
-<p align="center">
-  <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/v/maru-deep-pro-search?style=flat-square&color=blue" alt="PyPI"></a>
-  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/validate.yml"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/validate.yml?style=flat-square&label=validate" alt="Validate"></a>
-  <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/pyversions/maru-deep-pro-search?style=flat-square" alt="Python"></a>
-  <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
-</p>
+[![PyPI](https://img.shields.io/pypi/v/maru-deep-pro-search?style=flat-square&color=blue)](https://pypi.org/project/maru-deep-pro-search/)
+[![Validate](https://github.com/claudianus/maru-deep-pro-search/actions/workflows/validate.yml/badge.svg)](https://github.com/claudianus/maru-deep-pro-search/actions/workflows/validate.yml)
+[![Python](https://img.shields.io/pypi/pyversions/maru-deep-pro-search?style=flat-square)](https://pypi.org/project/maru-deep-pro-search/)
+[![License](https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square)](https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE)
 
-<p align="center">
-  <a href="https://claudianus.github.io/maru-deep-pro-search/">🌐 웹사이트</a> ·
-  <a href="https://claudianus.github.io/maru-deep-pro-search/#prompts">💬 복붙 프롬프트</a> ·
-  <a href="https://pypi.org/project/maru-deep-pro-search/">📦 PyPI</a> ·
-  <a href="https://github.com/claudianus/maru-deep-pro-search">💻 GitHub</a>
-</p>
+[웹사이트](https://claudianus.github.io/maru-deep-pro-search/) · [프롬프트 템플릿](https://claudianus.github.io/maru-deep-pro-search/#prompts) · [PyPI 패키지](https://pypi.org/project/maru-deep-pro-search/) · [GitHub 저장소](https://github.com/claudianus/maru-deep-pro-search)
 
 ---
 
-## 소개
+## 주요 특징
 
-`maru-deep-pro-search`는 코딩 에이전트용 **MCP 하네스 + 딥리서치 슈퍼셋**입니다. 웹 조사 → Granite 시맨틱 재랭킹 → `[1]` 인용 패킷을 만들고, 규칙·세션·툴로 **코딩 전 검색**을 강제합니다.
+- **하이브리드 멀티 엔진 검색**: DuckDuckGo, Bing 등 9개 검색 소스를 연동하고 검색 실패 시 자동 페일오버(Failover)를 수행합니다.
+- **시맨틱 재랭킹 (Semantic Re-ranking)**: 로컬에서 실행되는 `ibm-granite/granite-embedding-97m-multilingual-r2` 임베딩 모델을 활용하여 질의와 가장 연관성 높은 문서를 정교하게 추출합니다.
+- **신뢰할 수 있는 인용 표기**: 환각을 최소화하기 위해 검색된 모든 정보 원본에 `[N]` 형식의 출처 태그 및 링크를 강제로 매핑합니다.
+- **다양한 에이전트 연동**: Cursor, Claude Code, Cline, Aider 등 21종의 주요 AI 개발 도구를 지원합니다.
+- **완전 무료**: 상용 검색 API 키를 등록하지 않아도 모든 기능을 비용 없이 사용할 수 있습니다.
 
-| | 내장 검색 | maru-deep-pro-search |
-|---|---|---|
-| **엔진** | 1–2개 | **9 + 폴오버** |
-| **랭킹** | 없음 | **RRF + BM25 + Granite 97M** |
-| **인용** | 환각/없음 | **`[N]` + URL** |
-| **딥리서치 UI** | 없음 | **Trace · Insights · Clusters** |
-| **비용** | 변동 | **$0 · API 키 없음** |
+## 핵심 도구 (MCP Tools)
 
-바이브코더용 빠른 시작·복붙 프롬프트: **[GitHub Pages](https://claudianus.github.io/maru-deep-pro-search/)** · 18툴·ENV는 README
+| 도구 이름 | 주요 기능 |
+|:---|:---|
+| `answer` | 일반적인 질의나 시장 현황, 간단한 정보 검색 및 답변 생성 |
+| `deep_research` | 보안 취약점(CVE), 아키텍처 분석, 라이브러리 심층 비교 등 대규모 정보 수집 및 구조화 (Research Trace 포함) |
+| `fetch_page` | 웹 페이지 및 공식 문서 URL의 내용을 정제하고 프롬프트 주입 공격을 방어하여 본문 텍스트 추출 |
 
----
-
-## 3분 요약
-
-1. **설치** → `maru-deep-pro-search setup` → 에이전트 재시작
-2. **일반 질문** — *「갤럭시 S24 중고 시세」* → `answer`
-3. **코드·보안·설계** — *「FastAPI vs Django 2026 architecture」* → `deep_research` (기본 30소스 · 7서브쿼리)
-4. **업그레이드** — `pip install -U` 후 `update --with-setup` · `setup --check`
+- **상세 도구 가이드**: [웹사이트 도구 소개](https://claudianus.github.io/maru-deep-pro-search/#tools) 참고
+- **지원 에이전트 목록**: [웹사이트 에이전트 목록](https://claudianus.github.io/maru-deep-pro-search/#agents) 참고
 
 ---
 
-## ⚡ 10초 설치
+## 설치 및 설정
+
+### 1단계: 설치 스크립트 실행
 
 **macOS / Linux:**
 ```bash
@@ -62,46 +48,29 @@ curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main
 irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex
 ```
 
-**수동:**
+**Hatch / Pip를 이용한 수동 설치:**
 ```bash
-python3 -m pip install --user maru-deep-pro-search && maru-deep-pro-search setup
+pip install --user maru-deep-pro-search
+maru-deep-pro-search setup
 ```
 
-**Granite 97M (v0.22.1)** — 시맨틱 랭킹은 **항상 켜짐**. 기본 모델 `ibm-granite/granite-embedding-97m-multilingual-r2`. `install.sh` / `setup`이 `warmup-embeddings`로 Hugging Face 가중치를 **미리 받아** 첫 `deep_research` 콜드스타트를 줄입니다.
-
-```bash
-maru-deep-pro-search warmup-embeddings -q   # 수동 워밍
-maru-deep-pro-search setup --check
-```
-
-**uv:**
+**uv를 사용하는 경우:**
 ```bash
 uv tool install --python 3.12 maru-deep-pro-search
 ```
 
----
+> [!NOTE]
+> 시맨틱 재랭킹에 사용되는 Granite 97M 가중치 파일(Hugging Face)은 첫 실행 시 다운로드됩니다. 최초 검색 시의 콜드스타트 지연을 방지하기 위해 다음 명령어로 임베딩 모델을 미리 다운로드해 두는 것을 권장합니다.
+> ```bash
+> maru-deep-pro-search warmup-embeddings -q
+> maru-deep-pro-search setup --check
+> ```
 
-## 🚀 시작하기
+### 2단계: 에이전트 설정
 
-```bash
-maru-deep-pro-search --version   # 0.22.1
-maru-deep-pro-search setup
-```
+설치가 완료되면 에이전트(예: Cursor)를 **완전히 종료한 후 다시 실행**하십시오.
 
-업그레이드 시:
-```bash
-pip install -U maru-deep-pro-search
-maru-deep-pro-search update --with-setup
-maru-deep-pro-search setup --repair   # 훅·프로토콜 중복 시
-maru-deep-pro-search setup --check
-```
-
-프로젝트 로컬 지식만:
-```bash
-maru-deep-pro-search init   # .maru/knowledge.db 등
-```
-
-Claude Code MCP 예시 (`~/.claude/settings.json`):
+#### Claude Code 설정 (`~/.claude/settings.json`)
 ```json
 {
   "mcpServers": {
@@ -115,96 +84,67 @@ Claude Code MCP 예시 (`~/.claude/settings.json`):
 
 ---
 
-## 🏆 다른 도구와 비교
+## 사용 방법
 
-| 항목 | maru | Tavily MCP | Perplexity MCP |
-|---|---|---|---|
-| **비용** | **$0** | 무료 티어 / 유료 | $5+/월 |
-| **엔진** | **9 + 폴오버** | API 1종 | API 1종 |
-| **리서치 강제** | **3계층 게이트** | ❌ | ❌ |
-| **딥리서치 UI** | **Trace·Insights** | ❌ | ❌ |
+에이전트의 시스템 프롬프트(User Rules 등) 또는 첫 대화에 아래와 같은 지침을 지정하여 검색 활용을 강제할 수 있습니다.
 
----
-
-## 핵심 MCP 툴 (자주 쓰는 3개)
-
-| 툴 | 용도 |
-|------|------|
-| `answer` | 일반 웹 질문 · 시세 · 추천 |
-| `deep_research` | CVE, 아키텍처, 라이브러리 비교 (Trace·Insights·Clusters) |
-| `fetch_page` | 공식 문서 URL 본문 (정제·인젝션 방어) |
-
-**전체 18툴 · 선택 가이드:** [웹사이트 #tools](https://claudianus.github.io/maru-deep-pro-search/#tools)
-
-**21 에이전트 지원:** [웹사이트 #agents](https://claudianus.github.io/maru-deep-pro-search/#agents)
+- `"코드 작성 전에 반드시 웹 검색을 수행하여 최신 명세를 확인하고 [1], [2] 형식으로 명확한 출처를 표기해줘."`
+- `"Next.js 15 App Router의 Server Action revalidate 에러 관련 최신 해결 방법을 검색해서 알려줘."`
+- `"CVE-2026-40347 취약점 관련 공식 권고(Advisory)를 검색해 현재 프로젝트가 사용하는 버전이 안전한지 검증해줘."`
 
 ---
 
-## 📊 벤치마크 (TREC 스타일, 10쿼리)
+## 기능 비교
 
-| 지표 | 단일 엔진 | 다중 엔진 (maru) |
-|------|-----------|------------------|
-| Precision@5 | 기준 | **+86%** |
-| NDCG@10 | 기준 | **+36%** |
-| MRR | 기준 | **+25%** |
-
-트레이드오프: 응답 시간 ~2배. 재현: `uv run python benchmark/search_quality_benchmark.py`
-
----
-
-## 🔒 보안 (요약)
-
-- 72패턴 프롬프트 인젝션 정제 + `fetch_page` EXTERNAL CONTENT 래핑
-- `generate_code` — 세션 인용 없으면 코드 차단
-
-상세: [웹사이트 #security](https://claudianus.github.io/maru-deep-pro-search/#security)
+| 비교 항목 | maru | Tavily MCP | Perplexity MCP |
+|:---|:---|:---|:---|
+| **이용 비용** | **무료 ($0)** | 제한적 무료 / 유료 | 월 $5 이상 |
+| **연동 엔진** | **9개 엔진 + 자동 페일오버** | 단일 API 제공 | 단일 API 제공 |
+| **리서치 강제화** | **3단계 게이트 적용** | 지원 안 함 | 지원 안 함 |
+| **리서치 모니터링** | **Trace 및 Insights 제공** | 지원 안 함 | 지원 안 함 |
 
 ---
 
-## ⚙️ 설정
+## 품질 벤치마크
 
-자주 쓰는 ENV만:
+TREC(Text REtrieval Conference) 표준 데이터셋을 기준으로 한 검색 품질 측정 결과입니다. (10개 복합 쿼리 대상)
 
-| 변수 | 기본 | 설명 |
-|------|------|------|
-| `MARU_STRICT_QUERY` | `1` | 느슨한 쿼리 거절·정규화 |
-| `MARU_EMBEDDING_MODEL` | Granite 97M R2 | 시맨틱 랭킹 모델 |
-| `MARU_BENCHMARK_SUITE` | — | `stress`로 스트레스 벤치 |
+| 성능 지표 | 단일 엔진 기준 | 다중 엔진 (maru) |
+|:---|:---|:---|
+| **Precision@5** | baseline | **+86%** |
+| **NDCG@10** | baseline | **+36%** |
+| **MRR** | baseline | **+25%** |
 
-**전체 ENV:** [웹사이트 #config](https://claudianus.github.io/maru-deep-pro-search/#config)
-
----
-
-## 🐳 Docker
-
-```bash
-docker build -t maru-search .
-docker run --rm -i -v $(pwd)/.maru:/app/.maru maru-search
-```
+*트레이드오프: 9개 엔진 통합 검색으로 인해 단일 엔진 대비 응답 시간이 약 2배 소요될 수 있습니다. (재현 명령어: `uv run python benchmark/search_quality_benchmark.py`)*
 
 ---
 
-## 변경 이력
+## 주요 환경 변수 설정
 
-**v0.22.0–0.22.1:** Granite 97M 필수 시맨틱 랭킹 · `warmup-embeddings` · Research Trace/Insights 품질 파이프라인.
+주요 동작을 제어하기 위해 시스템 환경 변수(Environment Variables)를 설정할 수 있습니다.
 
-전체: [CHANGELOG.md](CHANGELOG.md)
+| 환경 변수 | 기본값 | 설명 |
+|:---|:---|:---|
+| `MARU_STRICT_QUERY` | `1` | 모호하거나 불완전한 검색어 입력을 필터링 및 정규화 |
+| `MARU_EMBEDDING_MODEL` | Granite 97M R2 | 문서 재랭킹에 사용할 시맨틱 임베딩 모델 명세 |
+| `MARU_BENCHMARK_SUITE` | — | `stress` 설정 시 부하 테스트 벤치마크 수행 |
 
----
-
-## 🆘 문제 해결
-
-| 증상 | 조치 |
-|------|------|
-| MCP 안 보임 | `setup` 후 에이전트 재시작 |
-| 첫 검색 느림 | `warmup-embeddings -q` |
-| 설정 안 바뀜 | `update --with-setup` / `setup --repair` |
-| 엔진 실패 | `engine_health` · 잠시 후 재시도 |
+- **전체 환경 변수 상세 설명**: [웹사이트 설정 페이지](https://claudianus.github.io/maru-deep-pro-search/#config) 참고
 
 ---
 
-## 🤝 기여 · 라이선스
+## 문제 해결 (Troubleshooting)
 
-기여: [CONTRIBUTING.md](CONTRIBUTING.md) · 이슈/PR 환영.
+| 발생 현상 | 해결 방법 |
+|:---|:---|
+| MCP 서버가 에이전트에 노출되지 않음 | `maru-deep-pro-search setup`을 다시 실행한 뒤 에이전트 애플리케이션을 완전히 재시작합니다. |
+| 첫 검색 실행 시 지나치게 느림 | `maru-deep-pro-search warmup-embeddings -q` 명령을 사전에 실행하여 가중치 파일을 캐시해 둡니다. |
+| 설정 변경 사항이 반영되지 않음 | `maru-deep-pro-search update --with-setup` 또는 `setup --repair`를 실행해 에이전트 훅 설정을 초기화합니다. |
+| 간헐적인 검색 엔진 에러 발생 | `engine_health` 도구를 통해 검색 소스의 실시간 헬스 상태를 점검합니다. |
 
-MIT — [LICENSE](LICENSE)
+---
+
+## 기여 및 라이선스
+
+- **기여 방법**: [CONTRIBUTING.md](CONTRIBUTING.md) 및 버그 리포트/PR 제출을 환영합니다.
+- **라이선스**: 본 프로젝트는 MIT 라이선스에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참고하십시오.

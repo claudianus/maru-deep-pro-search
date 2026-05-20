@@ -13,13 +13,15 @@ from pathlib import Path
 
 from ..backup import (
     backup_file,
+    read_json_safe,
     read_text_safe,
     restore_file,
     sorted_backup_paths,
+    write_json_safe,
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
-from .base import AgentAdapter
+from .base import AgentAdapter, get_mcp_server_command
 
 
 class TabnineAdapter(AgentAdapter):
@@ -51,22 +53,35 @@ class TabnineAdapter(AgentAdapter):
 
     skills_format = "flat"
 
+    def _mcp_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".tabnine") / "mcp_servers.json"
+        return Path.home() / ".tabnine" / "mcp_servers.json"
+
     def backup(self) -> list[Path]:
-        paths = [self._config_path("user")]
-        backups = [backup_file(p) for p in paths]
+        paths = [self._config_path("user"), self._mcp_path("user")]
+        backups = [backup_file(p) for p in paths if p.exists()]
         return [b for b in backups if b is not None]
 
     def restore(self) -> bool:
         restored = False
-        for p in [self._config_path("user")]:
+        for p in [self._config_path("user"), self._mcp_path("user")]:
             backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         return restored
 
     def install_mcp(self, scope: str = "user") -> bool:
-        # Tabnine does not natively support MCP yet.
-        return self.inject_rules(scope)
+        path = self._mcp_path(scope)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        config = read_json_safe(path)
+        mcp_servers = config.get("mcpServers")
+        if not isinstance(mcp_servers, dict):
+            mcp_servers = {}
+            config["mcpServers"] = mcp_servers
+        mcp_servers["maru-deep-pro-search"] = get_mcp_server_command()
+        write_json_safe(path, config)
+        return True
 
     def inject_rules(self, scope: str = "user") -> bool:
         # 1. .tabnine/guidelines/*.md — official Tabnine format

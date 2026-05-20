@@ -2,13 +2,13 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="theme-color" content="#141820">
+<meta name="theme-color" content="#09090b">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>maru-deep-pro-search — Cursor·Claude Code·Codex 딥리서치 MCP</title>
-<meta name="description" content="설치 한 번으로 Cursor·Claude Code·Codex가 딥리서치 후 최신 정보로 코딩. 무료 MCP + 전역 규칙·SKILL 자동 적용. API 키 없음.">
+<title>maru-deep-pro-search — Cursor·Claude Code·Cline Deep Research MCP</title>
+<meta name="description" content="AI 에이전트의 지식 한계를 극복하고 실시간 멀티 엔진 검색과 로컬 시맨틱 재랭킹으로 정확한 출처를 주입하는 무료 MCP 서버">
 <link rel="canonical" href="https://claudianus.github.io/maru-deep-pro-search/">
-<meta property="og:title" content="maru-deep-pro-search — 무료 딥리서치 MCP">
-<meta property="og:description" content="Cursor·Claude Code·Codex가 딥리서치 후 최신 정보로 코딩. 무료 딥리서치 MCP 슈퍼셋 + 전역 규칙·SKILL.">
+<meta property="og:title" content="maru-deep-pro-search — 실시간 딥리서치 MCP">
+<meta property="og:description" content="실시간 멀티 엔진 검색과 Granite 97M 로컬 시맨틱 재랭킹을 지원하는 개발자 지향적 MCP 서버">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://claudianus.github.io/maru-deep-pro-search/">
 <meta property="og:image" content="https://claudianus.github.io/maru-deep-pro-search/assets/screenshots/og-card@2x.png">
@@ -17,46 +17,39 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ── Design tokens (clarity · restraint · depth) ── */
 :root {
-  --bg: #141820;
-  --bg-elevated: #1c222c;
-  --surface: rgba(255,255,255,0.055);
-  --surface-hover: rgba(255,255,255,0.09);
-  --border: rgba(255,255,255,0.1);
-  --border-strong: rgba(255,255,255,0.14);
-  --text: #eceef2;
-  --text-secondary: #9aa3b2;
-  --text-tertiary: #6b7585;
-  --accent: #2ec4b6;
-  --accent-dim: rgba(46,196,182,0.14);
-  --accent-glow: rgba(46,196,182,0.22);
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
-  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --bg: #09090b;
+  --bg-elevated: #18181b;
+  --surface: rgba(39, 39, 42, 0.4);
+  --surface-hover: rgba(39, 39, 42, 0.65);
+  --border: rgba(63, 63, 70, 0.45);
+  --border-strong: rgba(82, 82, 91, 0.65);
+  --text: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --accent: #0d9488;
+  --accent-dim: rgba(13, 148, 136, 0.12);
+  --accent-glow: rgba(13, 148, 136, 0.18);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --page-pad: clamp(1rem, 4vw, 2.5rem);
-  --page-max: min(68rem, calc(100vw - var(--page-pad) * 2));
-  --section-gap: clamp(4rem, 10vw, 7rem);
-  --nav-h: 3.25rem;
-  font-size: clamp(15px, 0.9rem + 0.2vw, 17px);
-}
-@media (min-width: 1920px) {
-  :root {
-    --page-max: min(80rem, calc(100vw - 8rem));
-    font-size: 18px;
-  }
+  --page-pad: clamp(1.25rem, 5vw, 3rem);
+  --page-max: min(64rem, calc(100vw - var(--page-pad) * 2));
+  --section-gap: clamp(4rem, 8vw, 6.5rem);
+  --nav-h: 3.5rem;
+  font-size: clamp(15px, 0.88rem + 0.15vw, 16px);
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 body {
   margin: 0;
-  font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--text);
-  line-height: 1.5;
+  line-height: 1.6;
   overflow-x: hidden;
 }
 .hidden { display: none !important; }
@@ -64,190 +57,178 @@ a { color: inherit; text-decoration: none; }
 button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-/* Ambient */
 .ambient {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse 90% 60% at 50% -15%, rgba(46,196,182,0.09), transparent 50%),
-    radial-gradient(ellipse 50% 45% at 0% 40%, rgba(99,102,241,0.06), transparent 45%),
-    radial-gradient(ellipse 45% 40% at 100% 70%, rgba(56,189,248,0.05), transparent 45%),
-    linear-gradient(180deg, #181e28 0%, var(--bg) 45%, #12161d 100%);
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(ellipse at 50% -20%, rgba(20, 184, 166, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 100% 100%, rgba(24, 24, 27, 0.3) 0%, transparent 40%),
+    radial-gradient(circle at 0% 100%, rgba(24, 24, 27, 0.3) 0%, transparent 40%);
 }
 
-/* Layout */
 .page { position: relative; z-index: 1; }
 .wrap { width: 100%; max-width: var(--page-max); margin-inline: auto; padding-inline: var(--page-pad); }
 .section { padding-block: var(--section-gap); }
 .section-label {
-  font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--accent); margin-bottom: 0.75rem;
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 0.75rem; font-family: 'JetBrains Mono', monospace;
 }
-h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
-h1 { font-size: clamp(2.25rem, 5vw + 1rem, 4.25rem); font-weight: 700; }
-h2 { font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); }
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+h1 { font-size: clamp(2.25rem, 4vw + 1rem, 3.75rem); }
+h2 { font-size: clamp(1.75rem, 2.5vw + 0.5rem, 2.5rem); }
 .lead {
-  font-size: clamp(1.0625rem, 1.5vw + 0.5rem, 1.3125rem);
-  color: var(--text-secondary); line-height: 1.55; max-width: 36em;
+  font-size: clamp(1.05rem, 1.2vw + 0.5rem, 1.2rem);
+  color: var(--text-secondary); line-height: 1.6; max-width: 38em;
 }
-.lead strong { color: var(--text); font-weight: 600; }
 .accent-word {
-  background: linear-gradient(135deg, #5eead4 0%, #38bdf8 100%);
+  background: linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 
-/* Nav */
+/* Navigation */
 .nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   height: var(--nav-h);
-  background: rgba(20,24,32,0.78);
-  backdrop-filter: saturate(160%) blur(18px);
-  -webkit-backdrop-filter: saturate(160%) blur(18px);
+  background: rgba(9, 9, 11, 0.8);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
   border-bottom: 1px solid var(--border);
 }
 .nav-inner {
   height: 100%; max-width: var(--page-max); margin-inline: auto;
   padding-inline: var(--page-pad);
-  display: flex; align-items: center; gap: 1rem;
+  display: flex; align-items: center; justify-content: space-between;
 }
 .nav-brand {
-  font-size: 0.8125rem; font-weight: 600; letter-spacing: -0.02em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: min(12rem, 40vw);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem; font-weight: 700; letter-spacing: -0.03em;
 }
-@media (min-width: 480px) { .nav-brand { max-width: none; } }
 .nav-links {
-  display: none; align-items: center; gap: clamp(1rem, 3vw, 2rem);
-  margin-left: auto; font-size: 0.875rem; color: var(--text-secondary);
+  display: none; align-items: center; gap: clamp(1.25rem, 3vw, 2.25rem);
+  font-size: 0.875rem; color: var(--text-secondary);
 }
+.nav-links a { transition: color 0.15s var(--ease); }
 .nav-links a:hover { color: var(--text); }
 .nav-links a.nav-cta { color: var(--accent); font-weight: 500; }
 @media (min-width: 768px) { .nav-links { display: flex; } }
-.nav-actions { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
-@media (min-width: 768px) { .nav-actions { margin-left: 0; } }
+.nav-actions { display: flex; align-items: center; gap: 0.75rem; }
 .lang-btn {
-  font-size: 0.6875rem; font-weight: 500; padding: 0.35rem 0.65rem;
-  border-radius: 999px; border: 1px solid var(--border); color: var(--text-secondary);
-  transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem; font-weight: 500; padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm); border: 1px solid var(--border); color: var(--text-secondary);
+  transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
 }
 .lang-btn:hover { border-color: var(--border-strong); color: var(--text); }
 .menu-btn {
-  display: flex; width: 2.5rem; height: 2.5rem; align-items: center; justify-content: center;
-  border-radius: var(--radius-sm); border: 1px solid var(--border);
+  display: flex; width: 2.25rem; height: 2.25rem; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); border: 1px solid var(--border); color: var(--text-secondary);
 }
 @media (min-width: 768px) { .menu-btn { display: none; } }
 .mobile-drawer {
   display: none; position: fixed; top: var(--nav-h); left: 0; right: 0; z-index: 99;
-  background: rgba(20,24,32,0.96); backdrop-filter: blur(24px);
+  background: rgba(9, 9, 11, 0.96); backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border); padding: 1rem var(--page-pad) 1.5rem;
   flex-direction: column; gap: 0.25rem;
 }
 .mobile-drawer.open { display: flex; }
 .mobile-drawer a {
-  padding: 0.875rem 0; font-size: 1.125rem; font-weight: 500;
-  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0; font-size: 1rem; font-weight: 500;
+  border-bottom: 1px solid var(--border); color: var(--text-secondary);
 }
 .mobile-drawer a:last-child { border-bottom: none; }
 
 /* Hero */
 .hero {
-  min-height: 100svh; min-height: 100dvh;
+  min-height: 90vh;
   display: flex; flex-direction: column; justify-content: center;
-  padding-top: calc(var(--nav-h) + 2rem); padding-bottom: 3rem;
+  padding-top: calc(var(--nav-h) + 4rem); padding-bottom: 4rem;
   text-align: center;
 }
 .hero .wrap { display: flex; flex-direction: column; align-items: center; }
 .hero-badge {
   display: inline-flex; align-items: center; gap: 0.5rem;
-  padding: 0.4rem 0.9rem; border-radius: 999px;
+  padding: 0.35rem 0.85rem; border-radius: var(--radius-sm);
   background: var(--surface); border: 1px solid var(--border);
-  font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1.25rem;
-}
-.hero-badge::before {
-  content: ''; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent); box-shadow: 0 0 10px var(--accent-glow);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem; color: var(--accent); margin-bottom: 1.5rem;
 }
 .hero h1 {
-  margin-bottom: 1rem; max-width: 22ch;
-  font-size: clamp(1.75rem, 4.2vw + 0.75rem, 3.25rem);
-  line-height: 1.15; font-weight: 650;
+  margin-bottom: 1.25rem; max-width: 25ch;
+  font-size: clamp(2rem, 4.5vw + 0.5rem, 3.5rem);
+  line-height: 1.2; font-weight: 700;
 }
 .hero-explain {
-  font-size: clamp(0.9375rem, 1.2vw + 0.5rem, 1.125rem);
+  font-size: clamp(0.95rem, 1.2vw + 0.4rem, 1.1rem);
   color: var(--text-secondary); line-height: 1.65;
-  max-width: 40em; margin-inline: auto; margin-bottom: 1.75rem;
+  max-width: 42em; margin-inline: auto; margin-bottom: 2.25rem;
   text-align: center;
 }
-.hero-explain strong { color: var(--text); font-weight: 550; }
+.hero-explain strong { color: var(--text); font-weight: 600; }
 .hero-explain code {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.88em;
-  padding: 0.1em 0.35em; border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.9em;
+  padding: 0.1em 0.3em; border-radius: 4px;
   background: var(--accent-dim); color: var(--accent);
 }
 .hero-agents {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;
-  margin-bottom: 2rem; max-width: 28rem;
+  margin-bottom: 2.5rem; max-width: 32rem;
 }
 .agent-pill {
-  font-size: 0.75rem; font-weight: 500; padding: 0.35rem 0.75rem;
-  border-radius: 999px; background: var(--surface);
+  font-size: 0.75rem; font-weight: 500; padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-sm); background: var(--surface);
   border: 1px solid var(--border); color: var(--text-secondary);
 }
-.agent-pill.highlight { color: var(--accent); border-color: rgba(46,196,182,0.35); background: var(--accent-dim); }
-.hero .lead { margin-inline: auto; margin-bottom: 2rem; text-align: center; font-size: 1rem; }
+.agent-pill.highlight { color: var(--accent); border-color: rgba(13, 148, 136, 0.4); background: var(--accent-dim); }
 .hero-cta { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 20rem; }
 @media (min-width: 480px) {
   .hero-cta { flex-direction: row; max-width: none; justify-content: center; }
 }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-  padding: 0.875rem 1.5rem; border-radius: 980px; font-size: 1rem; font-weight: 500;
-  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+  padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: 500;
+  transition: transform 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease);
 }
 .btn:active { transform: scale(0.98); }
 .btn-primary {
-  background: linear-gradient(135deg, #2ec4b6 0%, #22a399 100%);
-  color: #0c1218; font-weight: 600;
-  box-shadow: 0 4px 20px rgba(46,196,182,0.25);
+  background: var(--accent);
+  color: var(--bg); font-weight: 600;
 }
-.btn-primary:hover { box-shadow: 0 8px 28px rgba(46,196,182,0.35); filter: brightness(1.05); }
+.btn-primary:hover { background: #14b8a6; }
 .btn-secondary {
   background: var(--surface); border: 1px solid var(--border); color: var(--text);
 }
 .btn-secondary:hover { background: var(--surface-hover); border-color: var(--border-strong); }
-.hero-meta { margin-top: 2.5rem; font-size: 0.75rem; color: var(--text-tertiary); }
+.hero-meta { margin-top: 2.5rem; font-size: 0.75rem; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace; }
 
-/* Steps */
-.steps { list-style: none; padding: 0; margin: 2.5rem 0 0; display: flex; flex-direction: column; gap: 1rem; }
+/* Workflow Steps */
+.steps { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1rem; }
+@media (min-width: 768px) { .steps { grid-template-columns: repeat(3, 1fr); } }
 .step-card {
-  display: flex; gap: 1.25rem; align-items: flex-start;
-  padding: clamp(1.25rem, 3vw, 1.75rem);
-  border-radius: var(--radius-lg);
+  display: flex; flex-direction: column; gap: 1rem;
+  padding: 1.5rem; border-radius: var(--radius-md);
   background: var(--surface); border: 1px solid var(--border);
-  transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
 }
 .step-card:hover { border-color: var(--border-strong); background: var(--surface-hover); }
 .step-num {
-  flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 50%;
+  flex-shrink: 0; width: 1.75rem; height: 1.75rem; border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.8125rem; font-weight: 700; color: var(--accent);
-  background: var(--accent-dim);
+  font-size: 0.8rem; font-weight: 700; color: var(--accent);
+  background: var(--accent-dim); border: 1px solid rgba(13, 148, 136, 0.2);
+  font-family: 'JetBrains Mono', monospace;
 }
-.step-card h3 { font-size: 1.0625rem; margin-bottom: 0.35rem; }
-.step-card p { margin: 0; font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.5; }
-.step-card code {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.8125em;
-  color: var(--accent); background: var(--accent-dim); padding: 0.1em 0.35em; border-radius: 4px;
-}
+.step-card h3 { font-size: 1.05rem; font-weight: 600; }
+.step-card p { margin: 0; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; }
 
-/* Prompts */
+/* Prompts Template */
 .prompt-panel {
-  border-radius: var(--radius-lg); overflow: hidden;
+  border-radius: var(--radius-md); overflow: hidden;
   border: 1px solid var(--border); background: var(--bg-elevated);
-  margin-top: 2rem;
+  margin-top: 1.5rem;
 }
 .prompt-row {
-  display: flex; align-items: center; gap: 1rem;
-  padding: clamp(1rem, 2.5vw, 1.25rem) clamp(1rem, 3vw, 1.5rem);
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border);
   transition: background 0.15s var(--ease);
 }
@@ -255,150 +236,115 @@ h2 { font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); }
 .prompt-row:hover { background: var(--surface); }
 .prompt-row.featured { background: var(--accent-dim); }
 .prompt-text {
-  flex: 1; font-size: clamp(0.9375rem, 2vw, 1.0625rem);
-  line-height: 1.45; min-width: 0;
+  flex: 1; font-size: 0.95rem; line-height: 1.5; min-width: 0;
 }
 .copy-btn {
-  flex-shrink: 0; width: 2.25rem; height: 2.25rem; border-radius: 50%;
+  flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
-  color: var(--text-tertiary); border: 1px solid transparent;
-  transition: color 0.2s, background 0.2s, border-color 0.2s;
+  color: var(--text-tertiary); border: 1px solid var(--border);
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
-.copy-btn:hover { color: var(--accent); background: var(--accent-dim); border-color: var(--border); }
+.copy-btn:hover { color: var(--accent); background: var(--accent-dim); border-color: var(--accent); }
 .tip-card {
-  margin-top: 1.5rem; padding: 1.25rem 1.5rem; border-radius: var(--radius-md);
-  border: 1px solid rgba(251,191,36,0.2); background: rgba(251,191,36,0.06);
-  font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.55;
+  margin-top: 1.25rem; padding: 1rem 1.25rem; border-radius: var(--radius-md);
+  border: 1px solid rgba(13, 148, 136, 0.2); background: var(--accent-dim);
+  font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;
 }
-.tip-card strong { color: #fcd34d; font-weight: 600; }
+.tip-card strong { color: var(--text); font-weight: 600; }
 
-/* Demo window */
-.demo-section { text-align: center; }
+/* Demo Terminal */
 .demo-section .lead { margin-inline: auto; margin-bottom: 2rem; }
 .demo-window {
-  text-align: left; border-radius: var(--radius-xl);
+  text-align: left; border-radius: var(--radius-lg);
   border: 1px solid var(--border-strong);
-  background: #1a2029;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.04) inset,
-    0 24px 48px -12px rgba(0,0,0,0.45),
-    0 0 80px -30px var(--accent-glow);
-  overflow: hidden; max-width: 56rem; margin-inline: auto;
+  background: #09090b;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5), 0 0 50px -20px var(--accent-glow);
+  overflow: hidden; max-width: 52rem; margin-inline: auto;
 }
 .demo-chrome {
   display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.75rem 1rem; background: #222933; border-bottom: 1px solid var(--border);
+  padding: 0.65rem 1rem; background: #18181b; border-bottom: 1px solid var(--border);
 }
-.demo-dot { width: 10px; height: 10px; border-radius: 50%; }
-.demo-dot.r { background: #ff5f57; } .demo-dot.y { background: #febc2e; } .demo-dot.g { background: #28c840; }
-.demo-title { flex: 1; text-align: center; font-size: 0.75rem; color: var(--text-tertiary); font-weight: 500; }
-.demo-body { padding: 0; }
-.demo-user {
-  padding: 1rem clamp(1rem, 3vw, 1.5rem);
-  font-size: clamp(0.875rem, 2vw, 1rem); color: var(--text);
-  border-bottom: 1px solid var(--border);
-  background: rgba(255,255,255,0.02);
-}
-.demo-user::before { content: 'You · '; color: var(--text-tertiary); font-weight: 500; }
-.demo-tool { margin: clamp(0.75rem, 2vw, 1rem); }
-.demo-tool-hdr {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
-  padding: 0.5rem 0.75rem; background: #1c1c1e; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  border: 1px solid var(--border); border-bottom: none;
-  font-family: 'JetBrains Mono', monospace; font-size: 0.6875rem; color: var(--text-tertiary);
-}
-.demo-tool-hdr strong { color: var(--accent); font-weight: 500; }
-.demo-tool-body {
-  padding: clamp(0.875rem, 2vw, 1.125rem);
-  border: 1px solid var(--border); border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  font-family: 'JetBrains Mono', monospace; font-size: clamp(0.6875rem, 1.5vw, 0.75rem);
-  line-height: 1.55; color: #c8c8cc; max-height: min(420px, 55vh); overflow-y: auto;
-}
-.demo-tool-body .h2 { color: #5eead4; font-weight: 600; margin-bottom: 0.75rem; font-size: 0.8125rem; }
-.demo-tool-body .h3 { color: #7dd3fc; margin: 0.75rem 0 0.35rem; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em; }
-.demo-tool-body .meta { color: #6e6e73; font-size: 0.625rem; margin-bottom: 0.5rem; }
-.demo-tool-body .li { margin: 0.25rem 0; padding-left: 0; }
-.demo-tool-body .p { margin: 0.35rem 0; }
-.demo-caption {
-  margin-top: 1rem; font-size: 0.8125rem; color: var(--text-tertiary);
-}
-@media (min-width: 768px) {
-  .demo-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-  .demo-user { grid-column: 1 / -1; }
-}
+.demo-dot { width: 8px; height: 8px; border-radius: 50%; }
+.demo-dot.r { background: #3f3f46; } .demo-dot.y { background: #3f3f46; } .demo-dot.g { background: #3f3f46; }
+.demo-title { flex: 1; text-align: center; font-size: 0.7rem; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace; }
+.demo-body { padding: 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; color: var(--text-secondary); }
+.demo-prompt { color: var(--text); margin-bottom: 1rem; }
+.demo-prompt::before { content: "$ "; color: var(--accent); }
+.demo-line { margin: 0.15rem 0; }
+.demo-line.accent { color: var(--accent); }
+.demo-line.highlight { color: #f4f4f5; }
+.demo-caption { margin-top: 1rem; font-size: 0.75rem; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace; }
 
-/* Install */
+/* Install Blocks */
 .install-block {
-  margin-top: 2rem; border-radius: var(--radius-lg); overflow: hidden;
+  margin-top: 1.5rem; border-radius: var(--radius-md); overflow: hidden;
   border: 1px solid var(--border); background: var(--bg-elevated);
 }
 .install-hdr {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 0.75rem 1rem; border-bottom: 1px solid var(--border);
-  font-size: 0.75rem; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace;
+  padding: 0.65rem 1rem; border-bottom: 1px solid var(--border);
+  font-size: 0.7rem; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace;
 }
 .install-pre {
-  margin: 0; padding: clamp(1rem, 3vw, 1.25rem);
-  font-family: 'JetBrains Mono', monospace; font-size: clamp(0.75rem, 2vw, 0.875rem);
-  line-height: 1.6; color: #d4d4d8; overflow-x: auto; word-break: break-all;
+  margin: 0; padding: 1.25rem;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+  line-height: 1.5; color: #e4e4e7; overflow-x: auto;
 }
 details.install-more {
   margin-top: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border);
   background: var(--surface);
 }
 details.install-more summary {
-  padding: 1rem 1.25rem; cursor: pointer; color: var(--text-secondary); font-size: 0.9375rem;
-  list-style: none;
+  padding: 0.75rem 1rem; cursor: pointer; color: var(--text-secondary); font-size: 0.875rem;
+  list-style: none; font-weight: 500;
 }
 details.install-more summary::-webkit-details-marker { display: none; }
 details.install-more[open] summary { border-bottom: 1px solid var(--border); }
-.install-more-body { padding: 1rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-tertiary); line-height: 1.7; }
+.install-more-body { padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-tertiary); line-height: 1.6; }
 
-/* Agents */
-.agent-tiers { display: grid; gap: 1rem; margin-top: 2rem; }
+/* Agent Compatibility */
+.agent-tiers { display: grid; gap: 1rem; margin-top: 1.5rem; }
 @media (min-width: 640px) { .agent-tiers { grid-template-columns: 1fr 1fr; } }
 .agent-tier {
-  padding: clamp(1.25rem, 3vw, 1.5rem); border-radius: var(--radius-lg);
+  padding: 1.25rem; border-radius: var(--radius-md);
   border: 1px solid var(--border); background: var(--surface);
 }
-.agent-tier h3 { font-size: 1rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem; }
-.agent-tier p { margin: 0 0 1rem; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; }
-.agent-tier.featured { border-color: rgba(46,196,182,0.3); background: var(--accent-dim); }
+.agent-tier h3 { font-size: 0.95rem; margin-bottom: 0.5rem; font-weight: 600; }
+.agent-tier p { margin: 0 0 1rem; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; }
+.agent-tier.featured { border-color: rgba(13, 148, 136, 0.25); background: var(--accent-dim); }
 .agent-tier.featured h3 { color: var(--accent); }
-.agent-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.agent-grid { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .agent-name {
-  font-size: 0.8125rem; font-weight: 500; padding: 0.4rem 0.7rem;
-  border-radius: 999px; background: var(--bg-elevated); border: 1px solid var(--border);
+  font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; padding: 0.25rem 0.5rem;
+  border-radius: 4px; background: var(--bg-elevated); border: 1px solid var(--border);
   color: var(--text-secondary);
 }
-.agent-tier.featured .agent-name { color: var(--text); border-color: rgba(46,196,182,0.25); }
-.agents-note {
-  margin-top: 1.25rem; font-size: 0.8125rem; color: var(--text-tertiary); text-align: center;
-}
-.agents-note a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.agent-tier.featured .agent-name { color: var(--text); border-color: rgba(13, 148, 136, 0.2); }
+.agents-note { margin-top: 1.25rem; font-size: 0.75rem; color: var(--text-tertiary); text-align: center; }
+.agents-note a { color: var(--accent); text-decoration: underline; }
 
-/* More + footer */
-.link-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.25rem 2rem; margin-top: 1.5rem; }
-.link-row a { font-size: 0.9375rem; color: var(--text-secondary); transition: color 0.2s; }
+/* Footer */
+.link-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem; margin-top: 1.5rem; }
+.link-row a { font-size: 0.875rem; color: var(--text-secondary); transition: color 0.15s; }
 .link-row a:hover { color: var(--accent); }
-.link-row a:first-child { color: var(--accent); }
 .site-footer {
-  padding: 2.5rem var(--page-pad) calc(2.5rem + env(safe-area-inset-bottom));
+  padding: 3rem var(--page-pad);
   border-top: 1px solid var(--border); text-align: center;
+  font-size: 0.8rem; color: var(--text-tertiary);
 }
 .footer-row {
   display: flex; flex-direction: column; align-items: center; gap: 1rem;
-  font-size: 0.875rem; color: var(--text-tertiary);
 }
 @media (min-width: 640px) {
   .footer-row { flex-direction: row; justify-content: space-between; max-width: var(--page-max); margin-inline: auto; width: 100%; }
 }
-.footer-legal { margin-top: 1.25rem; font-size: 0.75rem; color: #424245; }
+.footer-legal { margin-top: 1rem; font-size: 0.75rem; color: var(--text-tertiary); }
 
-/* Motion */
+/* Animation class */
 .scroll-in {
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+  opacity: 0; transform: translateY(16px);
+  transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
 }
 .scroll-in.visible { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
@@ -414,11 +360,11 @@ details.install-more[open] summary { border-bottom: 1px solid var(--border); }
   <div class="nav-inner">
     <a href="#" class="nav-brand">maru-deep-pro-search</a>
     <nav class="nav-links" aria-label="Primary">
-      <a href="#start"><span class="ko">시작</span><span class="en hidden">Start</span></a>
-      <a href="#prompts" class="nav-cta"><span class="ko">프롬프트</span><span class="en hidden">Prompts</span></a>
-      <a href="#demo"><span class="ko">예시</span><span class="en hidden">Demo</span></a>
+      <a href="#start"><span class="ko">동작 흐름</span><span class="en hidden">Workflow</span></a>
+      <a href="#prompts" class="nav-cta"><span class="ko">템플릿</span><span class="en hidden">Templates</span></a>
+      <a href="#demo"><span class="ko">실행 예시</span><span class="en hidden">Demo</span></a>
       <a href="#install"><span class="ko">설치</span><span class="en hidden">Install</span></a>
-      <a href="#agents"><span class="ko">에이전트</span><span class="en hidden">Agents</span></a>
+      <a href="#agents"><span class="ko">지원 환경</span><span class="en hidden">Agents</span></a>
       <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" rel="noopener">GitHub</a>
     </nav>
     <div class="nav-actions">
@@ -429,11 +375,11 @@ details.install-more[open] summary { border-bottom: 1px solid var(--border); }
     </div>
   </div>
   <nav id="mobileNav" class="mobile-drawer" aria-label="Mobile">
-    <a href="#start" class="mobile-link"><span class="ko">시작</span><span class="en hidden">Start</span></a>
-    <a href="#prompts" class="mobile-link"><span class="ko">프롬프트</span><span class="en hidden">Prompts</span></a>
-    <a href="#demo" class="mobile-link"><span class="ko">예시</span><span class="en hidden">Demo</span></a>
+    <a href="#start" class="mobile-link"><span class="ko">동작 흐름</span><span class="en hidden">Workflow</span></a>
+    <a href="#prompts" class="mobile-link"><span class="ko">템플릿</span><span class="en hidden">Templates</span></a>
+    <a href="#demo" class="mobile-link"><span class="ko">실행 예시</span><span class="en hidden">Demo</span></a>
     <a href="#install" class="mobile-link"><span class="ko">설치</span><span class="en hidden">Install</span></a>
-    <a href="#agents" class="mobile-link"><span class="ko">에이전트</span><span class="en hidden">Agents</span></a>
+    <a href="#agents" class="mobile-link"><span class="ko">지원 환경</span><span class="en hidden">Agents</span></a>
     <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" rel="noopener">GitHub</a>
   </nav>
 </header>
@@ -442,60 +388,68 @@ details.install-more[open] summary { border-bottom: 1px solid var(--border); }
   <section class="hero section">
     <div class="wrap">
       <p class="hero-badge scroll-in">
-        <span class="ko">딥리서치 MCP · 100% 무료</span>
-        <span class="en hidden">Deep-research MCP · 100% free</span>
+        <span class="ko">Model Context Protocol · 오픈소스</span>
+        <span class="en hidden">Model Context Protocol · Open Source</span>
       </p>
       <h1 class="scroll-in">
-        <span class="ko">이것만 설치하면 <span class="accent-word">Cursor</span>·<span class="accent-word">Claude Code</span>·<span class="accent-word">Codex</span>가<br>딥리서치 후 최신 정보로 코딩합니다</span>
-        <span class="en hidden">Install once — <span class="accent-word">Cursor</span>, <span class="accent-word">Claude Code</span>, and <span class="accent-word">Codex</span><br>research the web first, then code with fresh facts</span>
+        <span class="ko">AI 에이전트의 지식 한계를 극복하는<br><span class="accent-word">실시간 멀티 엔진 딥리서치 MCP</span></span>
+        <span class="en hidden">Break AI Agent Knowledge Boundaries with<br><span class="accent-word">Real-time Multi-engine Deep Research MCP</span></span>
       </h1>
       <p class="hero-explain scroll-in">
-        <span class="ko"><strong>maru-deep-pro-search</strong>는 API 키 없이 쓰는 자체 딥리서치 <strong>MCP 슈퍼셋</strong>입니다. 9개 검색 엔진·<code>[1][2]</code> 인용·<strong>전역 규칙(User Rules)·SKILL·세션 게이트</strong>를 한 번에 붙여, 에이전트가 추측하지 않고 웹 근거로 코드를 짜게 만드는 솔루션입니다.</span>
-        <span class="en hidden"><strong>maru-deep-pro-search</strong> is a free deep-research <strong>MCP super-set</strong>—no API keys. It wires up nine search engines, <code>[1][2]</code> citations, and <strong>global rules, SKILLs, and session gates</strong> so your agent researches before it codes instead of guessing.</span>
+        <span class="ko"><strong>maru-deep-pro-search</strong>는 상용 API 키 등록 없이 사용하는 개발자 지향적 딥리서치 MCP 서버입니다. 9개 검색 소스를 연동한 자동 페일오버, 로컬 Granite 임베딩 기반 시맨틱 재랭킹, 그리고 정확한 출처 인용(Citations) 파이프라인을 지원하여 에이전트가 정확한 최신 팩트를 기반으로 작업하도록 강제합니다.</span>
+        <span class="en hidden"><strong>maru-deep-pro-search</strong> is a developer-centric, deep-research MCP server requiring zero API keys. Featuring 9-engine aggregated search with auto-failover, local semantic re-ranking with Granite 97M, and a strict citation pipeline, it forces coding agents to use fresh, verified facts instead of hallucinating.</span>
       </p>
       <div class="hero-agents scroll-in" aria-label="Supported agents">
         <span class="agent-pill highlight">Cursor</span>
         <span class="agent-pill highlight">Claude Code</span>
-        <span class="agent-pill highlight">Codex</span>
-        <span class="agent-pill ko">+ 18 more</span>
-        <span class="agent-pill en hidden">+ 18 more</span>
+        <span class="agent-pill highlight">Cline</span>
+        <span class="agent-pill ko">+ 18종 추가 지원</span>
+        <span class="agent-pill en hidden">+ 18 more supported</span>
       </div>
-      <p class="lead scroll-in">
-        <span class="ko">설치 한 줄 → 에이전트 재시작 → 채팅에 <strong>「딥리서치 활용해」</strong></span>
-        <span class="en hidden">One-line install → restart agent → say <strong>“use deep research”</strong></span>
-      </p>
       <div class="hero-cta scroll-in">
-        <a href="#install" class="btn btn-primary"><span class="ko">1줄 설치</span><span class="en hidden">Install</span></a>
-        <a href="#prompts" class="btn btn-secondary"><span class="ko">프롬프트 복사</span><span class="en hidden">Copy prompts</span></a>
+        <a href="#install" class="btn btn-primary"><span class="ko">설치 및 시작</span><span class="en hidden">Get Started</span></a>
+        <a href="#prompts" class="btn btn-secondary"><span class="ko">템플릿 복사</span><span class="en hidden">Prompt Templates</span></a>
       </div>
-      <p class="hero-meta scroll-in">v0.22.3 · API 키 $0 · 21 agent adapters</p>
+      <p class="hero-meta scroll-in">v0.22.4 · MIT License · 21 Agent Adapters</p>
     </div>
   </section>
 
   <section id="start" class="section">
     <div class="wrap">
-      <p class="section-label scroll-in"><span class="ko">시작</span><span class="en hidden">Start</span></p>
-      <h2 class="scroll-in"><span class="ko">세 단계.</span><span class="en hidden">Three steps.</span></h2>
+      <p class="section-label scroll-in"><span class="ko">동작 흐름</span><span class="en hidden">Workflow</span></p>
+      <h2 class="scroll-in">
+        <span class="ko">간단한 3단계 프로세스</span>
+        <span class="en hidden">Simple 3-Step Process</span>
+      </h2>
       <ol class="steps">
         <li class="step-card scroll-in">
           <span class="step-num" aria-hidden="true">1</span>
           <div>
-            <h3><span class="ko">설치</span><span class="en hidden">Install</span></h3>
-            <p><span class="ko">터미널에 curl 한 줄. 끝나면 에이전트 <strong>완전 종료 후 재실행</strong>.</span><span class="en hidden">Paste the curl one-liner. Then <strong>fully quit and reopen</strong> your agent.</span></p>
+            <h3><span class="ko">설치 및 등록</span><span class="en hidden">Install & Register</span></h3>
+            <p>
+              <span class="ko">설치 명령어를 터미널에서 실행하여 패키지를 내려받은 후, 개발 환경에 MCP 서버 설정을 적용하고 에이전트를 재시작합니다.</span>
+              <span class="en hidden">Run the installation command in your terminal, configure the MCP server in your agent, and restart the application.</span>
+            </p>
           </div>
         </li>
         <li class="step-card scroll-in">
           <span class="step-num" aria-hidden="true">2</span>
           <div>
-            <h3><span class="ko">한 줄 규칙</span><span class="en hidden">One rule</span></h3>
-            <p><span class="ko"><code>딥리서치 활용해</code> — User Rules나 첫 메시지에 붙여넣기.</span><span class="en hidden"><code>use deep research</code> — paste into User Rules or your first message.</span></p>
+            <h3><span class="ko">지침 템플릿 등록</span><span class="en hidden">Inject System Rules</span></h3>
+            <p>
+              <span class="ko">에이전트의 시스템 설정(User Rules 등)에 코드 생성 전 실시간 탐색과 정확한 인용을 지시하는 템플릿을 등록합니다.</span>
+              <span class="en hidden">Add instructions to your agent's system prompt to enforce real-time web queries and citations before code blocks.</span>
+            </p>
           </div>
         </li>
         <li class="step-card scroll-in">
           <span class="step-num" aria-hidden="true">3</span>
           <div>
-            <h3><span class="ko">개발 질문 던지기</span><span class="en hidden">Ask dev questions</span></h3>
-            <p><span class="ko">버전·스택·에러만 말하면 됩니다. 출처는 <code>[1]</code> <code>[2]</code>로 붙어요.</span><span class="en hidden">Mention version, stack, error. Citations show up as <code>[1]</code> <code>[2]</code>.</span></p>
+            <h3><span class="ko">개발 질문 제기</span><span class="en hidden">Ask and Verify</span></h3>
+            <p>
+              <span class="ko">구현할 기능의 구체적인 명세, 패키지 버전 또는 발생한 에러 로그를 명시하면 관련 자료를 검색하여 출처와 함께 코드를 도출합니다.</span>
+              <span class="en hidden">Specify library versions, API specifications, or error traces. The agent retrieves the documentation, cites sources, and writes accurate code.</span>
+            </p>
           </div>
         </li>
       </ol>
@@ -504,102 +458,94 @@ details.install-more[open] summary { border-bottom: 1px solid var(--border); }
 
   <section id="prompts" class="section">
     <div class="wrap">
-      <p class="section-label scroll-in"><span class="ko">프롬프트</span><span class="en hidden">Prompts</span></p>
-      <h2 class="scroll-in"><span class="ko">복붙만 하세요.</span><span class="en hidden">Copy. Paste. Ship.</span></h2>
+      <p class="section-label scroll-in"><span class="ko">시스템 지침 템플릿</span><span class="en hidden">System Prompts</span></p>
+      <h2 class="scroll-in">
+        <span class="ko">검색 및 분석 강제화 템플릿</span>
+        <span class="en hidden">Templates for Enforcement</span>
+      </h2>
       <p class="lead scroll-in" style="margin-top:0.75rem">
-        <span class="ko">길게 쓸 필요 없습니다.</span>
-        <span class="en hidden">Keep it short.</span>
+        <span class="ko">에이전트가 임의의 가정을 바탕으로 잘못된 코드를 짜지 않도록 유도하는 지침입니다. 목적에 맞춰 복사하여 시스템 룰에 주입하십시오.</span>
+        <span class="en hidden">Use these templates in your system rules or initial prompts to guide the agent toward citation-backed research.</span>
       </p>
       <div class="prompt-panel scroll-in" id="prompt-list">
         <div class="prompt-row featured">
-          <p class="prompt-text ko">딥리서치 활용해</p>
-          <p class="prompt-text en hidden">Use deep research</p>
-          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+          <p class="prompt-text ko">코드 작성 전에 최신 웹 명세를 검색하고 신뢰할 수 있는 출처를 [1], [2] 형식으로 명시해줘.</p>
+          <p class="prompt-text en hidden">Search the web to verify the latest API specs before writing code. Cite your sources as [1], [2].</p>
+          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
         </div>
         <div class="prompt-row">
-          <p class="prompt-text ko">코드 짜기 전에 웹에서 최신 거 찾고 [1][2] 출처 달아줘</p>
-          <p class="prompt-text en hidden">Search the web before coding; cite as [1][2]</p>
-          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+          <p class="prompt-text ko">공식 릴리즈 노트와 보안 공고(Advisory) 데이터를 우선적으로 탐색하고, 임의의 가정으로 코드를 작성하지 마.</p>
+          <p class="prompt-text en hidden">Prioritize official release notes and security advisories; do not write code based on assumptions.</p>
+          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
         </div>
         <div class="prompt-row">
-          <p class="prompt-text ko">추측 금지. 공식 문서·릴리즈 노트부터 읽어</p>
-          <p class="prompt-text en hidden">No guessing — official docs and release notes first</p>
-          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+          <p class="prompt-text ko">Next.js 15 App Router Server Action revalidate 최신 오류 해결법을 웹에서 검색하여 수정안을 제시해줘.</p>
+          <p class="prompt-text en hidden">Search Next.js 15 App Router Server Action revalidate error resolution and propose a fix.</p>
+          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
         </div>
         <div class="prompt-row">
-          <p class="prompt-text ko">Next.js 15 app router — server action revalidate 오류. 웹 찾아서 고쳐줘</p>
-          <p class="prompt-text en hidden">Next.js 15 server action revalidate error — search the web and fix</p>
-          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
-        </div>
-        <div class="prompt-row">
-          <p class="prompt-text ko">CVE-2026-40347 httpx — 우리 0.27.2 쓰는데 영향 있어? 공식 공지만 확인해</p>
-          <p class="prompt-text en hidden">CVE-2026-40347 httpx — we're on 0.27.2. Check official advisories only</p>
-          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
-        </div>
-        <div class="prompt-row">
-          <p class="prompt-text ko">uv vs pip-tools — 팀 온보딩 쉬운 쪽으로 표로만 비교해줘</p>
-          <p class="prompt-text en hidden">uv vs pip-tools — compare in a table for easy team onboarding</p>
-          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+          <p class="prompt-text ko">CVE-2026-40347 취약점 패키지(httpx) 공지를 확인하고, 현재 사용 중인 버전이 영향받는지 공식 데이터로 판별해줘.</p>
+          <p class="prompt-text en hidden">Check official advisories for CVE-2026-40347 and verify if our current package version is affected.</p>
+          <button type="button" class="copy-btn" onclick="copyPrompt(this)" aria-label="Copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
         </div>
       </div>
       <div class="tip-card scroll-in">
-        <span class="ko"><strong>피하기:</strong> 「알아서 해줘」「최신으로」— 뭉뚱그리면 검색도 뭉뚱그려집니다. <code>Next.js 15</code> · <code>httpx 0.27</code> · 에러 한 줄이면 충분해요.</span>
-        <span class="en hidden"><strong>Avoid:</strong> “figure it out” / “make it modern.” Add <code>Next.js 15</code>, <code>httpx 0.27</code>, or one error line.</span>
+        <span class="ko"><strong>설계 팁:</strong> 막연한 지시보다 구체적인 라이브러리 명칭, 대상 버전, 혹은 에러 트레이스 일부를 포함할 때 하이브리드 검색 및 시맨틱 재랭킹 성능이 극대화됩니다.</span>
+        <span class="en hidden"><strong>Pro Tip:</strong> Specific library versions, target specifications, or error traces significantly improve the hybrid retrieval and semantic re-ranking accuracy.</span>
       </div>
     </div>
   </section>
 
   <section id="demo" class="section demo-section">
     <div class="wrap">
-      <p class="section-label scroll-in"><span class="ko">예시</span><span class="en hidden">Demo</span></p>
-      <h2 class="scroll-in"><span class="ko">실제로 이렇게 나옵니다.</span><span class="en hidden">This is what you get.</span></h2>
+      <p class="section-label scroll-in"><span class="ko">실행 예시</span><span class="en hidden">Execution Trace</span></p>
+      <h2 class="scroll-in">
+        <span class="ko">콘솔 동작 및 정제 단계</span>
+        <span class="en hidden">Under the Hood</span>
+      </h2>
       <p class="lead scroll-in">
-        <span class="ko">보안·프레임워크 질문 → <code>deep_research</code> → 공식 출처 [1][2]</span>
-        <span class="en hidden">Security / framework question → <code>deep_research</code> → official [1][2] cites</span>
+        <span class="ko">에이전트가 질의를 분석하고 9개 엔진 검색 결과에 Granite 97M 로컬 임베딩 재랭킹을 거치는 과정입니다.</span>
+        <span class="en hidden">AI agent delegates queries to 9 search engines, followed by local semantic re-ranking and citation mapping.</span>
       </p>
 
       <article class="demo-window scroll-in" aria-label="MCP output example">
         <div class="demo-chrome">
           <span class="demo-dot r"></span><span class="demo-dot y"></span><span class="demo-dot g"></span>
-          <span class="demo-title">Cursor · Agent</span>
+          <span class="demo-title">Terminal · maru-deep-pro-search</span>
         </div>
         <div class="demo-body">
-          <p class="demo-user ko">CVE-2026-40347 httpx 0.27.2 영향 있는지 — 공식 advisory만 확인해줘</p>
-          <p class="demo-user en hidden">CVE-2026-40347 httpx 0.27.2 — affected? official advisories only</p>
-          <div class="demo-tool">
-            <div class="demo-tool-hdr">
-              <span>Called MCP tool</span>
-              <strong>deep_research</strong>
-            </div>
-            <div class="demo-tool-body">
-              <div class="h2">Research: CVE-2026-40347 httpx python advisory</div>
-              <div class="meta">engines: duckduckgo_lite · bing · sources: 18 · quality: official-heavy</div>
-              <div class="h3">Research Trace</div>
-              <div class="p">1. Query expanded → security + package version probes</div>
-              <div class="p">2. Official GitHub Advisory + PyPI release notes prioritized</div>
-              <div class="p">3. Version 0.27.x scope checked against CVE text</div>
-              <div class="h3">Key Findings</div>
-              <div class="p">[1] GitHub Advisory Database — httpx affected range documented. Verify pinned version in lockfile before deploy.</div>
-              <div class="h3">Sources</div>
-              <div class="li">[1] CVE-2026-40347 — GitHub Advisory Database</div>
-              <div class="li">[2] encode/httpx CHANGELOG.md — security fixes</div>
-              <div class="li">[3] RHSA-2026:5588 — Red Hat Customer Portal</div>
-              <div class="meta" style="margin-top:0.75rem">Host: summarize with [n] cites · fetch_page on [1] for full text</div>
-            </div>
-          </div>
+          <div class="demo-prompt">maru-deep-pro-search query --strict "CVE-2026-40347 httpx"</div>
+          <div class="demo-line">[maru] Expanding query into search variables...</div>
+          <div class="demo-line">[maru] Aggregating results from 9 search engines (duckduckgo, bing, startpage, google_lite...)</div>
+          <div class="demo-line">[maru] Fetched 18 search documents. Filtering duplicates...</div>
+          <div class="demo-line accent">[maru] Running hybrid (RRF + BM25) + Granite 97M local semantic re-ranking...</div>
+          <div class="demo-line">[maru] Granite 97M semantic rerank completed in 184ms.</div>
+          <div class="demo-line">[maru] Citations generated for 3 verified sources.</div>
+          <div class="demo-line" style="margin-top: 1rem;"></div>
+          <div class="demo-line highlight"># Key Findings</div>
+          <div class="demo-line">[1] GitHub Advisory Database (GHSA-xxxx-xxxx) documents that httpx version 0.27.2 is safe.</div>
+          <div class="demo-line">    Vulnerability CVE-2026-40347 was introduced in version 0.27.3.</div>
+          <div class="demo-line">[2] encode/httpx CHANGELOG.md indicates the issue is patched in v0.27.4.</div>
+          <div class="demo-line" style="margin-top: 1rem;"></div>
+          <div class="demo-line highlight"># Sources</div>
+          <div class="demo-line">[1] https://github.com/advisories/GHSA-xxxx-xxxx</div>
+          <div class="demo-line">[2] https://github.com/encode/httpx/blob/main/CHANGELOG.md</div>
         </div>
       </article>
       <p class="demo-caption scroll-in">
-        <span class="ko">실제 deep_research 출력 발췌 · 코딩·보안 워크플로</span>
-        <span class="en hidden">Excerpt from live deep_research · dev/security workflow</span>
+        <span class="ko">실제 deep_research 도구 실행 시 백그라운드 콘솔 트레이스 출력 예시</span>
+        <span class="en hidden">Example console log output from a background deep_research execution trace</span>
       </p>
     </div>
   </section>
 
   <section id="install" class="section">
     <div class="wrap">
-      <p class="section-label scroll-in"><span class="ko">설치</span><span class="en hidden">Install</span></p>
-      <h2 class="scroll-in"><span class="ko">한 줄이면 됩니다.</span><span class="en hidden">One line.</span></h2>
+      <p class="section-label scroll-in"><span class="ko">설치</span><span class="en hidden">Installation</span></p>
+      <h2 class="scroll-in">
+        <span class="ko">단일 명령어 설치</span>
+        <span class="en hidden">One-line Command</span>
+      </h2>
       <p class="lead scroll-in" style="margin-top:0.75rem">Python 3.10+</p>
 
       <div class="install-block scroll-in">
@@ -611,54 +557,61 @@ details.install-more[open] summary { border-bottom: 1px solid var(--border); }
       </div>
 
       <details class="install-more scroll-in">
-        <summary><span class="ko">Windows · 수동 · 업그레이드</span><span class="en hidden">Windows · manual · upgrade</span></summary>
+        <summary><span class="ko">Windows 및 수동 설치 안내</span><span class="en hidden">Windows & Alternative Methods</span></summary>
         <div class="install-more-body">
           <p># Windows<br>irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex</p>
-          <p style="margin-top:0.75rem"># Manual<br>python3 -m pip install --user maru-deep-pro-search<br>maru-deep-pro-search setup</p>
-          <p style="margin-top:0.75rem"># Upgrade<br>pip install -U maru-deep-pro-search<br>maru-deep-pro-search update --with-setup</p>
+          <p style="margin-top:0.75rem"># Manual via Pip<br>python3 -m pip install --user maru-deep-pro-search<br>maru-deep-pro-search setup</p>
+          <p style="margin-top:0.75rem"># Modern uv Tool<br>uv tool install --python 3.12 maru-deep-pro-search</p>
         </div>
       </details>
 
-      <p class="lead scroll-in" style="margin-top:1.5rem;text-align:center;font-size:0.9375rem">
-        <span class="ko">설치 → <strong>Cursor 완전 재시작</strong> → 「딥리서치 활용해」</span>
-        <span class="en hidden">Install → <strong>restart Cursor</strong> → “use deep research”</span>
+      <p class="lead scroll-in" style="margin-top:1.5rem;text-align:center;font-size:0.9rem">
+        <span class="ko">설치 완료 후 <strong>개발 환경(Cursor 등)을 완전히 재시작</strong>해야 정상 연동됩니다.</span>
+        <span class="en hidden">Note: Fully restart your editor environment (e.g., Cursor) after installation.</span>
       </p>
     </div>
   </section>
 
   <section id="agents" class="section">
     <div class="wrap">
-      <p class="section-label scroll-in"><span class="ko">에이전트</span><span class="en hidden">Agents</span></p>
-      <h2 class="scroll-in"><span class="ko">21개 코딩 에이전트 지원</span><span class="en hidden">21 coding agents supported</span></h2>
+      <p class="section-label scroll-in"><span class="ko">지원 환경</span><span class="en hidden">Supported Environments</span></p>
+      <h2 class="scroll-in">
+        <span class="ko">주요 개발 에이전트 연동</span>
+        <span class="en hidden">Coding Agent Integrations</span>
+      </h2>
       <p class="lead scroll-in" style="margin-top:0.75rem">
-        <span class="ko"><code>maru-deep-pro-search setup</code>이 MCP 연결과 (가능한) User Rules·SKILL까지 맞춰 줍니다. 아래 전부 <strong>딥리서치·[1][2] 인용</strong>은 됩니다.</span>
-        <span class="en hidden"><code>maru-deep-pro-search setup</code> wires MCP plus rules and SKILLs where supported. Every agent below gets <strong>deep research and [1][2] cites</strong>.</span>
+        <span class="ko"><code>maru-deep-pro-search setup</code> 실행 시 MCP 연결을 자동으로 구성합니다. 아래 모든 환경에서 실시간 딥리서치와 인용 태깅 파이프라인이 정상적으로 동작합니다.</span>
+        <span class="en hidden">The setup command automatically registers the MCP server configuration. Citations and real-time deep research are supported across all targets listed below.</span>
       </p>
       <div class="agent-tiers scroll-in">
         <div class="agent-tier featured">
-          <h3><span class="ko">추천</span><span class="en hidden">Recommended</span></h3>
-          <p><span class="ko">코딩 전 검색·수정 제한이 비교적 잘 걸리는 편입니다.</span><span class="en hidden">Stronger hooks — research-before-code sticks better.</span></p>
+          <h3><span class="ko">권장 에이전트</span><span class="en hidden">Recommended</span></h3>
+          <p>
+            <span class="ko">시스템 수준에서 실시간 검색 지침을 강력하게 준수하는 환경입니다.</span>
+            <span class="en hidden">Environments that strongly enforce and follow injected system research instructions.</span>
+          </p>
           <div class="agent-grid">
             <span class="agent-name">Cursor</span>
             <span class="agent-name">Claude Code</span>
-            <span class="agent-name">Codex</span>
+            <span class="agent-name">Cline</span>
             <span class="agent-name">Aider</span>
             <span class="agent-name">Hermes</span>
           </div>
         </div>
         <div class="agent-tier">
-          <h3><span class="ko">그 외 16개</span><span class="en hidden">16 more</span></h3>
-          <p><span class="ko">MCP + 전역 지침. 에이전트마다 “막는” 세기는 다릅니다.</span><span class="en hidden">MCP + injected instructions; enforcement varies by host.</span></p>
+          <h3><span class="ko">기타 지원 환경</span><span class="en hidden">Other Supported</span></h3>
+          <p>
+            <span class="ko">MCP를 표준 지원하며 주입 규칙에 따라 실시간 쿼리를 트리거할 수 있습니다.</span>
+            <span class="en hidden">Standard MCP-compliant agents capable of executing background queries.</span>
+          </p>
           <div class="agent-grid">
             <span class="agent-name">Windsurf</span>
             <span class="agent-name">Zed</span>
             <span class="agent-name">Continue</span>
             <span class="agent-name">GitHub Copilot</span>
-            <span class="agent-name">Cline</span>
-            <span class="agent-name">JetBrains</span>
+            <span class="agent-name">JetBrains AI</span>
             <span class="agent-name">OpenCode</span>
             <span class="agent-name">Kimi</span>
-            <span class="agent-name">Kilo Code</span>
             <span class="agent-name">Tabnine</span>
             <span class="agent-name">Codeium</span>
             <span class="agent-name">Cody</span>
@@ -670,37 +623,33 @@ details.install-more[open] summary { border-bottom: 1px solid var(--border); }
         </div>
       </div>
       <p class="agents-note scroll-in">
-        <span class="ko">레이어별 상세 표는 <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/AGENT_COMPATIBILITY.md" target="_blank" rel="noopener">AGENT_COMPATIBILITY.md</a></span>
-        <span class="en hidden">Full layer matrix: <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/AGENT_COMPATIBILITY.md" target="_blank" rel="noopener">AGENT_COMPATIBILITY.md</a></span>
+        <span class="ko">에이전트별 호환성 및 레이어 상세 분석 표는 <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/AGENT_COMPATIBILITY.md" target="_blank" rel="noopener">AGENT_COMPATIBILITY.md</a>에서 확인할 수 있습니다.</span>
+        <span class="en hidden">Refer to <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/AGENT_COMPATIBILITY.md" target="_blank" rel="noopener">AGENT_COMPATIBILITY.md</a> for detailed agent layering metrics.</span>
       </p>
     </div>
   </section>
 
   <section id="more" class="section" style="padding-top:0">
     <div class="wrap" style="text-align:center">
-      <p class="section-label scroll-in"><span class="ko">더 보기</span><span class="en hidden">More</span></p>
+      <p class="section-label scroll-in"><span class="ko">추가 자원</span><span class="en hidden">Resources</span></p>
       <div class="link-row scroll-in">
         <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/README.md">README</a>
         <a href="https://pypi.org/project/maru-deep-pro-search/">PyPI</a>
         <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/CHANGELOG.md">Changelog</a>
       </div>
-      <p class="lead scroll-in" style="margin:1.5rem auto 0;font-size:0.875rem">
-        <span class="ko">9엔진 · 18 MCP 툴 · ENV — README에 정리</span>
-        <span class="en hidden">9 engines · 18 MCP tools · ENV — see README</span>
-      </p>
     </div>
   </section>
 </main>
 
 <footer class="site-footer">
   <div class="footer-row">
-    <span>maru-deep-pro-search <span style="color:#424245">v0.22.3</span></span>
+    <span>maru-deep-pro-search <span style="color:#71717a">v0.22.4</span></span>
     <div style="display:flex;gap:1.5rem">
       <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" rel="noopener">GitHub</a>
       <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a>
     </div>
   </div>
-  <p class="footer-legal">MIT · 100% Free · No API Keys</p>
+  <p class="footer-legal">MIT License · 100% Free · No API Keys Required</p>
 </footer>
 
 <script>
@@ -744,8 +693,13 @@ function copyInstall(btn) {
 }
 function copyDone(btn, text) {
   navigator.clipboard.writeText(text).then(() => {
+    const originalText = btn.innerHTML;
+    btn.style.borderColor = 'var(--accent)';
     btn.style.color = 'var(--accent)';
-    setTimeout(() => { btn.style.color = ''; }, 1200);
+    setTimeout(() => {
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }, 1200);
   });
 }
 </script>

@@ -26,6 +26,9 @@ def json_mcp_ok(config: dict[str, Any]) -> bool:
     mcp_servers = config.get("mcpServers")
     if isinstance(mcp_servers, dict) and "maru-deep-pro-search" in mcp_servers:
         return True
+    cody_mcp = config.get("cody.mcpServers")
+    if isinstance(cody_mcp, dict) and "maru-deep-pro-search" in cody_mcp:
+        return True
     mcp = config.get("mcp")
     if isinstance(mcp, dict) and "maru-deep-pro-search" in mcp:
         return True
@@ -61,8 +64,34 @@ def verify_adapter(adapter: AgentAdapter, scope: str = "user") -> dict[str, bool
         if isinstance(adapter, ContinueAdapter):
             return adapter.verify_setup(scope)
 
-    if name in ("copilot", "amazon_q", "cody", "codeium", "devin", "supermaven", "tabnine"):
+    if name in ("copilot", "codeium", "devin", "supermaven"):
         return _verify_rules_only(adapter, scope)
+
+    if name == "cody":
+        mcp = Path.home() / ".config" / "cody" / "mcp_servers.json"
+        rules = Path.home() / ".config" / "cody" / "prompts.md"
+        return {
+            "mcp": json_mcp_ok(read_json_safe(mcp)),
+            "rules": _rules_path_ok(rules),
+        }
+
+    if name == "tabnine":
+        mcp = Path.home() / ".tabnine" / "mcp_servers.json"
+        rules = Path.home() / ".tabnine" / "guidelines" / "maru-research-protocol.md"
+        return {
+            "mcp": json_mcp_ok(read_json_safe(mcp)),
+            "rules": _rules_path_ok(rules),
+        }
+
+    if name == "amazon_q":
+        mcp_ok = json_mcp_ok(
+            read_json_safe(Path.home() / ".aws" / "amazonq" / "mcp.json")
+        ) or json_mcp_ok(read_json_safe(Path.home() / ".aws" / "amazonq" / "default.json"))
+        rules = Path.home() / ".amazonq" / "rules" / "maru-research-protocol.md"
+        return {
+            "mcp": mcp_ok,
+            "rules": _rules_path_ok(rules),
+        }
 
     if name == "jetbrains":
         rule = Path.home() / ".aiassistant" / "rules" / "maru-research-protocol.md"
@@ -127,11 +156,38 @@ def verify_adapter(adapter: AgentAdapter, scope: str = "user") -> dict[str, bool
         }
 
     if name == "antigravity":
-        mcp = Path.home() / ".gemini" / "antigravity" / "mcp_config.json"
-        sidecar = mcp.parent / "MARU_RESEARCH_PROTOCOL.md"
+        mcp_paths = [
+            Path.home() / ".gemini" / "config" / "mcp_config.json",
+            Path.home() / ".gemini" / "antigravity-cli" / "mcp_config.json",
+            Path.home() / ".gemini" / "antigravity" / "mcp_config.json",
+        ]
+        mcp_ok = any(p.exists() and json_mcp_ok(read_json_safe(p)) for p in mcp_paths)
+
+        rule_paths = [
+            Path.home() / ".gemini" / "config" / "rules" / "maru-research-protocol.md",
+            Path.home() / ".gemini" / "antigravity" / "MARU_RESEARCH_PROTOCOL.md",
+        ]
+        rules_ok = any(p.exists() and _rules_path_ok(p) for p in rule_paths)
+
+        hooks_path = Path.home() / ".gemini" / "config" / "hooks.json"
+        if hooks_path.exists():
+            try:
+                hooks_data = read_json_safe(hooks_path)
+                group = hooks_data.get("maru-research-gate", {})
+                pre_tool = group.get("PreToolUse", [])
+                hook_registered = any(
+                    isinstance(h, dict) and "antigravity_research_gate" in str(h)
+                    for entry in pre_tool
+                    for h in entry.get("hooks", [])
+                )
+                if not hook_registered:
+                    rules_ok = False
+            except Exception:
+                rules_ok = False
+
         return {
-            "mcp": json_mcp_ok(read_json_safe(mcp)),
-            "rules": _rules_path_ok(sidecar),
+            "mcp": mcp_ok,
+            "rules": rules_ok,
         }
 
     if name == "zed":
@@ -142,12 +198,33 @@ def verify_adapter(adapter: AgentAdapter, scope: str = "user") -> dict[str, bool
             "rules": rules_text_ok(read_text_safe(assistant)),
         }
 
+    if name == "cursor":
+        mcp = Path.home() / ".cursor" / "mcp.json"
+        rules = Path.home() / ".cursor" / "rules" / "maru-research-protocol.mdc"
+        if not rules.exists():
+            rules = Path.home() / ".cursor" / "rules" / "maru-research-protocol.md"
+        hooks_path = Path.home() / ".cursor" / "hooks.json"
+
+        hooks_ok = False
+        if hooks_path.exists():
+            try:
+                hooks_data = read_json_safe(hooks_path)
+                group = hooks_data.get("hooks", {})
+                pre_shell = group.get("beforeShellExecution", [])
+                pre_mcp = group.get("beforeMCPExecution", [])
+                hooks_ok = any(
+                    isinstance(h, dict) and "cursor_research_gate" in str(h) for h in pre_shell
+                ) and any(isinstance(h, dict) and "cursor_research_gate" in str(h) for h in pre_mcp)
+            except Exception:
+                pass
+
+        return {
+            "mcp": json_mcp_ok(read_json_safe(mcp)),
+            "rules": _rules_path_ok(rules) and hooks_ok,
+        }
+
     json_mcp_paths: dict[str, tuple[Path, Path | None]] = {
         "claude": (Path.home() / ".claude" / ".mcp.json", Path.home() / ".claude" / "CLAUDE.md"),
-        "cursor": (
-            Path.home() / ".cursor" / "mcp.json",
-            Path.home() / ".cursor" / "rules" / "maru-research-protocol.md",
-        ),
         "windsurf": (
             Path.home() / ".codeium" / "windsurf" / "mcp_config.json",
             Path.home() / ".windsurf" / "rules" / "maru-research-protocol.md",
@@ -179,7 +256,10 @@ def _verify_rules_only(adapter: AgentAdapter, scope: str) -> dict[str, bool]:
         ],
         "amazon_q": [Path.home() / ".amazonq" / "rules" / "maru-research-protocol.md"],
         "cody": [Path.home() / ".cody" / "cody_instructions.md"],
-        "codeium": [Path.home() / ".codeium" / "instructions.md"],
+        "codeium": [
+            Path.home() / ".codeium" / "system-prompt.md",
+            Path.home() / ".codeium" / "instructions.md",
+        ],
         "devin": [Path.home() / ".devin" / "instructions.md"],
         "supermaven": [Path.home() / ".supermaven" / "instructions.md"],
         "tabnine": [Path.home() / ".tabnine" / "guidelines" / "maru-research-protocol.md"],

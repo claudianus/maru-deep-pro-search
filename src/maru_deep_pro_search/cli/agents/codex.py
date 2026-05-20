@@ -3,7 +3,7 @@
 Codex uses TOML config (~/.codex/config.toml) with:
 - [mcp_servers.<id>] for MCP registration
 - developer_instructions for session-level rules
-- features.codex_hooks to enable lifecycle hooks
+- features.hooks to enable lifecycle hooks
 - AGENTS.md for project-level rules (auto-discovered)
 """
 
@@ -69,33 +69,48 @@ class CodexAdapter(AgentAdapter):
         return "[mcp_servers.maru-deep-pro-search]" in content
 
     @staticmethod
-    def _has_codex_hooks(content: str) -> bool:
-        """Check if codex_hooks is already enabled in any [features] section."""
-        lines = content.splitlines()
+    def _insert_or_update_features(lines: list[str]) -> list[str]:
+        """Ensure [features] section exists with hooks = true.
+
+        Idempotent: will not duplicate [features] or hooks.
+        """
         in_features = False
-        for line in lines:
+        hooks_idx = None
+        hooks_indent = ""
+        codex_hooks_indices: list[int] = []
+        for i, line in enumerate(lines):
             stripped = line.strip()
             if stripped == "[features]":
                 in_features = True
                 continue
             if in_features:
                 if stripped.startswith("["):
-                    break  # next section
-                if stripped.startswith("codex_hooks"):
-                    return True
-        return False
+                    break
+                key, sep, _value = stripped.partition("=")
+                if not sep:
+                    continue
+                if key.strip() == "hooks":
+                    hooks_idx = i
+                    hooks_indent = line[: len(line) - len(line.lstrip())]
+                elif key.strip() == "codex_hooks":
+                    codex_hooks_indices.append(i)
 
-    @staticmethod
-    def _insert_or_update_features(lines: list[str]) -> list[str]:
-        """Ensure [features] section exists with codex_hooks = true.
-
-        Idempotent: will not duplicate [features] or codex_hooks.
-        """
-        # First, check if codex_hooks already exists anywhere in [features]
-        if CodexAdapter._has_codex_hooks("\n".join(lines)):
+        if hooks_idx is not None:
+            lines[hooks_idx] = f"{hooks_indent}hooks = true"
+            for legacy_idx in reversed(codex_hooks_indices):
+                del lines[legacy_idx]
+            return lines
+        if codex_hooks_indices:
+            first_legacy_idx = codex_hooks_indices[0]
+            indent = lines[first_legacy_idx][
+                : len(lines[first_legacy_idx]) - len(lines[first_legacy_idx].lstrip())
+            ]
+            lines[first_legacy_idx] = f"{indent}hooks = true"
+            for legacy_idx in reversed(codex_hooks_indices[1:]):
+                del lines[legacy_idx]
             return lines
 
-        # Find [features] section and insert codex_hooks inside it
+        # Find [features] section and insert hooks inside it
         features_idx = None
         for i, line in enumerate(lines):
             if line.strip() == "[features]":
@@ -111,13 +126,13 @@ class CodexAdapter(AgentAdapter):
                     break
                 else:
                     insert_pos = j + 1
-            lines.insert(insert_pos, "codex_hooks = true")
+            lines.insert(insert_pos, "hooks = true")
             return lines
 
         # No [features] section — append at end
         lines.append("")
         lines.append("[features]")
-        lines.append("codex_hooks = true")
+        lines.append("hooks = true")
         return lines
 
     def install_mcp(self, scope: str = "user") -> bool:

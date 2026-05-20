@@ -306,7 +306,7 @@
   - `docs/engine_insights.md`: 10 focused scraping insights from trial-and-error
   - `docs/lessons_learned.md`: 14-section comprehensive session log covering rate limits, anti-bot, obfuscated DOM recovery, session vs fetcher decision matrix
 - **Codex Agent Support**: 21st agent adapter added
-  - OpenAI Codex TOML config (`~/.codex/config.toml`) with `mcp_servers`, `developer_instructions`, `AGENTS.md` auto-discovery, `features.codex_hooks`
+  - OpenAI Codex TOML config (`~/.codex/config.toml`) with `mcp_servers`, `developer_instructions`, `AGENTS.md` auto-discovery, `features.hooks`
 - **Agent Harness Improvements**:
   - **Claude Code**: Added `UserPromptSubmit` hook for earlier interception (before tool execution)
   - **Zed**: Fixed from no-op to full MCP support — uses `context_servers` key, adds `tool_permissions.default = "allow"`, model hint updated to `claude-sonnet-4-5`

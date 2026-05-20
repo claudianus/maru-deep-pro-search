@@ -60,7 +60,7 @@ def _words(command: str) -> list[str]:
 
 def _unwrap_command(command: str) -> str:
     words = _words(command)
-    if len(words) >= 3 and words[0] == "lean-ctx" and words[1] == "-c":
+    if len(words) >= 3 and os.path.basename(words[0]) == "lean-ctx" and words[1] == "-c":
         return words[2]
     if len(words) >= 3 and os.path.basename(words[0]) in {"bash", "sh", "zsh"} and words[1] in {"-c", "-lc"}:
         return words[2]

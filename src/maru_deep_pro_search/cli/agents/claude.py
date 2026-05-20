@@ -152,9 +152,12 @@ class ClaudeAdapter(AgentAdapter):
         gate_script = Path.home() / ".claude" / "hooks" / "maru_research_gate.py"
 
         def has_hook_command(entry: dict[str, Any], script: Path) -> bool:
+            hooks = entry.get("hooks", [])
+            if not isinstance(hooks, list):
+                return False
             return any(
                 isinstance(hook, dict) and str(hook.get("command", "")).endswith(script.name)
-                for hook in entry.get("hooks", [])
+                for hook in hooks
             )
 
         settings["hooks"]["PreToolUse"] = [

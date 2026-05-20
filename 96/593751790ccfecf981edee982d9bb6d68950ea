@@ -1,0 +1,33 @@
+src/maru_deep_pro_search/cli/agents/cursor.py
+  s_1ac4454655be23::t_00cb84ff63bed2 102,150
+src/maru_deep_pro_search/cli/agents/tabnine.py
+  s_1ac4454655be23::t_511ed14891de50 78-82
+src/maru_deep_pro_search/cli/agents/cody.py
+  s_1ac4454655be23::t_d8784e644c3783 69-73
+src/maru_deep_pro_search/cli/agents/claude.py
+  s_1ac4454655be23::t_0558dc071e0e42 152-159,163-167,178,188,190-196
+src/maru_deep_pro_search/cli/agents/cline.py
+  s_1ac4454655be23::t_12061f58953333 61-68,72
+src/maru_deep_pro_search/harness/spec.py
+  s_1ac4454655be23::t_0579d70c18d980 121
+src/maru_deep_pro_search/cli/agents/antigravity.py
+  s_1ac4454655be23::t_9929c127aa70c6 126
+src/maru_deep_pro_search/cli/hooks_templates.py
+  s_1ac4454655be23::t_791d398ed773f3 53,141,145-146,215-217
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "96593751790ccfecf981edee982d9bb6d68950ea",
+  "prompts": {},
+  "sessions": {
+    "s_1ac4454655be23": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1e712de1-7d49-40ed-a62f-86008228b8ab",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

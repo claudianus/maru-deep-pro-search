@@ -1,0 +1,28 @@
+AGENT_COMPATIBILITY.md
+  s_f11870297408cd::t_a591e947f2abeb 27
+src/maru_deep_pro_search/cli/agents/codex.py
+  s_f11870297408cd::t_4ccaf5655be5ec 73-75,113,129,135
+  s_f11870297408cd::t_17ca16518b3062 80,96,100-101,103-110
+  s_f11870297408cd::t_0af1d2d1177206 78-79,90-95,97-99,102
+  s_f11870297408cd::t_ae3d7357f8ba44 6
+  s_f11870297408cd::t_1ec0d3918e0530 81,88
+  s_f11870297408cd::t_6b8b6cca98a789 89
+CHANGELOG.md
+  s_f11870297408cd::t_5ae875166ba4aa 309
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "6eade6e9e17d1c147303852cf06e98ca1f1f2db0",
+  "prompts": {},
+  "sessions": {
+    "s_f11870297408cd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e44ce-0463-7451-af51-fef9b33af172",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}

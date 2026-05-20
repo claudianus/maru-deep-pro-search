@@ -14,13 +14,15 @@ from pathlib import Path
 
 from ..backup import (
     backup_file,
+    read_json_safe,
     read_text_safe,
     restore_file,
     sorted_backup_paths,
+    write_json_safe,
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
-from .base import AgentAdapter
+from .base import AgentAdapter, get_mcp_server_command
 
 
 class AmazonQAdapter(AgentAdapter):
@@ -54,21 +56,41 @@ class AmazonQAdapter(AgentAdapter):
     def _rule_file(self, scope: str) -> Path:
         return self._rules_dir(scope) / "maru-research-protocol.md"
 
+    def _mcp_paths(self, scope: str) -> list[Path]:
+        if scope == "project":
+            return [
+                Path(".amazonq") / "mcp.json",
+                Path(".amazonq") / "default.json",
+            ]
+        return [
+            Path.home() / ".aws" / "amazonq" / "mcp.json",
+            Path.home() / ".aws" / "amazonq" / "default.json",
+        ]
+
     def backup(self) -> list[Path]:
-        p = self._rule_file("user")
-        b = backup_file(p)
-        return [b] if b else []
+        paths = [self._rule_file("user")] + self._mcp_paths("user")
+        backups = [backup_file(p) for p in paths if p.exists()]
+        return [b for b in backups if b is not None]
 
     def restore(self) -> bool:
-        p = self._rule_file("user")
-        backs = sorted_backup_paths(p)
-        if backs:
-            return restore_file(p, backs[0])
-        return False
+        restored = False
+        paths = [self._rule_file("user")] + self._mcp_paths("user")
+        for p in paths:
+            backs = sorted_backup_paths(p)
+            if backs:
+                restored = restore_file(p, backs[0]) or restored
+        return restored
 
     def install_mcp(self, scope: str = "user") -> bool:
-        # Amazon Q does not natively support MCP yet.
-        return self.inject_rules(scope)
+        paths = self._mcp_paths(scope)
+        for path in paths:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            config = read_json_safe(path)
+            if "mcpServers" not in config:
+                config["mcpServers"] = {}
+            config["mcpServers"]["maru-deep-pro-search"] = get_mcp_server_command()
+            write_json_safe(path, config)
+        return True
 
     def inject_rules(self, scope: str = "user") -> bool:
         # 1. .amazonq/rules/*.md — official Amazon Q format

@@ -94,7 +94,7 @@ class KimiAdapter(AgentAdapter):
 
         hook_block = f"""[[hooks]]
 event = "PreToolUse"
-matcher = "WriteFile|ApplyDiff|Shell"
+matcher = "Shell|BrowserAction"
 command = "python3 {hook_script}"
 timeout = 10"""
         content = upsert_kimi_hook_block(content, hook_block)

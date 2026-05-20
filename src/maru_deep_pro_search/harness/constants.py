@@ -21,6 +21,17 @@ RESEARCH_AUGMENTING_TOOLS: frozenset[str] = frozenset(
 
 FRESH_RESEARCH_REQUIRED_TOOLS: frozenset[str] = frozenset({"generate_code", "export_research"})
 
+BYPASS_SEARCH_TOOLS: frozenset[str] = frozenset(
+    {
+        "WebSearch",
+        "WebFetch",
+        "BrowserAction",
+        "search_web",
+        "google_search",
+        "brave_search",
+    }
+)
+
 RESEARCH_EXEMPT_META_TOOLS: frozenset[str] = frozenset(
     {
         "version",

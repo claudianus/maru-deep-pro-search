@@ -119,7 +119,7 @@ class ClaudeAdapter(AgentAdapter):
 
     # ── helpers ─────────────────────────────────────────────────
     def _write_hooks(self, *, repair: bool = False) -> None:
-        """Install the research-gate hook scripts that PreToolUse/PostToolUse call."""
+        """Install freshness-gate hook scripts."""
         hooks_dir = Path.home() / ".claude" / "hooks"
         hooks_dir.mkdir(parents=True, exist_ok=True)
         write_managed_hook(
@@ -145,14 +145,21 @@ class ClaudeAdapter(AgentAdapter):
         if "hooks" not in settings:
             settings["hooks"] = {}
 
-        # 1. PreToolUse — BLOCK edit/write without research
+        # 1. PreToolUse — gate only freshness-sensitive search/network actions.
         if "PreToolUse" not in settings["hooks"]:
             settings["hooks"]["PreToolUse"] = []
+        # Migrate old edit gates away from broad research enforcement.
+        settings["hooks"]["PreToolUse"] = [
+            h
+            for h in settings["hooks"]["PreToolUse"]
+            if h.get("matcher") not in {"Edit|Write", "Edit|Write|WebSearch|WebFetch"}
+        ]
         pre_matchers = [h.get("matcher", "") for h in settings["hooks"]["PreToolUse"]]
-        if "Edit|Write" not in pre_matchers:
+        target_matcher = "Bash|WebSearch|WebFetch"
+        if target_matcher not in pre_matchers:
             settings["hooks"]["PreToolUse"].append(
                 {
-                    "matcher": "Edit|Write",
+                    "matcher": target_matcher,
                     "hooks": [
                         {
                             "type": "command",
@@ -164,26 +171,13 @@ class ClaudeAdapter(AgentAdapter):
                 }
             )
 
-        # 2. PostToolUse — REVERT un-researched Write/Edit
-        #    Workaround for PreToolUse exit 2 not blocking Write/Edit
-        #    (github.com/anthropics/claude-code/issues/13744)
+        # 2. Remove old PostToolUse edit-revert gates. Research freshness should not undo
+        # local edits; only external freshness-sensitive actions are gated.
         if "PostToolUse" not in settings["hooks"]:
             settings["hooks"]["PostToolUse"] = []
-        post_matchers = [h.get("matcher", "") for h in settings["hooks"]["PostToolUse"]]
-        if "Write|Edit" not in post_matchers:
-            settings["hooks"]["PostToolUse"].append(
-                {
-                    "matcher": "Write|Edit",
-                    "hooks": [
-                        {
-                            "type": "command",
-                            "command": str(
-                                Path.home() / ".claude" / "hooks" / "maru_research_revert.py"
-                            ),
-                        }
-                    ],
-                }
-            )
+        settings["hooks"]["PostToolUse"] = [
+            h for h in settings["hooks"]["PostToolUse"] if h.get("matcher") != "Write|Edit"
+        ]
 
         # 3. SessionStart — inject research reminder
         if "SessionStart" not in settings["hooks"]:

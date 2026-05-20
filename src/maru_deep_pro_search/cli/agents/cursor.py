@@ -8,6 +8,7 @@ Official docs: https://cursor.com/docs/rules
 
 from __future__ import annotations
 
+import contextlib
 import shutil
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from ..backup import (
     write_json_safe,
     write_text_safe,
 )
+from ..hooks_templates import template_body, write_managed_hook
 from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter, get_mcp_server_command
 
@@ -45,6 +47,11 @@ class CursorAdapter(AgentAdapter):
             return Path(".cursor") / "settings.json"
         return Path.home() / ".cursor" / "settings.json"
 
+    def _hooks_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".cursor") / "hooks.json"
+        return Path.home() / ".cursor" / "hooks.json"
+
     def _rules_dir(self, scope: str) -> Path:
         """Cursor project rules directory — official since 2026."""
         if scope == "project":
@@ -63,17 +70,53 @@ class CursorAdapter(AgentAdapter):
         return Path.home() / ".cursor" / "skills"
 
     def backup(self) -> list[Path]:
-        paths = [self._mcp_path("user"), self._settings_path("user")]
+        paths = [
+            self._mcp_path("user"),
+            self._settings_path("user"),
+            self._hooks_path("user"),
+        ]
         backups = [backup_file(p) for p in paths]
         return [b for b in backups if b is not None]
 
     def restore(self) -> bool:
         restored = False
-        for p in [self._mcp_path("user"), self._settings_path("user")]:
+        for p in [
+            self._mcp_path("user"),
+            self._settings_path("user"),
+            self._hooks_path("user"),
+        ]:
             backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         return restored
+
+    def refresh_managed_hooks(self, *, repair: bool = False) -> bool:
+        gate_script = Path.home() / ".maru" / "cursor_research_gate.py"
+        write_managed_hook(gate_script, template_body("cursor_research_gate"), force=repair)
+        return True
+
+    def _install_hooks(self, scope: str, *, repair: bool = False) -> None:
+        """Install Cursor Lifecycle Hooks for research gating."""
+        self.refresh_managed_hooks(repair=repair)
+        gate_script = Path.home() / ".maru" / "cursor_research_gate.py"
+        cmd = f"python3 {gate_script}"
+
+        hooks_path = self._hooks_path(scope)
+        hooks = read_json_safe(hooks_path)
+        if "version" not in hooks:
+            hooks["version"] = 1
+        if "hooks" not in hooks:
+            hooks["hooks"] = {}
+
+        group = hooks["hooks"]
+        for event in ("beforeShellExecution", "beforeMCPExecution"):
+            if event not in group:
+                group[event] = []
+            existing_cmds = [h.get("command", "") for h in group[event]]
+            if cmd not in existing_cmds:
+                group[event].append({"command": cmd})
+
+        write_json_safe(hooks_path, hooks)
 
     def install_mcp(self, scope: str = "user") -> bool:
         path = self._mcp_path(scope)
@@ -83,18 +126,37 @@ class CursorAdapter(AgentAdapter):
 
         config["mcpServers"]["maru-deep-pro-search"] = get_mcp_server_command()
         write_json_safe(path, config)
+
+        self._install_hooks(scope)
         return True
 
-    def inject_rules(self, scope: str = "user") -> bool:
-        # 1. .cursor/rules/*.md — official rule format (2026+)
+    def inject_rules(self, scope: str = "user", *, repair: bool = False) -> bool:
+        # 1. .cursor/rules/*.mdc — official rule format (2026+)
         #    Always-write so the rule is present even if the file is new.
         rules_dir = self._rules_dir(scope)
         rules_dir.mkdir(parents=True, exist_ok=True)
-        rule_file = rules_dir / "maru-research-protocol.md"
+
+        # Clean up legacy .md rule file to avoid duplicate rules
+        legacy_rule_file = rules_dir / "maru-research-protocol.md"
+        if legacy_rule_file.exists():
+            with contextlib.suppress(OSError):
+                legacy_rule_file.unlink()
+
+        rule_file = rules_dir / "maru-research-protocol.mdc"
         protocol = get_protocol_for_agent(self.name)
 
+        mdc_header = """---
+description: Mandatory research protocol for code/architecture work
+globs: *
+alwaysApply: true
+---
+"""
         content = read_text_safe(rule_file)
-        new_content = inject_protocol(content, protocol)
+        if not content.startswith("---"):
+            new_content = inject_protocol(mdc_header + content, protocol)
+        else:
+            new_content = inject_protocol(content, protocol)
+
         if new_content != content:
             write_text_safe(rule_file, new_content)
 
@@ -161,6 +223,9 @@ class CursorAdapter(AgentAdapter):
             settings["mcp"] = {}
         settings["mcp"]["autoEnableTools"] = True
         write_json_safe(settings_path, settings)
+
+        # 4. hooks.json — register cursor pre-execution hooks
+        self._install_hooks(scope, repair=repair)
 
         return True
 

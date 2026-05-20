@@ -16,6 +16,7 @@ from typing import Any
 from ..config import DEFAULT_CONFIG
 from ..exceptions import MaruSearchError
 from .constants import (
+    BYPASS_SEARCH_TOOLS,
     FRESH_RESEARCH_REQUIRED_TOOLS,
     RESEARCH_EXEMPT_META_TOOLS,
     RESEARCH_PRODUCING_TOOLS,
@@ -228,6 +229,19 @@ class SessionEnforcer:
         state = self.get_or_create(session_id)
 
         if tool_name in self.RESEARCH_EXEMPT_TOOLS:
+            return state
+
+        # Enforce maru deep research before allowing supplementary/bypass search tools
+        if tool_name in BYPASS_SEARCH_TOOLS:
+            if not state.research_done:
+                raise ResearchRequiredError(
+                    f"{tool_name} (bypass search blocked: run answer or deep_research first)"
+                )
+            if not state.is_fresh:
+                raise ResearchRequiredError(
+                    f"{tool_name} (bypass search blocked: research expired after 30min — run answer or deep_research first)"
+                )
+            # Fresh research exists, allow supplementary search as fallback/extension
             return state
 
         if tool_name in self.FRESH_RESEARCH_REQUIRED_TOOLS:

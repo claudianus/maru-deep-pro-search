@@ -36,14 +36,37 @@ from .base import AgentAdapter, get_mcp_server_command
 
 # ── Cline PreToolUse hook gate script ───────────────────────────────
 _CLINE_PRETOOL_HOOK = '''#!/usr/bin/env python3
-"""Cline PreToolUse hook — blocks edits/commands without research."""
+"""Cline PreToolUse hook — gates only freshness-sensitive search/network actions."""
 import json
 import os
+import shlex
 import sys
 import time
 
 MARKER = os.path.expanduser("~/.maru/last_research")
 TTL_SECONDS = 1800
+RESEARCH_TOOLS = {"browser_action", "WebSearch", "WebFetch", "search_web", "google_search", "brave_search"}
+NETWORK_COMMANDS = {"curl", "wget", "http", "httpie", "lynx", "w3m", "links"}
+PACKAGE_FRESHNESS = {
+    ("npm", "view"), ("npm", "info"), ("pnpm", "view"), ("pnpm", "info"),
+    ("yarn", "info"), ("pip", "index"), ("pip3", "index"),
+}
+
+def _words(command: str) -> list[str]:
+    try:
+        return shlex.split(command)
+    except ValueError:
+        return command.split()
+
+def _requires_research(tool_name: str, command: str) -> bool:
+    if tool_name in RESEARCH_TOOLS:
+        return True
+    words = _words(command)
+    if not words:
+        return False
+    executable = os.path.basename(words[0])
+    second = words[1] if len(words) > 1 else ""
+    return executable in NETWORK_COMMANDS or (executable, second) in PACKAGE_FRESHNESS
 
 def main() -> None:
     data = json.load(sys.stdin)
@@ -54,13 +77,13 @@ def main() -> None:
 
     tool_data = data.get("preToolUse", {})
     tool_name = tool_data.get("toolName", "")
+    command = tool_data.get("command", "") or tool_data.get("input", {}).get("command", "")
 
-    # Only gate destructive tools
-    if tool_name not in ("write_to_file", "apply_diff", "execute_command", "browser_action"):
+    if not _requires_research(tool_name, command):
         sys.exit(0)
 
     if not os.path.exists(MARKER):
-        msg = "[MARU] Research required before editing. Run deep_research first."
+        msg = "[MARU] Research required for external freshness-sensitive action. Local edits and validation are allowed."
         print(json.dumps({"cancel": True, "errorMessage": msg}))
         sys.exit(0)
 

@@ -34,7 +34,12 @@ def _detect_kimi() -> bool:
 
 # ── AntiGravity ──────────────────────────────────────────────
 def _detect_antigravity() -> bool:
-    return Path.home().joinpath(".gemini", "antigravity").exists()
+    home = Path.home()
+    return (
+        home.joinpath(".gemini", "antigravity").exists()
+        or home.joinpath(".gemini", "antigravity-cli").exists()
+        or home.joinpath(".gemini", "config").exists()
+    )
 
 
 # ── Kilo Code ────────────────────────────────────────────────

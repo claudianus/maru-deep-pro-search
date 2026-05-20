@@ -8,7 +8,10 @@
 
 ## [Unreleased]
 
+## [0.22.4] - 2026-05-20
+
 ### Fixed
+- **Research gate scope** — Cursor, Claude, Kimi, Antigravity, Windsurf, Cline, Aider 훅이 로컬 읽기·편집·검증까지 `answer`/`deep_research`를 요구하던 과차단을 완화했습니다. 이제 외부 최신성 작업(웹 검색, 네트워크 조회, 패키지 최신 버전 확인)만 fresh research를 요구합니다.
 - **`strip_existing_protocol`** — Cursor `maru-research-protocol.md`에서 마커 밖 `# maru-deep-pro-search Research Protocol` H1이 `setup`마다 중복 쌓이던 문제. 재주입 전 stale H1 제거.
 
 ## [0.22.3] - 2026-05-19

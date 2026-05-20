@@ -50,9 +50,16 @@ def hook_script_stale(path: Path, expected_version: str | None = None) -> bool:
 
 def write_managed_hook(path: Path, body: str, *, force: bool = False) -> bool:
     """Write *body* with a version stamp. Skips non-managed existing files unless *force*."""
-    stamped = (
-        body if MARU_MANAGED_PREFIX in body.split("\n", 2)[0] else f"{managed_version_line()}{body}"
-    )
+    if MARU_MANAGED_PREFIX in body:
+        stamped = body
+    elif body.startswith("#!"):
+        parts = body.split("\n", 1)
+        shebang = parts[0]
+        rest = parts[1] if len(parts) > 1 else ""
+        stamped = f"{shebang}\n{managed_version_line()}{rest}"
+    else:
+        stamped = f"{managed_version_line()}{body}"
+
     if path.exists() and not force and not is_managed_hook(path):
         return False
     if path.exists() and not force and not hook_script_stale(path):
@@ -63,53 +70,197 @@ def write_managed_hook(path: Path, body: str, *, force: bool = False) -> bool:
     return True
 
 
-def claude_research_gate() -> str:
-    return '''#!/usr/bin/env python3
-"""Claude Code PreToolUse hook — blocks Bash without research."""
-import json, os, sys, time
+def _freshness_gate_script(title: str) -> str:
+    return f'''#!/usr/bin/env python3
+"""{title}"""
+from __future__ import annotations
+
+import json
+import os
+import shlex
+import sys
+import time
+from collections.abc import Mapping
+from typing import Any
+
+MARKER = os.path.expanduser("~/.maru/last_research")
+TTL_SECONDS = 1800
+
+RESEARCH_TOOL_NAMES = {{
+    "BrowserAction",
+    "WebFetch",
+    "WebSearch",
+    "brave_search",
+    "browser_action",
+    "browser_search",
+    "chrome-devtools-mcp",
+    "fetch_page",
+    "google_search",
+    "search_web",
+}}
+MARU_RESEARCH_TOOL_NAMES = {{"answer", "deep_research", "parallel_search", "web_search"}}
+LOCAL_MCP_TOOLS = {{
+    "ctx_graph",
+    "ctx_knowledge",
+    "ctx_overview",
+    "ctx_read",
+    "ctx_search",
+    "ctx_session",
+    "ctx_tree",
+}}
+LOCAL_SHELL_COMMANDS = {{
+    "awk",
+    "date",
+    "file",
+    "gh",
+    "git",
+    "jq",
+    "lean-ctx",
+    "ls",
+    "mypy",
+    "pwd",
+    "python",
+    "python3",
+    "rg",
+    "ruff",
+    "sed",
+    "uv",
+}}
+NETWORK_SHELL_COMMANDS = {{"curl", "http", "httpie", "links", "lynx", "w3m", "wget"}}
+PACKAGE_FRESHNESS_COMMANDS = {{
+    ("npm", "info"),
+    ("npm", "view"),
+    ("pip", "index"),
+    ("pip3", "index"),
+    ("pnpm", "info"),
+    ("pnpm", "view"),
+    ("yarn", "info"),
+}}
+
+
+def _load_event() -> dict[str, Any]:
+    try:
+        data = json.load(sys.stdin)
+    except Exception:
+        return {{}}
+    return data if isinstance(data, dict) else {{}}
+
+
+def _get_string(data: Mapping[str, Any], *keys: str) -> str:
+    for key in keys:
+        value = data.get(key)
+        if isinstance(value, str) and value:
+            return value
+    for container_key in ("tool_input", "agent_action_input", "input", "arguments", "params", "tool", "mcp"):
+        value = data.get(container_key)
+        if isinstance(value, Mapping):
+            nested = _get_string(value, *keys)
+            if nested:
+                return nested
+    return ""
+
+
+def _shell_words(command: str) -> list[str]:
+    try:
+        return shlex.split(command)
+    except ValueError:
+        return command.split()
+
+
+def _unwrap_shell_command(command: str) -> str:
+    words = _shell_words(command)
+    if len(words) >= 3 and words[0] == "lean-ctx" and words[1] == "-c":
+        return words[2]
+    return command
+
+
+def _shell_requires_research(command: str) -> bool:
+    command = _unwrap_shell_command(command).strip()
+    if not command:
+        return False
+    words = _shell_words(command)
+    if not words:
+        return False
+    executable = os.path.basename(words[0])
+    second = words[1] if len(words) > 1 else ""
+    if (executable, second) in PACKAGE_FRESHNESS_COMMANDS:
+        return True
+    if executable == "gh" and second == "search":
+        return True
+    if executable in NETWORK_SHELL_COMMANDS:
+        return True
+    return False
+
+
+def _mcp_requires_research(data: Mapping[str, Any]) -> bool:
+    tool_name = _get_string(data, "toolName", "tool_name", "tool", "name")
+    server_name = _get_string(data, "server", "serverName", "server_name", "mcpServer")
+    normalized_tool = tool_name.lower()
+    normalized_server = server_name.lower()
+    if tool_name in MARU_RESEARCH_TOOL_NAMES or tool_name in LOCAL_MCP_TOOLS:
+        return False
+    if tool_name in RESEARCH_TOOL_NAMES:
+        return True
+    if "lean-ctx" in normalized_server:
+        return normalized_tool not in LOCAL_MCP_TOOLS
+    if "context7" in normalized_server:
+        return True
+    if "browser" in normalized_server and "search" in normalized_tool:
+        return True
+    if "deep-pro-search" in normalized_server or "maru-deep-pro-search" in normalized_server:
+        return normalized_tool not in MARU_RESEARCH_TOOL_NAMES
+    return False
+
+
+def _requires_research(data: Mapping[str, Any]) -> tuple[bool, str]:
+    command = _get_string(data, "command")
+    if command:
+        return _shell_requires_research(command), "shell command '" + _unwrap_shell_command(command) + "'"
+    return _mcp_requires_research(data), "tool '" + (
+        _get_string(data, "toolName", "tool_name", "tool", "name") or "unknown"
+    ) + "'"
+
+
+def _research_age() -> float | None:
+    if not os.path.exists(MARKER):
+        return None
+    return time.time() - os.path.getmtime(MARKER)
+
 
 def main() -> None:
-    data = json.load(sys.stdin)
-    tool_name = data.get("tool_name", "")
-    if tool_name != "Bash":
+    requires_research, reason = _requires_research(_load_event())
+    if not requires_research:
         sys.exit(0)
-    marker = os.path.expanduser("~/.maru/last_research")
-    if not os.path.exists(marker):
-        print("[MARU] Research required. Call answer or deep_research before running commands.", file=sys.stderr)
+    elapsed = _research_age()
+    if elapsed is None or elapsed > TTL_SECONDS:
+        prefix = "[MARU] Research required" if elapsed is None else "[MARU] Research expired"
+        print(
+            prefix + " for " + reason + ". Run answer or deep_research first. "
+            "Local reads, edits, and validation are allowed.",
+            file=sys.stderr,
+        )
         sys.exit(2)
-    elapsed = time.time() - os.path.getmtime(marker)
-    if elapsed > 1800:
-        print(f"[MARU] Research expired ({elapsed/60:.0f}min ago). Re-run answer or deep_research.", file=sys.stderr)
-        sys.exit(2)
+    print("[MARU] WARNING: Fresh research exists; allowing " + reason + ".", file=sys.stderr)
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
 '''
 
 
+def claude_research_gate() -> str:
+    return _freshness_gate_script(
+        "Claude Code PreToolUse hook — gates only freshness-sensitive search/network actions."
+    )
+
+
 def claude_research_revert() -> str:
     return '''#!/usr/bin/env python3
-"""Claude Code PostToolUse hook — reverts Write/Edit without research."""
-import json, os, subprocess, sys
+"""Claude Code PostToolUse hook — compatibility no-op for old research gates."""
+import sys
 
 def main() -> None:
-    data = json.load(sys.stdin)
-    tool_name = data.get("tool_name", "")
-    if tool_name not in ("Write", "Edit"):
-        sys.exit(0)
-    marker = os.path.expanduser("~/.maru/last_research")
-    ok = False
-    if os.path.exists(marker):
-        import time
-        if time.time() - os.path.getmtime(marker) <= 1800:
-            ok = True
-    if ok:
-        sys.exit(0)
-    file_path = data.get("tool_input", {}).get("file_path", "")
-    if file_path:
-        subprocess.run(["git", "checkout", "--", file_path], capture_output=True)
-    print("[MARU-POST-GATE] Reverted un-researched edit. Run /research first.", file=sys.stderr)
     sys.exit(0)
 
 if __name__ == "__main__":
@@ -134,122 +285,42 @@ if __name__ == "__main__":
 
 
 def windsurf_research_gate() -> str:
-    return '''#!/usr/bin/env python3
-"""Windsurf Cascade Hook — blocks edits/tool-calls without research."""
-import json
-import os
-import sys
-import time
-
-MARKER = os.path.expanduser("~/.maru/last_research")
-TTL_SECONDS = 1800
-
-def main() -> None:
-    data = json.load(sys.stdin)
-    action = data.get("agent_action_name", "")
-    if action not in ("pre_write_code", "pre_mcp_tool_use", "pre_user_prompt"):
-        sys.exit(0)
-    if not os.path.exists(MARKER):
-        print("[MARU] Research required. Call answer or deep_research first.", file=sys.stderr)
-        sys.exit(2)
-    elapsed = time.time() - os.path.getmtime(MARKER)
-    if elapsed > TTL_SECONDS:
-        print(f"[MARU] Research expired ({elapsed/60:.0f}min). Re-run answer or deep_research.", file=sys.stderr)
-        sys.exit(2)
-    sys.exit(0)
-
-if __name__ == "__main__":
-    main()
-'''
+    return _freshness_gate_script(
+        "Windsurf Cascade hook — gates only freshness-sensitive search/network actions."
+    )
 
 
 def kimi_research_gate() -> str:
-    return '''#!/usr/bin/env python3
-"""Kimi PreToolUse hook — blocks edits without research."""
-import json
-import os
-import sys
-import time
-
-MARKER = os.path.expanduser("~/.maru/last_research")
-TTL_SECONDS = 1800
-
-def main() -> None:
-    data = json.load(sys.stdin)
-    event = data.get("event", "")
-    if event != "PreToolUse":
-        sys.exit(0)
-    tool = data.get("tool", "")
-    if tool not in ("WriteFile", "ApplyDiff", "Shell", "BrowserAction"):
-        sys.exit(0)
-    if not os.path.exists(MARKER):
-        print("[MARU] Research required. Call answer or deep_research first.", file=sys.stderr)
-        sys.exit(1)
-    elapsed = time.time() - os.path.getmtime(MARKER)
-    if elapsed > TTL_SECONDS:
-        print(f"[MARU] Research expired ({elapsed/60:.0f}min). Re-run answer or deep_research.", file=sys.stderr)
-        sys.exit(1)
-    sys.exit(0)
-
-if __name__ == "__main__":
-    main()
-'''
+    return _freshness_gate_script(
+        "Kimi PreToolUse hook — gates only freshness-sensitive search/network actions."
+    )
 
 
 def aider_research_gate() -> str:
     return '''#!/usr/bin/env python3
-"""Aider lint-cmd research gate — blocks edits when research incomplete."""
-import json
-import os
+"""Aider compatibility hook — no longer blocks local edits or validation."""
 import sys
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
-
-SESSION_FILE = Path.home() / ".maru" / "session_research.json"
-SESSION_TTL_MINUTES = int(os.environ.get("MARU_RESEARCH_TTL", "30"))
-
-
-def _fail(msg: str) -> None:
-    print(f"[MARU-RESEARCH-GATE] ERROR: {msg}", file=sys.stderr)
-    print(
-        "[MARU-RESEARCH-GATE] Run answer or deep_research first.",
-        file=sys.stderr,
-    )
-    sys.exit(1)
 
 
 def main() -> int:
-    if not SESSION_FILE.exists():
-        _fail("No research session found. Research must be completed before editing.")
-    try:
-        data = json.loads(SESSION_FILE.read_text())
-    except Exception:
-        _fail("Corrupted session research file.")
-    completed_at = data.get("completed_at")
-    if not completed_at:
-        _fail("Research not marked as completed.")
-    try:
-        ts = datetime.fromisoformat(completed_at)
-        if ts.tzinfo is None:
-            ts = ts.replace(tzinfo=timezone.utc)
-    except Exception:
-        _fail(f"Invalid timestamp: {completed_at}")
-    now = datetime.now(timezone.utc)
-    if now - ts > timedelta(minutes=SESSION_TTL_MINUTES):
-        _fail(
-            f"Research expired (TTL={SESSION_TTL_MINUTES}min). "
-            "Re-run answer or deep_research before editing."
-        )
-    rid = data.get("research_id", "")
-    if not rid.startswith("RSCH-"):
-        _fail(f"Invalid research_id format: {rid}")
-    print(f"[MARU-RESEARCH-GATE] OK — research {rid} valid.")
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
 '''
+
+
+def antigravity_research_gate() -> str:
+    return _freshness_gate_script(
+        "Antigravity PreToolUse hook — gates only freshness-sensitive search/network actions."
+    )
+
+
+def cursor_research_gate() -> str:
+    return _freshness_gate_script(
+        "Cursor pre-execution hook — gates only freshness-sensitive search/network actions."
+    )
 
 
 _HOOK_BODIES: dict[str, Callable[[], str]] = {
@@ -259,6 +330,8 @@ _HOOK_BODIES: dict[str, Callable[[], str]] = {
     "windsurf_research_gate": windsurf_research_gate,
     "kimi_research_gate": kimi_research_gate,
     "aider_research_gate": aider_research_gate,
+    "antigravity_research_gate": antigravity_research_gate,
+    "cursor_research_gate": cursor_research_gate,
 }
 
 

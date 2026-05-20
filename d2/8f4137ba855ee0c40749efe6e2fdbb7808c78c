@@ -1,0 +1,21 @@
+src/maru_deep_pro_search/cli/agents/cline.py
+  s_1ac4454655be23::t_73910ea0eba6e2 63
+src/maru_deep_pro_search/cli/agents/claude.py
+  s_1ac4454655be23::t_f255cc8d048f45 155-157,160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "d28f4137ba855ee0c40749efe6e2fdbb7808c78c",
+  "prompts": {},
+  "sessions": {
+    "s_1ac4454655be23": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1e712de1-7d49-40ed-a62f-86008228b8ab",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

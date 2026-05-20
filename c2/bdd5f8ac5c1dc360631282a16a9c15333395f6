@@ -1,0 +1,25 @@
+CHANGELOG.md
+  s_f11870297408cd::t_5ae875166ba4aa 309
+AGENT_COMPATIBILITY.md
+  s_f11870297408cd::t_a591e947f2abeb 27
+src/maru_deep_pro_search/cli/agents/codex.py
+  s_f11870297408cd::t_1ec0d3918e0530 97-109
+  s_f11870297408cd::t_4ccaf5655be5ec 72-73,90,92,94,111,127,133
+  s_f11870297408cd::t_ae3d7357f8ba44 6,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "c2bdd5f8ac5c1dc360631282a16a9c15333395f6",
+  "prompts": {},
+  "sessions": {
+    "s_f11870297408cd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e44ce-0463-7451-af51-fef9b33af172",
+        "model": "gpt-5.5"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}

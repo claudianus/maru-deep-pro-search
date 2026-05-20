@@ -99,7 +99,7 @@ class CursorAdapter(AgentAdapter):
         """Install Cursor Lifecycle Hooks for research gating."""
         self.refresh_managed_hooks(repair=repair)
         gate_script = Path.home() / ".maru" / "cursor_research_gate.py"
-        cmd = f"python3 {gate_script}"
+        cmd = f'python3 "{gate_script}"'
 
         hooks_path = self._hooks_path(scope)
         hooks = read_json_safe(hooks_path)
@@ -147,7 +147,7 @@ class CursorAdapter(AgentAdapter):
 
         mdc_header = """---
 description: Mandatory research protocol for code/architecture work
-globs: *
+globs: "*"
 alwaysApply: true
 ---
 """

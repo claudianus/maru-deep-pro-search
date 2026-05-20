@@ -123,7 +123,7 @@ class AntiGravityAdapter(AgentAdapter):
 
         # 2. Legacy rules path for older desktop version (if antigravity folder exists)
         legacy_dir = Path.home() / ".gemini" / "antigravity"
-        if legacy_dir.exists():
+        if scope != "project" and legacy_dir.exists():
             sidecar = legacy_dir / "MARU_RESEARCH_PROTOCOL.md"
             content = read_text_safe(sidecar)
             new_content = inject_protocol(content, protocol)

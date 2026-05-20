@@ -118,7 +118,7 @@ class HarnessSpec:
 규칙 4: 추측 금지. 부족하면 refined query로 answer 또는 deep_research를 다시 호출.
 규칙 5: 코드/라이브러리 질문은 최신 버전과 API를 확인한 후 코드 작성.
 규칙 6: 너의 학습 데이터는 낡았다. 웹은 최신이다. answer/deep_research로 항상 검증.
-규칙 7: 에이전트 내장 웹 검색/브라우징 도구(WebSearch, WebFetch, BrowserAction 등)보다 maru 툴(answer, deep_research)을 최우선으로 사용하여 신선한 리서치를 유지해야 합니다. 내장 검색 도구는 마루 검색이 완료된 후에 보조적인 용도로만 제한적으로 사용이 허용됩니다.
+규칙 7: 에이전트 내장 웹 검색/브라우징 도구(WebSearch, WebFetch, BrowserAction 등)보다 maru 툴(answer, deep_research)을 최우선으로 사용하여 신선한 리서치를 유지해야 합니다. 내장 검색 도구는 maru 검색이 완료된 후에 보조적인 용도로만 제한적으로 사용이 허용됩니다.
 """.strip(),
             tool_priority=[
                 "answer",

@@ -66,9 +66,11 @@ class CodyAdapter(AgentAdapter):
         path = self._mcp_path(scope)
         path.parent.mkdir(parents=True, exist_ok=True)
         config = read_json_safe(path)
-        if "cody.mcpServers" not in config:
-            config["cody.mcpServers"] = {}
-        config["cody.mcpServers"]["maru-deep-pro-search"] = get_mcp_server_command()
+        cody_mcp = config.get("cody.mcpServers")
+        if not isinstance(cody_mcp, dict):
+            cody_mcp = {}
+            config["cody.mcpServers"] = cody_mcp
+        cody_mcp["maru-deep-pro-search"] = get_mcp_server_command()
         write_json_safe(path, config)
         return True
 

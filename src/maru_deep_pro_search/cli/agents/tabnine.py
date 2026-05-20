@@ -75,9 +75,11 @@ class TabnineAdapter(AgentAdapter):
         path = self._mcp_path(scope)
         path.parent.mkdir(parents=True, exist_ok=True)
         config = read_json_safe(path)
-        if "mcpServers" not in config:
-            config["mcpServers"] = {}
-        config["mcpServers"]["maru-deep-pro-search"] = get_mcp_server_command()
+        mcp_servers = config.get("mcpServers")
+        if not isinstance(mcp_servers, dict):
+            mcp_servers = {}
+            config["mcpServers"] = mcp_servers
+        mcp_servers["maru-deep-pro-search"] = get_mcp_server_command()
         write_json_safe(path, config)
         return True
 

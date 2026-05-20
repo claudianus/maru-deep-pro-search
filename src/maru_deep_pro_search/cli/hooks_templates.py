@@ -50,7 +50,7 @@ def hook_script_stale(path: Path, expected_version: str | None = None) -> bool:
 
 def write_managed_hook(path: Path, body: str, *, force: bool = False) -> bool:
     """Write *body* with a version stamp. Skips non-managed existing files unless *force*."""
-    if MARU_MANAGED_PREFIX in body:
+    if any(line.startswith(MARU_MANAGED_PREFIX) for line in body.splitlines()[:2]):
         stamped = body
     elif body.startswith("#!"):
         parts = body.split("\n", 1)
@@ -138,12 +138,12 @@ PACKAGE_FRESHNESS_COMMANDS = {{
 }}
 
 
-def _load_event() -> dict[str, Any]:
+def _load_event() -> dict[str, Any] | None:
     try:
         data = json.load(sys.stdin)
     except Exception:
-        return {{}}
-    return data if isinstance(data, dict) else {{}}
+        return None
+    return data if isinstance(data, dict) else None
 
 
 def _get_string(data: Mapping[str, Any], *keys: str) -> str:
@@ -212,7 +212,9 @@ def _mcp_requires_research(data: Mapping[str, Any]) -> bool:
     return False
 
 
-def _requires_research(data: Mapping[str, Any]) -> tuple[bool, str]:
+def _requires_research(data: Mapping[str, Any] | None) -> tuple[bool, str]:
+    if data is None:
+        return True, "unparseable hook payload"
     command = _get_string(data, "command")
     if command:
         return _shell_requires_research(command), "shell command '" + _unwrap_shell_command(command) + "'"

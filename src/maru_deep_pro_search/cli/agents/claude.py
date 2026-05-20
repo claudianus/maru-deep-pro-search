@@ -149,10 +149,22 @@ class ClaudeAdapter(AgentAdapter):
         if "PreToolUse" not in settings["hooks"]:
             settings["hooks"]["PreToolUse"] = []
         # Migrate old edit gates away from broad research enforcement.
+        gate_script = Path.home() / ".claude" / "hooks" / "maru_research_gate.py"
+
+        def has_hook_command(entry: dict[str, Any], script: Path) -> bool:
+            return any(
+                isinstance(hook, dict) and str(hook.get("command", "")).endswith(script.name)
+                for hook in entry.get("hooks", [])
+            )
+
         settings["hooks"]["PreToolUse"] = [
             h
             for h in settings["hooks"]["PreToolUse"]
-            if h.get("matcher") not in {"Edit|Write", "Edit|Write|WebSearch|WebFetch"}
+            if not (
+                isinstance(h, dict)
+                and h.get("matcher") in {"Edit|Write", "Edit|Write|WebSearch|WebFetch"}
+                and has_hook_command(h, gate_script)
+            )
         ]
         pre_matchers = [h.get("matcher", "") for h in settings["hooks"]["PreToolUse"]]
         target_matcher = "Bash|WebSearch|WebFetch"
@@ -163,9 +175,7 @@ class ClaudeAdapter(AgentAdapter):
                     "hooks": [
                         {
                             "type": "command",
-                            "command": str(
-                                Path.home() / ".claude" / "hooks" / "maru_research_gate.py"
-                            ),
+                            "command": str(gate_script),
                         }
                     ],
                 }
@@ -175,8 +185,15 @@ class ClaudeAdapter(AgentAdapter):
         # local edits; only external freshness-sensitive actions are gated.
         if "PostToolUse" not in settings["hooks"]:
             settings["hooks"]["PostToolUse"] = []
+        revert_script = Path.home() / ".claude" / "hooks" / "maru_research_revert.py"
         settings["hooks"]["PostToolUse"] = [
-            h for h in settings["hooks"]["PostToolUse"] if h.get("matcher") != "Write|Edit"
+            h
+            for h in settings["hooks"]["PostToolUse"]
+            if not (
+                isinstance(h, dict)
+                and h.get("matcher") == "Write|Edit"
+                and has_hook_command(h, revert_script)
+            )
         ]
 
         # 3. SessionStart — inject research reminder

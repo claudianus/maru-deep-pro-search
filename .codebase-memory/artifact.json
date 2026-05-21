@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
-    "commit": "8ed216908cf8118da3f49d8b4b5c6360e26b49fb",
-    "indexed_at": "2026-05-21T06:43:35Z",
+    "commit": "70a53168d607a8884edad18a379b1c56fb6f9f7b",
+    "indexed_at": "2026-05-21T06:47:08Z",
     "project": "Users-modumaru-Desktop-code-clco-deep-research-mcp",
     "nodes": 1916,
-    "edges": 5639,
+    "edges": 5634,
     "original_size": 8716288,
-    "compressed_size": 1490028,
+    "compressed_size": 1489688,
     "compression_level": 3
 }

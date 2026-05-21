@@ -77,9 +77,7 @@ class RefinerConfig:
     max_tokens: int = 1500
     temperature: float = 0.1
     top_p: float = 0.9
-    cache_dir: Path = field(
-        default_factory=lambda: Path.home() / ".cache" / "maru" / "models"
-    )
+    cache_dir: Path = field(default_factory=lambda: Path.home() / ".cache" / "maru" / "models")
     enabled: bool = True
     timeout_seconds: float = 30.0
 
@@ -130,9 +128,7 @@ class RefinerConfig:
 
         cache_dir_raw = os.getenv("MARU_REFINER_CACHE_DIR")
         cache_dir = (
-            Path(cache_dir_raw)
-            if cache_dir_raw
-            else Path.home() / ".cache" / "maru" / "models"
+            Path(cache_dir_raw) if cache_dir_raw else Path.home() / ".cache" / "maru" / "models"
         )
 
         return cls(

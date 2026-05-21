@@ -94,6 +94,10 @@ class XEngine(SearchEngine):
 | 14 | `gh pr create` 본문에 백틱/파이프/`$` | bash가 해석함. `--body-file` 사용 |
 | 15 | 머지 후 pull 안 함 | `git pull` 안 하면 로컬만 낡음 |
 | 16 | PR 머지 가정 | 행동 전 `gh pr view N --json state` 확인 |
+| 17 | Qwen3.5 모델 파일명 대소문자 | `Qwen3.5-0.8B-Q4_K_M.gguf` (대문자 Q). 소문자 `qwen3.5`로 다운로드 시 로드 실패 |
+| 18 | GitHub Release 2GB 제한 | >2GB 모델은 400MB chunk로 분할 업로드 + `_merge_chunks()`로 병합 |
+| 19 | Split chunk 순서 | `_download_chunks()`는 병합 전 `sorted()`로 chunk 순서 확인 필수 |
+| 20 | Refiner 초기화 비용 | `llama-cpp-python` 첫 로드 수 초~수십 초. 캐시 재사용 필수 |
 
 ---
 
@@ -156,12 +160,20 @@ uv run ruff check src/ && uv run ruff format --check src/ && uv run mypy src/
 ## 벤치마크
 
 ```bash
+# 검색 품질 벤치마크
 uv run python benchmark/search_quality_benchmark.py
+
+# Refiner 토큰 절약 벤치마크
+uv run python benchmark/refiner_benchmark.py
 ```
 
 다중 엔진 vs 단일 엔진 (TREC 표준, 10쿼리):
 - Precision@5: **+86%** | NDCG@10: **+36%** | MRR: **+25%**
 - 트레이드오프: 응답 시간 ~2배
+
+Refiner 토큰 절약 (10개 테스트 URL):
+- 평균 압축률: **83%** (6000tok → ~1000tok)
+- 처리 속도: 0.8B 기준 ~50tok/s (Apple Metal M3), ~30tok/s (CPU)
 
 ---
 
@@ -226,3 +238,12 @@ uv run python benchmark/search_quality_benchmark.py
 7. **3층 레이트 리밋** — Semaphore(4) + 엔진별 쿨다운 + 슬라이딩 윈도우(`RateLimiter`).
 8. **세션 재사용 스텔스** — Google/Startpage용 `AsyncStealthySession`.
 9. **MCP 툴은 데이터만** — 종합은 에이전트 LLM이 결정.
+10. **내장 Refiner 엔진** — `llama-cpp-python` 기반 Qwen3.5 경량 모델(0.8B~4B)이 웹 콘텐츠를 자동 정제. 호스트 LLM 토큰 83% 절약.
+    - 하드웨어 자동 감지: RAM/VRAM/CPU/GPU 백엔드 (NVIDIA CUDA, Apple Metal, ROCm, CPU)
+    - 모델 자동 선택: VRAM > 6GB → 4B, VRAM > 2GB → 2B, else → 0.8B
+    - GitHub Release 모델 미러링: 2GB 제한 우회를 위해 400MB chunk로 분할 다운로드 후 자동 병합 (SHA256 검증)
+11. **Atomic Tools v2** — Perplexity-style host-driven 반복 루프 (decompose → search → fetch → verify)
+    - `search`: SERP + 낮은 refiner로 스니펫 정제 (호스트는 refiner 존재 모름)
+    - `fetch`: 본문 + 낮은 refiner로 정제 (원본 6000tok → ~1000tok)
+    - `verify`: 교차 검증 + 충돌 감지 + 신뢰도 점수
+    - `decompose`: 쿼리 분해 (의도/엔티티/서브쿼리 생성)

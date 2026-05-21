@@ -163,8 +163,80 @@ try {
 } catch { $newVer = "unknown" }
 Write-Ok "maru-deep-pro-search $newVer 설치 완료"
 
-# ── 6. Pre-download embedding model ────────────────────────────
-Write-Title "5. 임베딩 모델 사전 다운로드"
+# ── 6. Hardware Detection ──────────────────────────────────────
+Write-Title "5. 하드웨어 탐지"
+Write-Info "시스템 사양을 분석합니다..."
+
+$hwOutput = & $pythonCmd -c @"
+import sys
+sys.path.insert(0, 'src')
+from maru_deep_pro_search.refiner.hardware import detect_hardware, get_optimal_model
+hw = detect_hardware()
+print(f'CPU: {hw.cpu_count} cores')
+print(f'RAM: {hw.total_ram_mb // 1024} GB')
+if hw.has_gpu:
+    print(f'GPU: {hw.gpu_name} ({hw.gpu_vram_mb // 1024} GB VRAM)')
+else:
+    print('GPU: 없음 (CPU 추론)')
+model = get_optimal_model(hw)
+print(f'Recommended model: {model}')
+"@ 2>$null
+
+if ($LASTEXITCODE -eq 0) {
+    $hwOutput | ForEach-Object { Write-Info $_ }
+} else {
+    Write-Warn "하드웨어 탐지 실패 (선택적 기능)"
+}
+
+# ── 7. llama-cpp-python GPU Wheel Selection ────────────────────
+$nvidiaSmi = Get-Command nvidia-smi -ErrorAction SilentlyContinue
+if ($nvidiaSmi) {
+    Write-Info "NVIDIA GPU 감지됨 — CUDA 가속 wheel 설치"
+    & $pythonCmd -m pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu122
+    if ($LASTEXITCODE -eq 0) {
+        Write-Ok "CUDA 가속 wheel 설치 완료"
+    } else {
+        Write-Warn "CUDA wheel 설치 실패 — CPU 모드로 동작합니다"
+    }
+}
+
+# ── 8. Model Download ──────────────────────────────────────────
+Write-Title "6. 경량 LLM 모델 다운로드"
+Write-Info "콘텐츠 정제용 경량 모델을 다운로드합니다..."
+Write-Info "이 모델은 웹 검색 결과를 깔끔하게 정리하여 토큰을 절약합니다."
+
+$modelDownload = & $pythonCmd -c @"
+import sys
+sys.path.insert(0, 'src')
+from maru_deep_pro_search.refiner.config import RefinerConfig, MODEL_REGISTRY
+from maru_deep_pro_search.refiner.hardware import detect_hardware, get_optimal_model
+from maru_deep_pro_search.refiner.model_manager import ModelManager
+
+hw = detect_hardware()
+model_name = get_optimal_model(hw)
+config = RefinerConfig(model_name=model_name)
+manager = ModelManager(config.cache_dir)
+
+print(f'Selected model: {model_name}')
+print(f'Size: {MODEL_REGISTRY[model_name]["size_mb"]} MB')
+print('Downloading...')
+
+try:
+    path = manager.ensure_model(model_name)
+    print(f'Model ready: {path}')
+except Exception as e:
+    print(f'Download failed: {e}', file=sys.stderr)
+    sys.exit(1)
+"@ 2>&1
+
+if ($LASTEXITCODE -eq 0) {
+    Write-Ok "모델 다운로드 완료"
+} else {
+    Write-Warn "모델 다운로드 실패 — 런타임에 자동으로 재시도됩니다"
+}
+
+# ── 9. Pre-download embedding model ────────────────────────────
+Write-Title "7. 임베딩 모델 사전 다운로드"
 Write-Info "첫 deep_research 지연 방지 — Hugging Face에서 Granite 임베딩을 받습니다."
 $warmupOk = $false
 if (Get-Command maru-deep-pro-search-setup -ErrorAction SilentlyContinue) {
@@ -181,8 +253,8 @@ if ($warmupOk) {
     Write-Info "  maru-deep-pro-search-setup warmup-embeddings"
 }
 
-# ── 7. Optional setup wizard ───────────────────────────────────
-Write-Title "6. 설정 마법사"
+# ── 10. Optional setup wizard ──────────────────────────────────
+Write-Title "8. 설정 마법사"
 Write-Host "설정 마법사는 AI 에이전트(Claude, Cursor, Kimi 등)를 자동 감지하고"
 Write-Host "MCP 서버를 등록하는 과정입니다."
 Write-Host ""
@@ -194,7 +266,7 @@ if (Confirm "지금 설정 마법사를 실행하시겠습니까?") {
     Write-Info "  maru-deep-pro-search setup"
 }
 
-# ── 8. Summary ─────────────────────────────────────────────────
+# ── 11. Summary ────────────────────────────────────────────────
 Write-Title "✅ 설치 완료 요약"
 Write-Ok "Python: ${pythonVersion:-${TargetPy} (via uv)}"
 Write-Ok "패키지: $newVer"

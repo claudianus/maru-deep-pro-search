@@ -1,6 +1,6 @@
 [project]
 name = "maru-deep-pro-search"
-version = "0.22.4"
+version = "0.23.0"
 description = "Universal AI search MCP server — Perplexity-level quality with zero API keys. Multi-engine web scraping, intelligent ranking, and citation-native answers."
 readme = "README.md"
 license = "MIT"
@@ -42,7 +42,10 @@ classifiers = [
 ]
 dependencies = [
     "htmldate>=1.9.4",
+    "huggingface-hub>=0.20.0",
+    "llama-cpp-python>=0.3.0",
     "mcp>=1.0.0",
+    "psutil>=5.9.0",
     "pyyaml>=6.0.1",
     "pygments>=2.20.0",
     "scrapling[fetchers]>=0.2.99",
@@ -86,6 +89,12 @@ where = ["src"]
 [project.optional-dependencies]
 # Kept for backward-compatible install scripts; embeddings are core since 0.21.0.
 semantic = []
+gpu = [
+    "llama-cpp-python>=0.3.0; platform_system != 'Darwin'",
+]
+metal = [
+    "llama-cpp-python>=0.3.0; platform_system == 'Darwin'",
+]
 
 [dependency-groups]
 dev = [

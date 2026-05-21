@@ -12,12 +12,12 @@ GITHUB_RELEASE_TAG: str = "models-v1"
 
 MODEL_REGISTRY: dict[str, dict[str, Any]] = {
     "Qwen3.5-0.8B-Q4_K_M": {
-        "repo_id": "Qwen/Qwen3.5-0.8B-Instruct-GGUF",
-        "filename": "qwen3.5-0.8b-instruct-q4_k_m.gguf",
+        "repo_id": "unsloth/Qwen3.5-0.8B-GGUF",
+        "filename": "Qwen3.5-0.8B-Q4_K_M.gguf",
         "github_url": (
             f"https://github.com/{GITHUB_REPO}"
             f"/releases/download/{GITHUB_RELEASE_TAG}"
-            f"/qwen3.5-0.8b-instruct-q4_k_m.gguf"
+            f"/Qwen3.5-0.8B-Q4_K_M.gguf"
         ),
         "min_ram_mb": 2048,
         "min_vram_mb": 512,
@@ -25,12 +25,12 @@ MODEL_REGISTRY: dict[str, dict[str, Any]] = {
         "context_length": 32768,
     },
     "Qwen3.5-2B-Q4_K_M": {
-        "repo_id": "Qwen/Qwen3.5-2B-Instruct-GGUF",
-        "filename": "qwen3.5-2b-instruct-q4_k_m.gguf",
+        "repo_id": "unsloth/Qwen3.5-2B-GGUF",
+        "filename": "Qwen3.5-2B-Q4_K_M.gguf",
         "github_url": (
             f"https://github.com/{GITHUB_REPO}"
             f"/releases/download/{GITHUB_RELEASE_TAG}"
-            f"/qwen3.5-2b-instruct-q4_k_m.gguf"
+            f"/Qwen3.5-2B-Q4_K_M.gguf"
         ),
         "min_ram_mb": 5120,
         "min_vram_mb": 1536,
@@ -38,12 +38,12 @@ MODEL_REGISTRY: dict[str, dict[str, Any]] = {
         "context_length": 32768,
     },
     "Qwen3.5-4B-Q4_K_M": {
-        "repo_id": "Qwen/Qwen3.5-4B-Instruct-GGUF",
-        "filename": "qwen3.5-4b-instruct-q4_k_m.gguf",
+        "repo_id": "unsloth/Qwen3.5-4B-GGUF",
+        "filename": "Qwen3.5-4B-Q4_K_M.gguf",
         "github_url": (
             f"https://github.com/{GITHUB_REPO}"
             f"/releases/download/{GITHUB_RELEASE_TAG}"
-            f"/qwen3.5-4b-instruct-q4_k_m.gguf"
+            f"/Qwen3.5-4B-Q4_K_M.gguf"
         ),
         "min_ram_mb": 8192,
         "min_vram_mb": 2560,
@@ -77,7 +77,9 @@ class RefinerConfig:
     max_tokens: int = 1500
     temperature: float = 0.1
     top_p: float = 0.9
-    cache_dir: Path = field(default_factory=lambda: Path.home() / ".cache" / "maru" / "models")
+    cache_dir: Path = field(
+        default_factory=lambda: Path.home() / ".cache" / "maru" / "models"
+    )
     enabled: bool = True
     timeout_seconds: float = 30.0
 
@@ -128,7 +130,9 @@ class RefinerConfig:
 
         cache_dir_raw = os.getenv("MARU_REFINER_CACHE_DIR")
         cache_dir = (
-            Path(cache_dir_raw) if cache_dir_raw else Path.home() / ".cache" / "maru" / "models"
+            Path(cache_dir_raw)
+            if cache_dir_raw
+            else Path.home() / ".cache" / "maru" / "models"
         )
 
         return cls(

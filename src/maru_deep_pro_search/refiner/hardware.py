@@ -308,22 +308,22 @@ def detect_hardware() -> HardwareProfile:
 
 MODEL_CONFIGS: dict[str, dict[str, object]] = {
     "Qwen3.5-0.8B-Q4_K_M": {
-        "repo_id": "Qwen/Qwen3.5-0.8B-Instruct-GGUF",
-        "filename": "qwen3.5-0.8b-instruct-q4_k_m.gguf",
+        "repo_id": "unsloth/Qwen3.5-0.8B-GGUF",
+        "filename": "Qwen3.5-0.8B-Q4_K_M.gguf",
         "min_ram_mb": 2048,
         "min_vram_mb": 512,
         "size_mb": 500,
     },
     "Qwen3.5-2B-Q4_K_M": {
-        "repo_id": "Qwen/Qwen3.5-2B-Instruct-GGUF",
-        "filename": "qwen3.5-2b-instruct-q4_k_m.gguf",
+        "repo_id": "unsloth/Qwen3.5-2B-GGUF",
+        "filename": "Qwen3.5-2B-Q4_K_M.gguf",
         "min_ram_mb": 5120,
         "min_vram_mb": 1536,
         "size_mb": 1200,
     },
     "Qwen3.5-4B-Q4_K_M": {
-        "repo_id": "Qwen/Qwen3.5-4B-Instruct-GGUF",
-        "filename": "qwen3.5-4b-instruct-q4_k_m.gguf",
+        "repo_id": "unsloth/Qwen3.5-4B-GGUF",
+        "filename": "Qwen3.5-4B-Q4_K_M.gguf",
         "min_ram_mb": 8192,
         "min_vram_mb": 2560,
         "size_mb": 2400,
@@ -348,9 +348,7 @@ def get_optimal_model(profile: HardwareProfile) -> str:
     """
     if profile.gpu_vram_mb is not None and profile.gpu_vram_mb > 6000:
         return "Qwen3.5-4B-Q4_K_M"
-    elif (
-        profile.gpu_vram_mb is not None and profile.gpu_vram_mb > 2000
-    ) or profile.total_ram_mb > 8000:
+    elif (profile.gpu_vram_mb is not None and profile.gpu_vram_mb > 2000) or profile.total_ram_mb > 8000:
         return "Qwen3.5-2B-Q4_K_M"
     else:
         return "Qwen3.5-0.8B-Q4_K_M"

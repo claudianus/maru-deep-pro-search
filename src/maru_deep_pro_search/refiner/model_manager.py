@@ -28,16 +28,16 @@ except ImportError:
 # Registry of known models — maps friendly name → (repo_id, filename)
 _MODEL_REGISTRY: dict[str, tuple[str, str]] = {
     "Qwen3.5-0.8B-Q4_K_M": (
-        "Qwen/Qwen3.5-0.8B-Instruct-GGUF",
-        "qwen3.5-0.8b-instruct-q4_k_m.gguf",
+        "unsloth/Qwen3.5-0.8B-GGUF",
+        "Qwen3.5-0.8B-Q4_K_M.gguf",
     ),
     "Qwen3.5-2B-Q4_K_M": (
-        "Qwen/Qwen3.5-2B-Instruct-GGUF",
-        "qwen3.5-2b-instruct-q4_k_m.gguf",
+        "unsloth/Qwen3.5-2B-GGUF",
+        "Qwen3.5-2B-Q4_K_M.gguf",
     ),
     "Qwen3.5-4B-Q4_K_M": (
-        "Qwen/Qwen3.5-4B-Instruct-GGUF",
-        "qwen3.5-4b-instruct-q4_k_m.gguf",
+        "unsloth/Qwen3.5-4B-GGUF",
+        "Qwen3.5-4B-Q4_K_M.gguf",
     ),
 }
 
@@ -46,9 +46,9 @@ _GITHUB_RELEASE_BASE: str = (
     "https://github.com/claudianus/maru-deep-pro-search/releases/download/models-v1"
 )
 _GITHUB_URLS: dict[str, str] = {
-    "Qwen3.5-0.8B-Q4_K_M": f"{_GITHUB_RELEASE_BASE}/qwen3.5-0.8b-instruct-q4_k_m.gguf",
-    "Qwen3.5-2B-Q4_K_M": f"{_GITHUB_RELEASE_BASE}/qwen3.5-2b-instruct-q4_k_m.gguf",
-    "Qwen3.5-4B-Q4_K_M": f"{_GITHUB_RELEASE_BASE}/qwen3.5-4b-instruct-q4_k_m.gguf",
+    "Qwen3.5-0.8B-Q4_K_M": f"{_GITHUB_RELEASE_BASE}/Qwen3.5-0.8B-Q4_K_M.gguf",
+    "Qwen3.5-2B-Q4_K_M": f"{_GITHUB_RELEASE_BASE}/Qwen3.5-2B-Q4_K_M.gguf",
+    "Qwen3.5-4B-Q4_K_M": f"{_GITHUB_RELEASE_BASE}/Qwen3.5-4B-Q4_K_M.gguf",
 }
 
 
@@ -217,7 +217,7 @@ class ModelManager:
         model_name: str,
         progress_callback: Callable[[int, int, float, float], None] | None = None,
     ) -> Path:
-        """Download a model from GitHub releases (primary) or HuggingFace Hub (fallback).
+        """Download a model from HuggingFace Hub (primary) or GitHub releases (fallback).
         Args:
             model_name: Friendly name of the model.
             progress_callback: opt callback invoked at the start and end of
@@ -235,41 +235,10 @@ class ModelManager:
         local_path = model_dir / filename
         if progress_callback is not None:
             progress_callback(0, 0, 0.0, 0.0)
-        # Try GitHub release mirror first (primary)
-        github_url = _GITHUB_URLS.get(model_name)
-        if github_url is not None:
-            try:
-                self._download_with_progress(github_url, local_path, progress_callback)
-                file_size = local_path.stat().st_size
-                size_mb = round(file_size / (1024 * 1024), 2)
-                sha256 = _compute_sha256(local_path)
-                metadata: dict[str, Any] = {
-                    "model_name": model_name,
-                    "repo_id": repo_id,
-                    "filename": filename,
-                    "download_date": datetime.now(timezone.utc).isoformat(),
-                    "size_mb": size_mb,
-                    "sha256": sha256,
-                    "source": "github",
-                    "url": github_url,
-                    "selected_for": {
-                        "hardware_profile": {},
-                    },
-                }
-                _write_metadata(model_name, metadata, cache_dir)
-                if progress_callback is not None:
-                    progress_callback(file_size, file_size, 0.0, 0.0)
-                return local_path
-            except Exception as exc:
-                if local_path.exists():
-                    local_path.unlink()
-                # Fall through to HF Hub
-                print(f"GitHub download failed: {exc}")
-        # Fallback: HuggingFace Hub
+        # Primary: HuggingFace Hub
         if not _HF_AVAILABLE:
             raise RuntimeError(
-                f"Failed to download {model_name} from GitHub and "
-                "huggingface_hub is not installed for fallback."
+                "huggingface_hub is not installed. Install it with: pip install huggingface_hub"
             )
         hf_path_str = hf_hub_download(repo_id, filename)  # type: ignore[arg-type]
         hf_path = Path(hf_path_str)
@@ -286,7 +255,7 @@ class ModelManager:
         sha256 = _compute_sha256(hf_path)
         if progress_callback is not None:
             progress_callback(file_size, file_size, 0.0, 0.0)
-        metadata = {
+        metadata: dict[str, Any] = {
             "model_name": model_name,
             "repo_id": repo_id,
             "filename": filename,

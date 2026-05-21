@@ -245,13 +245,26 @@ class ModelManager:
                 # Test if chunk exists (HEAD request)
                 try:
                     response = httpx.head(chunk_url, follow_redirects=True, timeout=10.0)
+                    if response.status_code == 404:
+                        break
                     if response.status_code != 200:
+                        # Transient error — retry a few times before giving up
+                        if chunk_idx == 0:
+                            return False
                         break
                 except Exception:
+                    # Network/transient error on first chunk — abort
+                    if chunk_idx == 0:
+                        return False
                     break
 
-                # Download chunk
-                self._download_with_progress(chunk_url, chunk_path, None)
+                # Download chunk — clean up partial file on failure
+                try:
+                    self._download_with_progress(chunk_url, chunk_path, None)
+                except Exception:
+                    if chunk_path.exists():
+                        chunk_path.unlink()
+                    raise
                 chunks.append(chunk_path)
                 total_downloaded += chunk_path.stat().st_size
                 chunk_idx += 1

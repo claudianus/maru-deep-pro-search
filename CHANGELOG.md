@@ -8,6 +8,42 @@
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-05-21
+
+### Added (BREAKING ARCHITECTURE)
+- **내장 추론 엔진 (Refiner Engine)** — `llama-cpp-python` 0.3.x 기반 경량 LLM 추론 엔진 탑재
+  - Qwen3.5 0.8B/2B/4B Instruct 모델 지원 (Q4_K_M quantization)
+  - 하드웨어 자동 감지: RAM/VRAM/CPU/GPU 백엔드 자동 탐지 (NVIDIA CUDA, Apple Metal, ROCm, CPU)
+  - 모델 자동 선택: VRAM > 6GB → 4B, VRAM > 2GB → 2B, else → 0.8B
+  - 콘텐츠 정제 (refine): 광고/난비게이션/푸터 제거 → 핵심 사실/근거 추출
+  - 스니펫 정제 (refine_snippet): 검색 결과 요약 1-2문장
+  - 사실 추출 (extract_facts): JSON 구조화 출력 + 신뢰도 점수
+- **Atomic Tools v2** — Perplexity-style 아키텍처로 monolithic → atomic 분해
+  - `search` — SERP + 낮은 refiner로 스니펫 정제 (호스트는 refiner 존재 모름)
+  - `fetch` — 본문 + 낮은 refiner로 정제 (원본 6000tok → ~1000tok)
+  - `verify` — 교차 검증 + 충돌 감지 + 신뢰도 점수
+  - `decompose` — 쿼리 분해 (의도/엔티티/서브쿼리 생성)
+- **GitHub Release 모델 미러링** — 모든 모델을 GitHub Release에 미러링
+  - `ModelManager`가 GitHub를 primary, HuggingFace Hub를 fallback으로 사용
+  - 대역폭 제한 없는 안정적인 다운로드
+- **설치 스크립트 개선** — 하드웨어 탐지 + 모델 자동 선택 + GPU wheel 자동 설치
+  - CUDA/Metal/ROCm 자동 감지 및 pre-built wheel 설치
+  - tqdm-style 진행률 표시
+- **벤치마크** — `benchmark/refiner_benchmark.py`: 토큰 절약률/속도/품질 측정
+
+### Changed (BREAKING)
+- **MCP 서버 아키텍처 재설계** — 기존 18개 monolithic tool → 5개 atomic tool
+  - `deep_research`, `answer`, `web_search`, `search_with_citations`, `fetch_page`, `fetch_bulk`, `stealthy_fetch`, `parallel_search` 등 제거
+  - 새 도구: `search`, `fetch`, `fetch_bulk`, `verify`, `decompose` + 유틸리티 3개
+  - 호스트 에이전트가 반복 루프 제어 (decompose → search → fetch → verify → "충분한가?")
+- **토큰 효율** — fetch 결과 6000tok → ~1000tok (**83% 절약**)
+  - 호스트 LLM이 정제된 사실만 받아 추론 품질 향상
+- **설치 의존성** — `llama-cpp-python>=0.3.0`, `huggingface-hub>=0.20.0`, `psutil>=5.9.0` 추가
+
+### Removed
+- **Monolithic tools** — 기존 `tools.py` 완전 제거 (18개 tool)
+- **server.py.bak** — 기존 서버 백업 제거
+
 ## [0.22.4] - 2026-05-20
 
 ### Fixed

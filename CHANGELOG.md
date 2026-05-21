@@ -8,6 +8,27 @@
 
 ## [Unreleased]
 
+## [0.23.2] - 2026-05-21
+
+### Added
+- **Split/Merge 모델 다운로드** — GitHub Release 2GB 제한 우회
+  - `_split_file()`: 400MB chunk로 대용량 모델 분할
+  - `_merge_chunks()`: 다운로드된 chunk 자동 병합 (SHA256 검증)
+  - `_download_chunks()`: 분할 파일 순차 다운로드 + 자동 병합
+
+### Fixed
+- **Qwen3.5 모델 복원** — 잘못 변경된 Qwen2.5 모델을 원래 Qwen3.5로 복원
+  - `config.py`: MODEL_REGISTRY → Qwen3.5-0.8B/2B/4B
+  - `hardware.py`: 선택 로직 → Qwen3.5
+  - `model_manager.py`: Registry → Qwen3.5
+
+## [0.23.1] - 2026-05-21
+
+### Fixed
+- **Qwen3.5 모델 복원** — v0.23.0에서 잘못 도입된 Qwen2.5를 Qwen3.5로 복원
+  - 실제 HF Hub에 Qwen3.5 GGUF 모델 존재 확인 (unsloth/Qwen3.5-*-GGUF)
+  - 0.8B/2B/4B 모델 모두 Qwen3.5로 변경
+
 ## [0.23.0] - 2026-05-21
 
 ### Added (BREAKING ARCHITECTURE)

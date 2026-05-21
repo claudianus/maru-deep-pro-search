@@ -348,7 +348,9 @@ def get_optimal_model(profile: HardwareProfile) -> str:
     """
     if profile.gpu_vram_mb is not None and profile.gpu_vram_mb > 6000:
         return "Qwen3.5-4B-Q4_K_M"
-    elif (profile.gpu_vram_mb is not None and profile.gpu_vram_mb > 2000) or profile.total_ram_mb > 8000:
+    elif (
+        profile.gpu_vram_mb is not None and profile.gpu_vram_mb > 2000
+    ) or profile.total_ram_mb > 8000:
         return "Qwen3.5-2B-Q4_K_M"
     else:
         return "Qwen3.5-0.8B-Q4_K_M"

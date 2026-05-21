@@ -154,19 +154,144 @@ def _compute_sha256(file_path: Path) -> str:
     return h.hexdigest()
 
 
+_CHUNK_SIZE_BYTES: int = 400 * 1024 * 1024  # 400 MB per chunk
+
+
 class ModelManager:
     """Manages GGUF model downloads from HuggingFace Hub and local caching.
 
     Uses HF Hub's built-in cache for the actual blob storage and maintains
     maru-specific metadata + symlinks under ``~/.cache/maru/models/``.
 
+    Supports GitHub Release split-download for large models (>1GB).
+
     Args:
-        cache_dir: Root directory for maru model metadata and symlinks.
+        cache_dir: Root dir for maru model metadata and symlinks.
             Defaults to ``~/.cache/maru/models/``.
     """
 
     def __init__(self, cache_dir: Path | None = None):
         self._cache_dir = cache_dir
+
+    def _split_file(self, file_path: Path, chunk_size: int = _CHUNK_SIZE_BYTES) -> list[Path]:
+        """Split a large file into chunks.
+
+        Args:
+            file_path: Path to the file to split.
+            chunk_size: Size of each chunk in bytes.
+
+        Returns:
+            List of chunk file paths.
+        """
+        chunks: list[Path] = []
+        file_size = file_path.stat().st_size
+        if file_size <= chunk_size:
+            return [file_path]
+
+        with file_path.open("rb") as f:
+            chunk_idx = 0
+            while True:
+                chunk_data = f.read(chunk_size)
+                if not chunk_data:
+                    break
+                chunk_path = file_path.parent / f"{file_path.name}.part-{chunk_idx:03d}"
+                chunk_path.write_bytes(chunk_data)
+                chunks.append(chunk_path)
+                chunk_idx += 1
+
+        return chunks
+
+    def _merge_chunks(self, chunks: list[Path], dest: Path) -> None:
+        """Merge chunk files into a single file.
+
+        Args:
+            chunks: List of chunk file paths (must be in order).
+            dest: Destination path for the merged file.
+        """
+        with dest.open("wb") as out_f:
+            for chunk in chunks:
+                with chunk.open("rb") as in_f:
+                    shutil.copyfileobj(in_f, out_f)
+
+    def _download_chunks(
+        self,
+        model_name: str,
+        dest: Path,
+        progress_callback: Callable[[int, int, float, float], None] | None = None,
+    ) -> bool:
+        """Download split chunks from GitHub Release and merge.
+
+        Args:
+            model_name: Friendly name of the model.
+            dest: Destination path for the merged file.
+            progress_callback: Optional progress callback.
+
+        Returns:
+            True if download and merge succeeded, False otherwise.
+        """
+        base_url = _GITHUB_URLS.get(model_name)
+        if base_url is None:
+            return False
+
+        chunks: list[Path] = []
+        chunk_idx = 0
+        total_downloaded = 0
+
+        try:
+            while True:
+                chunk_url = f"{base_url}.part-{chunk_idx:03d}"
+                chunk_path = dest.parent / f"{dest.name}.part-{chunk_idx:03d}"
+
+                # Test if chunk exists (HEAD request)
+                try:
+                    response = httpx.head(chunk_url, follow_redirects=True, timeout=10.0)
+                    if response.status_code == 404:
+                        break
+                    if response.status_code != 200:
+                        # Transient error — retry a few times before giving up
+                        if chunk_idx == 0:
+                            return False
+                        break
+                except Exception:
+                    # Network/transient error on first chunk — abort
+                    if chunk_idx == 0:
+                        return False
+                    break
+
+                # Download chunk — clean up partial file on failure
+                try:
+                    self._download_with_progress(chunk_url, chunk_path, None)
+                except Exception:
+                    if chunk_path.exists():
+                        chunk_path.unlink()
+                    raise
+                chunks.append(chunk_path)
+                total_downloaded += chunk_path.stat().st_size
+                chunk_idx += 1
+
+            if not chunks:
+                return False
+
+            # Merge chunks
+            if progress_callback is not None:
+                progress_callback(total_downloaded, total_downloaded, 0.0, 0.0)
+
+            self._merge_chunks(chunks, dest)
+
+            # Clean up chunks after merge
+            for chunk in chunks:
+                chunk.unlink()
+
+            return True
+
+        except Exception:
+            # Clean up on failure
+            for chunk in chunks:
+                if chunk.exists():
+                    chunk.unlink()
+            if dest.exists():
+                dest.unlink()
+            return False
 
     def get_cache_dir(self) -> Path:
         """Return the maru cache directory, creating it if necessary.
@@ -217,7 +342,11 @@ class ModelManager:
         model_name: str,
         progress_callback: Callable[[int, int, float, float], None] | None = None,
     ) -> Path:
-        """Download a model from HuggingFace Hub (primary) or GitHub releases (fallback).
+        """Download a model from GitHub releases (primary) or HuggingFace Hub (fallback).
+
+        Supports split-file download for large models (>1GB) from GitHub Release.
+        Automatically detects and merges split chunks.
+
         Args:
             model_name: Friendly name of the model.
             progress_callback: opt callback invoked at the start and end of
@@ -235,10 +364,63 @@ class ModelManager:
         local_path = model_dir / filename
         if progress_callback is not None:
             progress_callback(0, 0, 0.0, 0.0)
-        # Primary: HuggingFace Hub
+
+        # Primary: GitHub Release (single file or split chunks)
+        github_url = _GITHUB_URLS.get(model_name)
+        if github_url is not None:
+            # Try single-file download first
+            try:
+                self._download_with_progress(github_url, local_path, progress_callback)
+                file_size = local_path.stat().st_size
+                size_mb = round(file_size / (1024 * 1024), 2)
+                sha256 = _compute_sha256(local_path)
+                if progress_callback is not None:
+                    progress_callback(file_size, file_size, 0.0, 0.0)
+                metadata: dict[str, Any] = {
+                    "model_name": model_name,
+                    "repo_id": repo_id,
+                    "filename": filename,
+                    "download_date": datetime.now(timezone.utc).isoformat(),
+                    "size_mb": size_mb,
+                    "sha256": sha256,
+                    "source": "github",
+                    "url": github_url,
+                    "selected_for": {
+                        "hardware_profile": {},
+                    },
+                }
+                _write_metadata(model_name, metadata, cache_dir)
+                return local_path
+            except Exception:
+                # Single file failed, try split chunks
+                if local_path.exists():
+                    local_path.unlink()
+                if self._download_chunks(model_name, local_path, progress_callback):
+                    file_size = local_path.stat().st_size
+                    size_mb = round(file_size / (1024 * 1024), 2)
+                    sha256 = _compute_sha256(local_path)
+                    metadata = {
+                        "model_name": model_name,
+                        "repo_id": repo_id,
+                        "filename": filename,
+                        "download_date": datetime.now(timezone.utc).isoformat(),
+                        "size_mb": size_mb,
+                        "sha256": sha256,
+                        "source": "github_split",
+                        "url": github_url,
+                        "selected_for": {
+                            "hardware_profile": {},
+                        },
+                    }
+                    _write_metadata(model_name, metadata, cache_dir)
+                    return local_path
+                # Both single and split failed, fall through to HF Hub
+
+        # Fallback: HuggingFace Hub
         if not _HF_AVAILABLE:
             raise RuntimeError(
-                "huggingface_hub is not installed. Install it with: pip install huggingface_hub"
+                f"Failed to download {model_name} from GitHub and "
+                "huggingface_hub is not installed for fallback."
             )
         hf_path_str = hf_hub_download(repo_id, filename)  # type: ignore[arg-type]
         hf_path = Path(hf_path_str)
@@ -255,7 +437,7 @@ class ModelManager:
         sha256 = _compute_sha256(hf_path)
         if progress_callback is not None:
             progress_callback(file_size, file_size, 0.0, 0.0)
-        metadata: dict[str, Any] = {
+        metadata = {
             "model_name": model_name,
             "repo_id": repo_id,
             "filename": filename,
